@@ -1,0 +1,5 @@
+"!parameter input file for periodic.f90"
+"!integers 1st:m,n,np,nYears,etPersist,Semerge,vegmax,tSteps,isSemerge"
+"reals 2nd:dx,pa,ts,K0,Kmax,kf,rf,Emax,kc,rc,gamma,bav,pc,roughness"
+       16       16      100       90      200      120        9      200        1
+              1.0000000            400.0000000              0.0128767              0.3847440              1.6155901              0.8000000              5.0000000            876.0000000              0.8000000              5.0000000              0.5000000              0.1000000             -1.0000000              0.1000000              10.000000              0.0030000              10.000000              0.0300000

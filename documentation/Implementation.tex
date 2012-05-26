@@ -1,0 +1,569 @@
+\section{Implementation}
+
+\subsection{Overview}
+
+\subsection{Implementation strategy}
+
+
+\subsection{Subroutines}
+
+
+\subsubsection{Simulation\index{simulation}}
+
+\subroutine{SimCODE}{m, n, mn, simflags, climParams, infiltParams, evapParams, vegParams, erParams, resultsFID}
+
+\inout{
+\inoutentry[emph]{m}{integer}{}{number of rows}
+\inoutentry{n}{integer}{}{number of colums}
+\inoutentry{mn}{integer}{}{$=$ \texttt{m$\cdot$n}}
+\inoutentry{simflags}{integer}{6}{{[}1{]} $\ldots$ is for this, {[}2{]} $\ldots$ is for that, \note[Nanu]{should be explained!}}
+\inoutentry{climParams}{8-byte real}{4}{\ \annote[Nanu]{climate parameters}{how to input these?}}
+\inoutentry{infiltParams}{8-byte real}{6}{\ \remove[Nanu]{vegetation and} soil kernel parameters}
+\inoutentry{evapParams}{8-byte real}{8}{evaporation parameters}
+\inoutentry{vegParams}{8-byte real}{5}{vegetation \remove[Nanu]{and soil kernel} parameters}
+\inoutentry{erParams}{8-byte real}{4}{\ \annote[Nanu]{vegetation and soil kernel parameters}{what specific?}}
+\inoutentry{resultsFID}{character}{len=8}{results file id code}
+}{
+}
+
+\begin{usessubs}
+\usessubentry{GD8}
+\usessubentry{InfiltProb}
+\usessubentry{RoutingWithKernel}
+\usessubentry{Erosion}
+\usessubentry{Splash}
+\usessubentry{Evaporation}
+\usessubentry{VegChange}
+\end{usessubs}
+
+\subsubsection{Green-ampt infiltration}
+
+\subroutine{GAInfilt}{m, n, dt, inflow, Ksat, wfs, cumInfilt, infex}
+
+\annote[Nanu]{Green-ampt infiltration calculation.}{Literature?}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{dt}{8-byte real}{}{}
+\inoutentry{inflow}{8-byte real}{\mn}{surface runon + precipitation ($R+P$)}
+\inoutentry{wfs}{8-byte real}{\mn}{\ \annote[Nanu]{wetting front suction {*} moisture deficit}{formula?}}
+\inoutentry{cumInfilt}{8-byte real}{\mn}{\ \annote[Nanu]{cumulative infiltration}{nomenclature?}}
+}{
+\inoutentry{infex}{8-byte real}{\mn}{infiltration excess}
+\inoutentry{cumInfilt}{8-byte real}{\mn}{cumulative infiltration}
+}
+
+\subsubsection{\annote[Nanu]{TwoDRandPos}{cannot guess what this means}}
+
+\subroutine{TwoDRandPos}{randOrder, m, n, mn}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}
+}{
+\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}
+}
+
+
+
+\begin{usessubs}
+\usessubentry{OneDRandList}
+\end{usessubs}
+
+\subsubsection{Kinematic wave primer}
+
+\subroutine{KWPrimer}{m, n, topog, manningsN, mask, solOrder, flowdirns,
+alpha, deltax,\\ solMax}
+
+Iterate over space to generate calculation a mask. The mask is a 9
+x 1 array where 1s indicate that a neighbour (as defined by the position
+in mask(x,y) ) discharges to the cell at x,y
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{topog}{integer}{\texttt{mn,n}}{}
+\inoutentry{manningsN}{integer}{\texttt{mn,n}}{}
+}{
+\inoutentry{deltax}{8-byte real}{\mn}{}
+\inoutentry{alpha}{8-byte real}{\mn}{}
+\inoutentry{solMax}{integer}{}{}
+\inoutentry{solOrder}{integer}{\mn}{}
+\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+\inoutentry{mask}{integer}{\texttt{m},\texttt{n},9}{}
+}
+
+\begin{usessubs}
+\usessubentry{GD8}
+\usessubentry{KMWOrder}
+\usessubentry{Neighbours}
+\usessubentry{Lookupfdir}
+\end{usessubs}
+
+\subsubsection{Kinematic wave\index{kinematic wave}}
+
+\subroutine{KinematicWave}{m, n, ndx, dt, iex, flowdirns, solOrder, solMax,
+mask, alpha,\\ deltax, disOld, disNew}
+
+This subroutine calculates the kinematic wave equation for surface
+runoff in a network for a single time step. The flow network is given
+by the GD8 algorithm calculated on the topography. We assume no interaction
+between adjacent flow pathways i.e. water does not overflow in a direction
+not specified by the GD8 network. \texttt{iex} is the excess water
+from \annote[Nanu]{precip - infiltration + GW discharge}{display as formula?}. 
+
+\[
+iex(m,n,1)=qit
+\]
+\annote[Nanu]{}{should this be displayed as formula or as code?}
+\[
+iex(m,n,2)=qitPlus
+\]
+
+
+\annote[Nanu]{\texttt{manningsN} the roughness coefficient }{is this in the right place?}
+
+\annote[Nanu]{\texttt{init} a value passed to initialise the variables}{same for this}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{ndx}{integer}{}{}
+\inoutentry{solMax}{integer}{}{}
+\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+\inoutentry{solOrder}{integer}{\mn}{}
+\inoutentry{mask}{integer}{\mn}{}
+\inoutentry{alpha}{8-byte real}{\mn}{}
+\inoutentry{deltax}{8-byte real}{\mn}{}
+\inoutentry{dt}{8-byte real}{}{time step}
+\inoutentry{disOld,disNew}{8-byte real}{\mn\texttt{,ndx}}{}
+\inoutentry{iex}{8-byte real}{\texttt{m},\texttt{n},2}{}
+}{
+\inoutentry{disOld, disNew}{8-byte real}{\texttt{m},\texttt{n},\texttt{ndx}}{}
+}
+
+\subsubsection{Kinematic wave order}
+
+\subroutine{KMWOrder}{flowdirns, m, n, solutionOrder}
+
+Subroutine assigns values to the matrix \texttt{solutionOrder} to
+tell the Kinematic Wave subroutine in which order to solve the KM
+equation on the drainage network. Values of 1 assigned to top of catchment,
+2 to 1st downstream node etc.. Value at a point is the maximum travel
+distance to that point from all points above it.
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{flowdirns}{integer}{\texttt{m},\texttt{n}}{flow directions}
+}{
+\inoutentry{solutionOrder}{integer}{\texttt{n},\texttt{n}}{}
+}
+
+\begin{usessubs}
+\usessubentry{Lookupfdir}
+\end{usessubs}
+
+\subsubsection{\texttt{OneDRandList(a,mn)}}
+
+\subroutine{OneDRandList}{a, mn}
+
+\inout{
+\inoutentry{mn}{integer}{}{}
+\inoutentry{a}{integer}{\texttt{mn},2}{}
+}{
+\inoutentry{a}{integer}{\texttt{mn},2}{}
+}
+
+\subsubsection{Lookup for direction}
+
+\subroutine{Lookupfdir}{dirn, dx, dy}
+
+\inout{
+\inoutentry{dirn}{integer}{}{}
+}{
+\inoutentry{dx,dy}{integer}{}{}
+}
+
+
+\subsubsection{Routing with kernel}
+
+\subroutine{RoutingWithKernel}{m, n, mn, precip, infiltKern, storeKern,
+newflowdirns,\\ topog, store, discharge, outflow}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{mn}{integer}{}{}
+\inoutentry{infiltKern}{8-byte real}{\mn}{}
+\inoutentry{storeKern}{8-byte real}{\mn}{}
+\inoutentry{topog}{8-byte real}{\mn}{}
+\inoutentry{precip}{integer}{\mn}{}
+\inoutentry{store}{integer}{\mn}{}
+\inoutentry{newflowdirns}{integer}{\mn}{flow directions}
+}{
+\inoutentry{outflow}{integer}{}{}
+\inoutentry{store}{integer}{\mn}{}
+\inoutentry{newflowdirns}{integer}{\mn}{new flow directions}
+\inoutentry{discharge}{integer}{\mn}{}
+}
+
+\begin{description}
+\item [{Notice:}] Periodic boundary conditions can only really be defined
+simply for an inclined plane with two adjacent edges defined as the
+boundary from which particles are routed to the opposite boundary.
+For simplicity it is assumed that the landscape slopes downwards in
+the direction of lower x and y.
+\end{description}
+
+\begin{usessubs}
+\usessubentry{OneDRandList}
+\usessubentry{TwoDRandPos}
+\usessubentry{Lookupfdir}
+\usessubentry{Neighbours}
+\usessubentry{fdirLookup}
+\end{usessubs}
+
+\subsubsection{Infiltration\index{infiltration} Probability}
+
+\subroutine{InfiltProb}{veg, m, n, K0, ie, rfx, rfy, kf, Kmax, dx, dy, iProb}
+
+This subroutine calculates the spatial distributed infiltration probability.
+
+\inout{
+\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
+\inoutentry{rfx, rfy}{integer}{}{maximum radius for plant effects on soil properties}
+\inoutentry{kf}{integer}{}{}
+\inoutentry{veg}{integer}{\mn}{vegetation matrix}
+\inoutentry{K0}{8-byte real}{}{}
+\inoutentry{ie}{8-byte real}{}{}
+\inoutentry{Kmax}{8-byte real}{}{}
+\inoutentry{dx, dy}{8-byte real}{}{length scales of lattice}
+}{
+\inoutentry{iProb}{8-byte real}{\mn}{infiltration probability matrix}
+}
+
+\subsubsection{List Convolve}
+
+\subroutine{ListConvolve}{base, kernel, convol, m, n, m1, n1}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{m1,n1}{integer}{}{}
+\inoutentry{base}{integer}{\mn}{}
+\inoutentry{kernel}{integer}{\texttt{m},\texttt{n}}{}
+}{
+\inoutentry{convol}{}{\mn}{}
+}
+
+\subsubsection{Erosion\index{erosion}}
+
+\subroutine{Erosion}{discharge, topog, newflowdirns, flowResistance, m, n}
+
+\inout{
+\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
+\inoutentry{discharge}{integer}{\mn}{discharge has units of $\unitfrac{mm}{year}$}
+\inoutentry{newflowdirns}{integer}{\mn}{new flow directions}
+\inoutentry{flowResistance}{8-byte real}{\mn}{flow resistance; effective $d_{40}$ grainsize in $\unit{mm}$}
+\inoutentry{topog}{8-byte real}{\mn}{topography}
+}{
+\inoutentry{topog}{8-byte real}{\mn}{topography}
+}
+
+\begin{usessubs}
+\usessubentry{Lookupfdir}
+\end{usessubs}
+
+\subsubsection{Splash}
+
+\subroutine{Splash}{topog, veg, Dv, Db, m, n}
+
+\inout{
+\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
+\inoutentry{veg}{integer}{\mn}{}
+\inoutentry{topog}{8-byte real}{\mn}{topography}
+\inoutentry{Dv,Db}{8-byte real}{}{$\unitfrac{m^{2}}{kyr}$}
+}{
+\inoutentry{topog}{8-byte real}{\mn}{topography}
+}
+
+\begin{usessubs}
+\usessubentry{Neighbours}
+\end{usessubs}
+
+\subsubsection{Find holes}
+
+\subroutine{FindHoles}{newtopog,holes}
+
+\inout{
+\inoutentry{newtopog}{8-byte real}{:,:}{topography}
+}{
+\inoutentry{holes}{8-byte real}{:,:}{}
+}
+
+\begin{lstlisting}[caption={a program listing could look like this;
+notice the language sensitive formatting},label={lis:a-program-listing},breaklines=true,tabsize=4]
+SUBROUTINE FindHoles(newtopog,holes) 
+IMPLICIT NONE
+
+REAL*8, DIMENSION(:,:), INTENT(IN) :: newtopog 
+INTEGER, INTENT(OUT) :: holes
+
+INTEGER :: m,n,i,j,k,l 
+m=SIZE(newtopog,1) 
+n=SIZE(newtopog,2)
+
+DO i=2,m-1 
+DO j=2,n-1   
+    holes=0   
+	DO k=-1,1   
+	DO l=-1,1     
+(*\label{test}*)		IF (newtopog(i,j) < newtopog(i + k, j + l)) THEN
+	    	holes = holes + 1     
+		END IF   
+	END DO   
+	END DO   
+	IF (holes.ge.8) THEN     
+		holes = 1     
+		RETURN   
+	END IF 
+END DO 
+END DO
+
+END SUBROUTINE FindHoles
+\end{lstlisting}
+
+
+Listing \ref{lis:a-program-listing} shows, how code can be inserted
+into the document. With line numbers and Fortran specific code highlighting. 
+
+It is possible to refer to individual lines inside the listing with
+\LaTeX{} commands \texttt{\textbackslash{}label\{\}} and \texttt{\textbackslash{}ref\{\}},
+so references get updated if the code changes. For example line \ref{test}
+in listing \ref{lis:a-program-listing}, where the first \texttt{IF}-condition
+begins.
+
+The code in the listing could be loaded from an external file (for
+example the actual Fortran file). 
+
+
+\subsubsection{Evaporation\index{evaporation}}
+
+\subroutine{Evaporation}{veg, eTActual, bareE, store, tsteps, rcx, rcy, kc, dx, dy, params}
+
+This version cycles through sites and evaporates water from site and
+neighbouring sites if vegetated.
+
+\inout{
+\inoutentry{veg}{integer}{:,:}{}
+\inoutentry{eTActual}{integer}{:,:}{}
+\inoutentry{bareE}{integer}{:,:}{}
+\inoutentry{store}{integer}{:,:}{}
+\inoutentry{tsteps}{integer}{}{}
+\inoutentry{rcx, rcy, kc}{8-byte real}{}{}
+\inoutentry{dx, dy}{8-byte real}{}{}
+\inoutentry{params}{8-byte real}{7}{}
+}{
+\inoutentry{store}{integer}{:,:}{}
+\inoutentry{eTActual}{integer}{:,:}{}
+\inoutentry{bareE}{integer}{:,:}{}
+}
+
+\begin{usessubs}
+\usessubentry{TwoDRandPos}
+\end{usessubs}
+
+\subsubsection{Neighbours}
+
+\subroutine{Neighbours}{order, posij, dom, neighbs}
+
+\inout{
+\inoutentry{order}{integer}{}{}
+\inoutentry{posij}{integer}{2}{}
+\inoutentry{dom}{integer}{2}{}
+}{
+\inoutentry{neighbs}{integer}{\annote[Nanu]{(order*2+1)**2,2}{as formula?}}{}
+}
+
+\subsubsection{LSDs}
+
+\subroutine{LSDs}{order, posxy, topog, m, n, lsdList}
+
+This function returns the matrix positions:
+
+\vspace{-2mm}
+\begin{description}
+\item [{LSD1:}] the position of the neighbouring cell with the steepest
+slope downhill
+\item [{LSD2:}] the position of the neighbouring cell with second steepest
+slope adjacent LSD1
+\item [{otherpos:}] the position of the other neighbouring cell the mirror
+reflection about LSD1 of LSD2
+\end{description}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{posxy}{integer}{2}{}
+\inoutentry{topog}{8-byte real}{\mn}{}
+}{
+\inoutentry{lsdList}{integer}{3,2}{}
+}
+
+\begin{usessubs}
+\usessubentry{Neighbours}
+\usessubentry{RotateArray}
+\end{usessubs}
+
+\subsubsection{Array rotation}
+
+\subroutine{RotateArray}{list, m, n, leftorRight}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{list}{integer}{\mn}{}
+\inoutentry{leftorRight}{integer}{}{}
+}{
+\inoutentry{list}{integer}{\mn}{}
+}
+
+\subsubsection{Pos1D}
+
+\subroutine{Pos1d}{list, m, n, match, rownum}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{list}{integer}{\mn}{}
+\inoutentry{match}{integer}{\texttt{n}}{}
+}{
+\inoutentry{rownum}{integer}{\texttt{m}}{}
+}
+
+\subsubsection{GD8 fow directions}
+
+\subroutine{GD8}{topog, flowdirns, m, n}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}
+}{
+\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+}
+
+\begin{usessubs}
+\usessubentry{makeOrds}
+\usessubentry{Pos1d}
+\usessubentry{endShift}
+\usessubentry{LSDs}
+\usessubentry{fdirLookup}
+\usessubentry{RotateArray}
+\end{usessubs}
+
+\subsubsection{New GD8 \index{flow directions}flow directions}
+
+\subroutine{NewGD8}{topog, lakes, flowdirns, m, n}
+
+Calculates flow directions following the \index{GD8-algorithm}GD8-algorithm
+of \citet{Paik2008a}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{lakes}{integer}{\mn}{}
+\inoutentry{topog}{8-byte real}{\mn}{}
+}{
+\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+}
+
+\begin{usessubs}
+\usessubentry{makeOrds}
+\usessubentry{Pos1d}
+\usessubentry{endShift}
+\usessubentry{LSDs}
+\usessubentry{fdirLookup}
+\usessubentry{Neighbours}
+\end{usessubs}
+
+\subsubsection{\texttt{fdirLookup(dirnxy, idirn)}}
+\subroutine{fdirLookup}{dirnxy, idirn}
+
+\inout{
+\inoutentry{dirnxy}{integer}{2}{}
+}{
+\inoutentry{idirn}{integer}{}{}
+}
+
+\subsubsection{Array sort}
+
+\subroutine{qsortd}{x, ind, n, incdec}
+
+This subroutine uses an order $n\cdot\log(n)$ quick sort to sort
+a real (double precision/8-byte) array $x(n)$ into increasing order.
+
+\inout{
+\inoutentry{x(n)}{8-byte real}{}{vector of length \texttt{n} to be sorted}
+\inoutentry{n}{integer}{}{length of the array \texttt{x(n)}}
+\inoutentry{incdec}{integer}{}{if positive the ind is returned so values decreasing order}
+\inoutentry{incdec}{integer}{}{}
+}{
+\inoutentry{ind(n)}{integer}{}{vector of length $\geqq$ \texttt{n}; sequence of indices $1,\ldots,n$ permuted in the same fashion as x would be: $y(i)=x\left(ind(i)\right)$}
+}
+
+\texttt{ind} is initialized to the ordered sequence of indices $1,\ldots,n$,
+and all interchanges are applied to \texttt{ind}. \texttt{x} is devided
+into two portions by picking a central element $t$. The first and
+last elements are compared with $t$, and interchanges are applied
+as necessary so that the three values are in ascending order. Interchanges
+are then applied so that all elements greater than $t$ are in the
+upper portion of the array and all elements less than $t$ are in
+the lower portion. The upper and lower indices of one of the portions
+are saved in local arrays, and the process is repeated iteratively
+on the other portion. When a portion is completely sorted, the process
+begins again by retrieving the indices bounding another unsorted portion.
+
+Note: IU and IL must be dimensioned $\geqq\log(n)$ where $\log$
+has base 2.
+
+Credit goes to Robert Renka Oak Ridge Natl. Lab.
+
+\subsubsection{endShift}
+
+\subroutine{endShift}{arr, rownum, mn, n}
+
+\inout{
+\inoutentry{rown}{integer}{}{}
+\inoutentry{n}{integer}{}{}
+\inoutentry{mn}{integer}{}{}
+\inoutentry{arr}{integer}{mn,n}{}
+}{
+\inoutentry{arr}{integer}{mn,n}{}
+}
+
+\subsubsection{makeOrds}
+
+\subroutine{makeOrds}{topog, ords, m, n}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}
+}{
+\inoutentry{ords}{integer}{size(topog),2}{}
+}
+
+\begin{usessubs}
+\usessubentry{qsortd}
+\end{usessubs}
+
+\subsubsection{Vegetation Change}
+
+\subroutine{VegChange}{veg, m, n, vegParams, store, actualET, isEmerge, isGrow}
+
+\inout{
+\inoutentry{m,n}{integer}{}{}
+\inoutentry{isGrow}{integer}{}{}
+\inoutentry{isEmerge}{integer}{}{}
+\inoutentry{vegParams}{8-byte real}{5}{}
+\inoutentry{veg}{integer}{\mn}{}
+\inoutentry{store}{integer}{\mn}{}
+\inoutentry{actualET}{integer}{\mn}{}
+}{
+\inoutentry{veg}{integer}{\mn}{}
+\inoutentry{store}{integer}{\mn}{}
+\inoutentry{actualET}{integer}{\mn}{}
+}
+
+\subsection{Customizability}

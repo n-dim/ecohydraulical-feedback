@@ -1,5 +1,7 @@
 PROGRAM Sensitivity
 
+!use csv_file
+
 IMPLICIT NONE
 
 REAL,PARAMETER  :: pi = 3.14159
@@ -29,12 +31,17 @@ Integer, DIMENSION(9) :: readIntParams
 
 CHARACTER(LEN=8) :: fid, fid2
 
+!check how many parameter sets are in params.txt
 !Check params file for length
-Open(1,FILE="params.txt")
+PRINT *,'Reading file "params.txt" ...'
+Open(1,FILE="params.txt", status='old') !parameter settings are in params.txt
+!first three rows are headers
 READ(1,*)
 READ(1,*)
 READ(1,*)
-k=0
+
+!the rest are parameter sets
+k=0	!count for the rows
 IOStatus=0
 DO WHILE (IOStatus.eq.0)
 READ(1,*,IOSTAT=IOStatus)
@@ -48,7 +55,7 @@ PRINT *,k," parameter sets"
 
 !Read input parameter file
 !put program in loop to run through parameter file
-Open(99,FILE="params.txt")
+Open(99,FILE="params.txt", status='old')
 READ(99,*)
 READ(99,*)
 READ(99,*)

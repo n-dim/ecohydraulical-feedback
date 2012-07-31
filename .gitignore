@@ -2,3 +2,15 @@
 .Rhistory
 .RData
 .DS_Store
+
+model/a.out
+
+model/TStepResults1_1.out
+
+model/SummaryResults1_1.out
+
+documentation/GavsDocumentation.aux
+
+documentation/GavsDocumentation.dvi
+
+documentation/GavsDocumentation.out

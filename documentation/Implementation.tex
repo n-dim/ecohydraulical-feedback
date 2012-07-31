@@ -10,7 +10,7 @@
 
 \subsubsection{Simulation\index{simulation}}
 
-\subroutine{SimCODE}{m, n, mn, simflags, climParams, infiltParams, evapParams, vegParams, erParams, resultsFID}
+\subroutine{SimCODE}{m, n, mn, simflags, climParams, infiltParams, evapParams,\\ vegParams, erParams, resultsFID}
 
 \inout{
 \inoutentry[emph]{m}{integer}{}{number of rows}
@@ -345,7 +345,7 @@ example the actual Fortran file).
 
 \subsubsection{Evaporation\index{evaporation}}
 
-\subroutine{Evaporation}{veg, eTActual, bareE, store, tsteps, rcx, rcy, kc, dx, dy, params}
+\subroutine{Evaporation}{veg, eTActual, bareE, store, tsteps, rcx, rcy, kc, dx, dy, \\ params}
 
 This version cycles through sites and evaporates water from site and
 neighbouring sites if vegetated.

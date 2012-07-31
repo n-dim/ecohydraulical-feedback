@@ -26,6 +26,13 @@ tabsize=4}
 \usepackage[a4paper]{geometry}
 % page margins
 \geometry{verbose,tmargin=2cm,bmargin=2cm,lmargin=3cm,rmargin=2cm}
+% line space:
+\usepackage{setspace}
+\singlespacing
+%\onehalfspacing
+%\doublespacing
+%\setstretch{1.2}
+
 
 % for headers:
 \usepackage{fancyhdr}
@@ -218,7 +225,13 @@ Konrad-Wachsmann-Allee 6, 03046 Cottbus, Germany}
 
 \clearpage{}
 
+\newlength{\parskipold}
+\setlength{\parskipold}{\parskip}
+\setlength{\parskip}{0.5ex}
+
 \tableofcontents{}
+
+\setlength{\parskip}{\parskipold}
 
 \clearpage{}
 

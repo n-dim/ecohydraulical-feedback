@@ -157,7 +157,9 @@ CLOSE(99)
 
 CONTAINS
 
-!SimCode
+!#####################################################################################
+!###### SimCode ######################################################################
+!#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,simflags,climParams,infiltParams,evapParams,vegParams,erParams, resultsFID)
  
 IMPLICIT NONE
@@ -205,6 +207,9 @@ INTEGER, DIMENSION(m,n,9) :: mask
 REAL*8, DIMENSION(m,n) :: alpha, deltax
 
 LOGICAL :: lexist
+
+character(4) :: char_n !number of rows as character, used for output formating
+write(char_n,'(i4)') n 
 
 
 !simflags(1) = 1 !then use topography to route flows
@@ -368,8 +373,20 @@ storeKern = 99999.d0
 !ELSE
   OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out')
   OPEN(2,file='SummaryResults'//trim(adjustl(resultsFID))//'.out')
+  
   write(1,*) m,n,'veg,flowdirns,store,discharge,eTActual,bareE,topog,flowResistance1'
   write(2,*) 'timeStep,vegDensity,totalET,totalBE,totalStore, totalDischarge, totalOutflow'
+  
+  !Files for csv-output
+  OPEN(13,file='./output/vegetation'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(14,file='./output/flowdirections'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(15,file='./output/store'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(16,file='./output/discharge'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(17,file='./output/eTActual'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(18,file='./output/bareE'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(19,file='./output/topography'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(20,file='./output/flowResistance'//trim(adjustl(resultsFID))//'.csv')
+  
 !END IF
 
 !***********************************************************************************
@@ -420,6 +437,31 @@ IF (MOD(j,1).eq.0) THEN
       veg(i,:),flowdirns(i,:),store(i,:),discharge(i,:),eTActual(i,:),bareE(i,:),topog(i,:),infiltKern(i,:)
   END DO
   WRITE(2,'(i3,e14.6,5i10)') j,dble(sum(veg))/dble((m*n)), sum(ETActual), sum(bareE), sum(store), sum(discharge), outflow
+  
+  !write csv-files
+  write(13,*) "time step = ", j, ";"
+  write(13,'('//char_n//'(i3,";"))') veg
+  
+  write(14,*) "time step = ", j, ";"
+  write(14,'('//char_n//'(i4,";"))') flowdirns
+  
+  write(15,*) "time step = ", j, ";"
+  write(15,'('//char_n//'(i12,";"))') store
+  
+  write(16,*) "time step = ", j, ";"
+  write(16,'('//char_n//'(i12,";"))') discharge
+  
+  write(17,*) "time step = ", j, ";"
+  write(17,'('//char_n//'(i12,";"))') eTActual
+  
+  write(18,*) "time step = ", j, ";"
+  write(18,'('//char_n//'(i12,";"))') bareE
+  
+  write(19,*) "time step = ", j, ";"
+  write(19,'('//char_n//'(e14.6,";"))') topog
+  
+  write(20,*) "time step = ", j, ";"
+  write(20,'('//char_n//'(e14.6,";"))') infiltKern
 ELSE
   !flag = 0
 END IF  
@@ -445,7 +487,16 @@ END DO
 
  CLOSE(1)
  CLOSE(2)
-
+ !close csv-files
+ CLOSE(13)
+ CLOSE(14)
+ CLOSE(15)
+ CLOSE(16)
+ CLOSE(17)
+ CLOSE(18)
+ CLOSE(19)
+ CLOSE(20)
+	
 END SUBROUTINE SimCODE
 
 !Subroutine GAInfilt

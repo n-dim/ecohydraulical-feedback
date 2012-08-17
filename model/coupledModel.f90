@@ -148,7 +148,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
     character(9) :: lineNumChar
 	integer, save :: parameterSet
 	character(9) :: parameterSetChar 
-	integer :: posEQ, posEM !position equal sign and exclamation mark
+	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
 	
 	!initiation of some variables:
 	run = .true.  !as default every parameter set gets run in the simulation
@@ -177,8 +177,16 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		PosEM = index(input, "!")
 		if(.not.PosEM==0) input = input(1:(PosEM-1))
 
+
 		if(input=="") then !ignore empty rows
 		else
+			!tabs to spaces
+			do
+				PosTab = index(input, "	") !thats a tab in the quotes
+				if(PosTab==0) exit
+				input(PosTab:PosTab) = " " ! and thats a space in the quotes
+			end do
+			
 			PosEQ = index(input, "=")
 			if(PosEQ == 0) then
 				inputParName = "error" 
@@ -347,6 +355,8 @@ subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,
   precip = np
     
 end subroutine deriveInputParameters
+
+
 
 
 !#####################################################################################

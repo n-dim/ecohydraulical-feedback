@@ -1,25 +1,16 @@
 PROGRAM Sensitivity
 
-!use csv_file
 
 IMPLICIT NONE
 
 REAL,PARAMETER  :: pi = 3.14159
-INTEGER :: m, n, mn, infOrder, vegOrder, sEmerge, tPersist, tsteps, nSteps, precip
-INTEGER :: i, j, k, l, esteps 
+INTEGER :: infOrder, vegOrder
+INTEGER :: i, j !diversly used index variables for loops etc.
+INTEGER :: k, l, esteps 
 INTEGER, ALLOCATABLE ::clock(:)
 INTEGER :: infOrdermin,infOrdermax,vegOrdermin,vegOrdermax 
-REAL*8 :: roughness
 REAL*8 :: kv, kb, Dv, Db, rnd
-REAL*8 :: K0, Kmax, kf, rf, alpha
-REAL*8 :: Emax, kc,rc,beta
-REAL*8 :: gamma, Esb, Esv, bav, Psv, Psb
-REAL*8 :: dx, dy  !spatial dimesions of lattice cells
-REAL*8 :: pa, pbar, ie !pa = mean annual precip, pbar = water in each particle, ie = mean rain intensity
-REAL *8 :: ts, te  !ts = duration raining, te = time step for evap calculations
-INTEGER :: np, ne !number of particles, ne = number of evap iterations
-INTEGER :: vegmax, isSEmerge, IOStatus
-REAL*8 :: pc
+INTEGER :: IOStatus !variable to hold read errors
 INTEGER, DIMENSION(6) :: simflags
 REAL*8, DIMENSION(4) :: climParams
 Real*8, DIMENSION(6) :: infiltParams
@@ -29,78 +20,322 @@ REAL*8, DIMENSION(4) :: erParams
 REAL*8,DIMENSION(14) :: readRealParams
 Integer, DIMENSION(9) :: readIntParams
 
-CHARACTER(LEN=8) :: fid, fid2
 
-!check how many parameter sets are in params.txt
-!Check params file for length
-PRINT *,'Reading file "params.txt" ...'
-Open(1,FILE="params.txt", status='old') !parameter settings are in params.txt
-!first three rows are headers
-READ(1,*)
-READ(1,*)
-READ(1,*)
+!input parameters:
+character(40) :: title
+character(200) :: description
+logical :: run 		!run simulation for this parameter set?
+integer :: m, n
+integer :: np		!number of patricles of rain falling
+integer :: nSteps	!total number of "years"
+integer :: tPersist
+integer :: sEmerge
+integer :: vegmax	!maximum biomass
+integer :: tSteps	!number of iterations for evap calcs between veg change
+integer :: isSEmerge	!flag denotes whether to use random collonisation pc or storage based sEmerge
+REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
+real*8 :: pa		!mean annual precip
+real*8 :: ts
+real*8 :: K0		!in mm/hr
+real*8 :: Kmax		!in mm/hr
+real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
+real*8 :: rf		! meter: maximum length for plant effect on infiltration
+real*8 :: Emax		! 0.5 * (365.0* 24.0)  from mm/hr to mm/year
+real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
+real*8 :: rc		!meter: maximum length for plant water uptake
+real*8 :: gamma		!relative reduction of soil evap under canopy
+real*8 :: bav		!scaling factor for Esb calc
+real*8 :: pc		!prob of collonisation of bare soil
+real*8 :: roughness	
 
-!the rest are parameter sets
-k=0	!count for the rows
-IOStatus=0
-DO WHILE (IOStatus.eq.0)
-READ(1,*,IOSTAT=IOStatus)
-k=k+1
-END DO
-CLOSE(1)
+!derived parameters:
+integer :: mn
+integer :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
+  					!by one evap process at any one time
+integer :: precip
+real*8 :: beta
+real*8 :: alpha
+real*8 :: Esb	  	!maximum bare soil evap rate
+real*8 :: Esv		!soil evap from under canopy
+real*8 :: Psv
+real*8 :: Psb
+real*8 :: pbar
+real*8 :: ie
+real*8 :: te		!years: length of a time step in evap calcs
 
-k=k-1
-k=k/2
-PRINT *,k," parameter sets"
+!for reading process:
+integer :: unitNumber = 11
+logical :: anotherParamSet !are there multiple parameter Sets?
+logical :: Errors !Errors from input read process
 
-!Read input parameter file
-!put program in loop to run through parameter file
-Open(99,FILE="params.txt", status='old')
-READ(99,*)
-READ(99,*)
-READ(99,*)
 
-DO i=1,k  
+write(*,*) 'try to read "readTest.txt"'
+open(unitNumber, file='readTest.txt', status="old")
 
-  READ(99,'(9i9)') readIntParams(:)
-  READ(99,'(14f23.7)') readRealParams(:)
+DO 
+	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
+		m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness)
+    
+    if(run) then
+        call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
+            gamma,  mn, ne, precip, beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+		CALL RANDOM_SEED(size=l)
+		ALLOCATE(clock(l))
+		DO j=1,l
+		  CALL SYSTEM_CLOCK(COUNT=clock(j))
+		  clock(j)=clock(j)+j
+		END DO
+		CALL RANDOM_SEED(PUT = clock)
+		DEALLOCATE(clock)
+		
+		kv = 10.0d0 !readRealParams(15)
+		Dv = 1.0d0 !readRealParams(16)
+		
+		simflags = (/ 1,0,1,1,1, nSteps/) !what does these flags mean?
+		climParams = (/dble(np), pbar, ie, roughness  /)
+		infiltParams = (/K0,rf,kf, Kmax, dx,dy /)
+		evapParams = (/rc, kc,dble(tSteps),te,Psb,Psv,beta ,dble(ne)/)
+		vegParams = (/ dble(vegmax), dble(sEmerge),dble(tPersist),pc,dble(isSEmerge) /)
+		erParams = (/0.1d0, 0.1d0, 0.1d0, 0.1d0 /)
+		 
+		CALL SimCODE(m,n,mn,simflags,climParams,infiltParams,evapParams,vegParams,erParams,title)
 
-   PRINT *,readIntParams
-   PRINT *,readRealParams
-  m=readIntParams(1)  !numbers of rows and columns
-  n=readIntParams(2)
+    else
+        write(*,*) "don't run simulation for this parameter set"
+    end if
+        
+    if(.not.anotherParamSet) exit
+
+
+END DO  !end of loop through parameter file
+
+close(unitNumber)
+
+write(*,*) "-----------------------------"
+if(Errors)	write(*,*) 'Errors occured reading the input file, hence no simulation was run'
+write(*,*) 'end of execution'
+write(*,*) ""
+
+
+CONTAINS
+
+subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
+	m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness)
+
+	IMPLICIT NONE
+	integer, intent(in) :: inputfile
+
+    integer, intent(out) :: m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge
+    real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness
+	logical, intent(out) :: run !run simulation for this parameter set?
+	character(40), intent(out) :: title
+	character(200), intent(out) :: description
+	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
+	logical, intent(out) :: Errors
+
+    integer :: countTitle !how many "title" rows in input file? 
+	!!! TODO: what length to allow for input parameters?
+	character(221) :: input 	!whole row in input
+	character(20) :: inputParName !parameter Name 
+	character(200) :: inputValChar !value of the above parameter
+	integer :: inputVal !input Value used in input read
+	integer :: ioStatus
+	integer :: i
+	logical :: check = .false. ! if check was successful
+    integer, save :: lineNum !line Number
+    character(9) :: lineNumChar
+	integer, save :: parameterSet
+	character(9) :: parameterSetChar 
+	integer :: posEQ, posEM !position equal sign and exclamation mark
+	
+	!initiation of some variables:
+	run = .true.  !as default every parameter set gets run in the simulation
+    anotherParamSet = .false.
+    !Errors = .false.
+    countTitle = 0
+	title = ""
+	description = ""
+	
+	
+	write(*,*) "-----------------------------"
+	parameterSet = parameterSet + 1
+	write(parameterSetChar,'(I9)') parameterSet
+	parameterSetChar = adjustl(parameterSetChar)
+	write(*,*) 'parameter set ', parameterSetChar
+
+    !loop over every row of the input file
+	do 	  
+		lineNum = lineNum + 1
+		write(lineNumChar,'(I9)') lineNum
+		lineNumChar = adjustl(lineNumChar)
+	
+		read(inputfile,'(A)', IOSTAT=IOStatus) input
+		if (IOStatus /= 0) exit
+		
+		PosEM = index(input, "!")
+		if(.not.PosEM==0) input = input(1:(PosEM-1))
+
+		if(input=="") then !ignore empty rows
+		else
+			PosEQ = index(input, "=")
+			if(PosEQ == 0) then
+				inputParName = "error" 
+				inputValChar = ""
+			else
+				inputParName = trim(input(1: (PosEQ-1))) !parameter Name (before "=")
+				inputValChar = adjustl(input((PosEQ+1): ) ) !parameter Value as Character (after "=")
+			end if
+			
+					
+			!exit if there is another title row
+			if(countTitle >= 1.AND.inputParName=="title") then
+	                  anotherParamSet = .true. ! if there is another title row there must be mutliple parameter sets
+	                  backspace(inputfile) ! go one row back so that the title row can be read in again
+	                  lineNum = lineNum-1 ! go back in line Number, too
+			          exit
+			end if  
+			
+			!if(.not.inputParName=="".AND.trim(inputValChar)=="") then      
+				!write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
+				!Errors =.true.
+			!else
+		
+				checkagainst: select case (inputParName)
+					case("run") 
+						read(inputValChar, *, IOSTAT=IOStatus) run
+					case("title")
+						read(inputValChar, '(A)', IOSTAT=IOStatus) title
+						countTitle = 1
+					case( "description")
+					 	read(inputValChar, '(A)', IOSTAT=IOStatus) description
+					case("n")
+						read(inputValChar, *, IOSTAT=IOStatus) n
+					case("m")
+						read(inputValChar, *, IOSTAT=IOStatus) m
+					case("np")
+						read(inputValChar, *, IOSTAT=IOStatus) np
+		          	case("nSteps")
+		          		read(inputValChar, *, IOSTAT=IOStatus) nSteps
+		       		case("tPersist")
+		       			read(inputValChar, *, IOSTAT=IOStatus) tPersist
+		   			case("sEmerge")
+		   				read(inputValChar, *, IOSTAT=IOStatus) sEmerge
+					case("vegmax")
+						read(inputValChar, *, IOSTAT=IOStatus) vegmax
+					case("tSteps")
+						read(inputValChar, *, IOSTAT=IOStatus) tSteps
+					case("isSEmerge")
+						read(inputValChar, *, IOSTAT=IOStatus) isSEmerge
+					case("dx")
+						read(inputValChar, *, IOSTAT=IOStatus) dx
+					case("pa")
+						read(inputValChar, *, IOSTAT=IOStatus) pa
+					case("ts")
+						read(inputValChar, *, IOSTAT=IOStatus) ts
+					case("K0")
+						read(inputValChar, *, IOSTAT=IOStatus) K0 
+						K0 = K0 * (365.d0* 24.d0)  !from mm/hr to mm/year  
+					case("Kmax")
+						read(inputValChar, *, IOSTAT=IOStatus) Kmax 
+						Kmax = Kmax * (365.d0* 24.d0)  !from mm/hr to mm/year  
+					case("kf")
+						read(inputValChar, *, IOSTAT=IOStatus) kf
+					case("rf")
+						read(inputValChar, *, IOSTAT=IOStatus) rf
+					case("Emax")
+						read(inputValChar, *, IOSTAT=IOStatus) Emax
+					case("kc")
+						read(inputValChar, *, IOSTAT=IOStatus) kc
+					case("rc")
+						read(inputValChar, *, IOSTAT=IOStatus) rc
+					case("gamma")
+						read(inputValChar, *, IOSTAT=IOStatus) gamma
+					case("bav")
+						read(inputValChar, *, IOSTAT=IOStatus) bav
+					case("pc")
+						read(inputValChar, *, IOSTAT=IOStatus) pc
+					case("roughness")
+						read(inputValChar, *, IOSTAT=IOStatus) roughness
+						
+					!if nothing of the above applies, an error message is shown
+					case default
+					    write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
+					Errors = .true.
+				end select checkagainst
+				
+				if (IOStatus /= 0) then
+					write(*,*) 'Error! Wrong Value for parameter "', trim(inputParName), '" in line number ', lineNumChar
+					Errors =.true.
+				end if
+			!end if
+		end if
+	end do !loop reading process
+	
+	
+	!if reading process had error messages:			
+	if(Errors) then 
+		run = .false.
+	!if reading process was successful:
+	else 
+		write(*,*) "read parameter set without errors"
+		write(*,*) "using following input parameters:"
+		!repeat input parameters vor visual validation
+		write(*,*) 'title          = ', trim(title)
+		write(*,*) "description    = ", trim(description)
+		write(*,*) "run simulation = ", run
+		write(*,*) "m              = ", m
+		write(*,*) "n              = ", n
+		write(*,*) "np             = ", np
+		write(*,*) "nSteps         = ", nSteps
+		write(*,*) "tPersist       = ", tPersist
+		write(*,*) "sEmerge        = ", sEmerge
+		write(*,*) "vegmax         = ", vegmax
+		write(*,*) "tSteps         = ", tSteps
+		write(*,*) "isSemerge      = ", isSemerge
+		write(*,*) "dx             = ", dx
+		write(*,*) "pa             = ", pa
+		write(*,*) "ts             = ", ts
+		write(*,*) "K0             = ", K0
+		write(*,*) "Kmax           = ", Kmax
+		write(*,*) "kf             = ", kf
+		write(*,*) "rf             = ", rf
+		write(*,*) "Emax           = ", Emax
+		write(*,*) "kc             = ", kc
+		write(*,*) "rc             = ", rc
+		write(*,*) "gamma          = ", gamma
+		write(*,*) "bav            = ", bav
+		write(*,*) "pc             = ", pc
+		write(*,*) "roughness      = ", roughness
+	end if
+	
+	
+return
+end subroutine readInput
+
+
+subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
+ gamma,  mn, ne, precip, beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+ 
+  implicit none
+  integer, intent(in) :: m, n, np
+  real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
+  integer, intent(out) :: mn, ne, precip
+  real*8, intent(out) :: beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
+  
   mn = m*n
-  np = readIntParams(3) !number of particles of rain falling
-  !PRINT *,"m,n",m,n
-  dx = readRealParams(1)  !dimensions of cells
-  dy = readRealParams(1)  !
-  pa = readRealParams(2) !400.0    !annual precip
-  !PRINT *,"dx,dy,pa",dx,dy,pa
-  ts = readRealParams(3) !12.0/365.0 !duration in years of time raining
-  pbar = pa/dble(np) !mm 
+  dy = dx
+  pbar = pa/dble(np) !water in each particle in mm
   ie = pa / ts  !effective rainfall intensity mm / year
-  !PRINT *,"ts,pbar,ie",ts,pbar,ie
-  K0 = readRealParams(4) * (365.d0* 24.d0)  !from mm/hr to mm/year
-  Kmax = readRealParams(5) * (365.d0* 24.d0)  !from mm/hr to mm/year
-  kf = readRealParams(6) !0.9d0 !per meter : rate of decline in plant effect on infiltration
-  rf = readRealParams(7) !10.d0  ! meter: maximum length for plant effect on infiltration
   alpha = (Kmax-K0)/K0
-  !PRINT *,"K0,Kmax,kf,rf,alpha",K0,Kmax,kf,rf,alpha
  !K(r) = K0 +K0 *alpha*exp(-kf*r)
  !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
  !PInf[r_] := Min[1, K[r]/ie]
-
-  Emax = readRealParams(8) !0.5 * (365.0* 24.0)  !from mm/hr to mm/year
-  kc = readRealParams(9) !1.8d0 !per meter : rate of decline in plant water uptake with distance
-  rc = readRealParams(10) !10.0 !meter: maximum length for plant water uptake
   beta = Emax
- !PRINT*,"Emax,kc,rc,beta",Emax,kc,rc,beta
  !ET(r) =  beta*exp(-kc*r)*dx*dy
-  gamma = readRealParams(11) !0.1 !relative reduction of soil evap under canopy
-  bav = readRealParams(12) !0.03  !scaling factor for Esb calc
   Esb = bav*Emax  !maximum bare soil evap rate
   Esv = gamma*Esb   !soil evap from under canopy
-  !PRINT*,"gamma,bav,Esb,Esv",gamma,bav,Esb,Esv
   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*beta/pbar)))
   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
   !by one evap process at any one time
@@ -109,53 +344,10 @@ DO i=1,k
   Psb = te * Esb / pbar
   Psv = te * Esv / pbar
   !Pet(r) = te * dx * dy*beta*exp(- kc*r)/pbar
-
-  nSteps = readIntParams(4) !100  !total number of "years"
-  !esteps = 1
-  tSteps = readIntParams(5) !200 !ne !number of iterations for evap calcs between veg change
-  !PRINT*,"te,Psb,Psv,nSteps,tSteps",te,Psb,Psv,nSteps,tSteps
-
   precip = np
+    
+end subroutine deriveInputParameters
 
-  sEmerge = readIntParams(6) !120
-  vegmax = readIntParams(7) !9
-  pc = readRealParams(13) !0.01d0
-  tPersist = readIntParams(8) !200
-  isSEmerge = readIntParams(9)
-  roughness = readRealParams(14) !0.00005d0
-  !PRINT*,"sEmerge,vegmax,pc,tPersist,isSEmerge,roughness",sEmerge,vegmax,pc,tPersist,isSEmerge,roughness
-  !READ*,
- 
-  CALL RANDOM_SEED(size=l)
-  ALLOCATE(clock(l))
-  DO j=1,l
-    CALL SYSTEM_CLOCK(COUNT=clock(j))
-    clock(j)=clock(j)+j
-  END DO
-  CALL RANDOM_SEED(PUT = clock)
-  DEALLOCATE(clock)
-
-  kv = 10.0d0 !readRealParams(15)
-  Dv = 1.0d0 !readRealParams(16)
-  !i=3
-  j=1
-  WRITE(fid,'(i4)') i
-  WRITE(fid2,'(i4)') j
-  fid=trim(trim(adjustl(fid))//'_'//trim(adjustl(fid2)))
-  !PRINT*,"fid",fid
-  simflags = (/ 1,0,1,1,1, nSteps/)
-  climParams = (/dble(np), pbar, ie, roughness  /)
-  infiltParams = (/K0,rf,kf, Kmax, dx,dy /)
-  evapParams = (/rc, kc,dble(tSteps),te,Psb,Psv,beta ,dble(ne)/)
-  vegParams = (/ dble(vegmax), dble(sEmerge),dble(tPersist),pc,dble(isSEmerge) /)
-  erParams = (/0.1d0, 0.1d0, 0.1d0, 0.1d0 /)
-   
-  CALL SimCODE(m,n,mn,simflags,climParams,infiltParams,evapParams,vegParams,erParams,fid)
-
-END DO  !end of loop through parameter file
-CLOSE(99)
-
-CONTAINS
 
 !#####################################################################################
 !###### SimCode ######################################################################
@@ -173,7 +365,7 @@ REAL*8, DIMENSION(6), INTENT(IN) :: infiltParams !veg and soil kernel parameters
 REAL*8, DIMENSION(8), INTENT(IN) :: evapParams !evaporation parameters
 REAL*8, DIMENSION(5), INTENT(IN) :: vegParams !veg and soil kernel parameters 
 REAL*8, DIMENSION(4), INTENT(IN) :: erParams !veg and soil kernel parameters 
-CHARACTER(LEN=6), INTENT(IN) :: resultsFID  !results file id code
+CHARACTER(LEN=21), INTENT(IN) :: resultsFID  !results file id code
 !*************************************************************************************
 CHARACTER(len=10) :: fid
 CHARACTER(len=3) :: mc
@@ -210,7 +402,6 @@ LOGICAL :: lexist
 
 character(4) :: char_n !number of rows as character, used for output formating
 write(char_n,'(i4)') n 
-
 
 !simflags(1) = 1 !then use topography to route flows
 !simflags(2) = 1 and simflags(1) = 1 then simulate erosion and update flow pathways
@@ -300,6 +491,7 @@ store=0
 lakes = 0
 flowdirns = -2
  
+
  !manningsN = 0.02d0
  !iex = 0.0d0
  !disOld = 1e-20
@@ -371,21 +563,21 @@ storeKern = 99999.d0
 !  OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out',POSITION='APPEND')
 !  OPEN(2,file='SummaryResults'//trim(adjustl(resultsFID))//'.out',POSITION='APPEND')
 !ELSE
-  OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out')
-  OPEN(2,file='SummaryResults'//trim(adjustl(resultsFID))//'.out')
+  !OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out')
+  OPEN(2,file='./output/'//trim(adjustl(resultsFID))//' - SummaryResults.csv')
   
-  write(1,*) m,n,'veg,flowdirns,store,discharge,eTActual,bareE,topog,flowResistance1'
-  write(2,*) 'timeStep,vegDensity,totalET,totalBE,totalStore, totalDischarge, totalOutflow'
+  !write(1,*) m,n,'veg,flowdirns,store,discharge,eTActual,bareE,topog,flowResistance1'
+  write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
   
   !Files for csv-output
-  OPEN(13,file='./output/vegetation'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(14,file='./output/flowdirections'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(15,file='./output/store'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(16,file='./output/discharge'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(17,file='./output/eTActual'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(18,file='./output/bareE'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(19,file='./output/topography'//trim(adjustl(resultsFID))//'.csv')
-  OPEN(20,file='./output/flowResistance'//trim(adjustl(resultsFID))//'.csv')
+  OPEN(13,file='./output/'//trim(adjustl(resultsFID))//' - vegetation.csv')
+  OPEN(14,file='./output/'//trim(adjustl(resultsFID))//' - flowdirections.csv')
+  OPEN(15,file='./output/'//trim(adjustl(resultsFID))//' - store.csv')
+  OPEN(16,file='./output/'//trim(adjustl(resultsFID))//' - discharge.csv')
+  OPEN(17,file='./output/'//trim(adjustl(resultsFID))//' - eTActual.csv')
+  OPEN(18,file='./output/'//trim(adjustl(resultsFID))//' - bareE.csv')
+  OPEN(19,file='./output/'//trim(adjustl(resultsFID))//' - topography.csv')
+  OPEN(20,file='./output/'//trim(adjustl(resultsFID))//' - flowResistance.csv')
   
 !END IF
 
@@ -431,12 +623,13 @@ DO j=1,nSteps
   
 IF (MOD(j,1).eq.0) THEN
   !flag = 1
-  WRITE(1,*) "time step = ",j
+  !WRITE(1,*) "time step = ",j
   DO i=1,m
-    WRITE(1,'('//fid//'i3,'//fid//'i4,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'e14.6,'//fid//'e14.6)') & 
-      veg(i,:),flowdirns(i,:),store(i,:),discharge(i,:),eTActual(i,:),bareE(i,:),topog(i,:),infiltKern(i,:)
+    !WRITE(1,'('//fid//'i3,'//fid//'i4,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'e14.6,'//fid//'e14.6)') & 
+     ! veg(i,:),flowdirns(i,:),store(i,:),discharge(i,:),eTActual(i,:),bareE(i,:),topog(i,:),infiltKern(i,:)
   END DO
-  WRITE(2,'(i3,e14.6,5i10)') j,dble(sum(veg))/dble((m*n)), sum(ETActual), sum(bareE), sum(store), sum(discharge), outflow
+  WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+  	sum(bareE), sum(store), sum(discharge), outflow
   
   !write csv-files
   write(13,*) "time step = ", j, ";"
@@ -485,8 +678,8 @@ END IF
   WRITE(*,'("% Complete : ",F6.2)') Real(j)/REAL(nSteps) *100.0
 END DO
 
- CLOSE(1)
- CLOSE(2)
+ !CLOSE(1)
+ !CLOSE(2)
  !close csv-files
  CLOSE(13)
  CLOSE(14)

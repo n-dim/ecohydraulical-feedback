@@ -66,7 +66,7 @@ real*8 :: te		!years: length of a time step in evap calcs
 !for reading process:
 integer :: unitNumber = 11
 logical :: anotherParamSet !are there multiple parameter Sets?
-logical :: Errors !Errors from input read process
+logical :: Errors =.false. !Errors from input read process
 
 
 write(*,*) 'try to read "readTest.txt"'

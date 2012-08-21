@@ -5,7 +5,7 @@ m 	= 			4
 n 	= 			4
 
 !climate parameters:
-np 	= 			100 		!number of patricles of rain falling
+np 	= 			100 		!number of particles of rain falling
 roughness = 	0.1
 
 nSteps 	= 		10 			!total number of "years"

@@ -11,12 +11,6 @@ INTEGER, ALLOCATABLE ::clock(:)
 INTEGER :: infOrdermin,infOrdermax,vegOrdermin,vegOrdermax 
 REAL*8 :: kv, kb, Dv, Db, rnd
 INTEGER :: IOStatus !variable to hold read errors
-INTEGER, DIMENSION(6) :: simflags
-REAL*8, DIMENSION(4) :: climParams
-Real*8, DIMENSION(6) :: infiltParams
-REAL*8, DIMENSION(8) :: evapParams
-REAL*8, DIMENSION(5) ::  vegParams
-REAL*8, DIMENSION(4) :: erParams
 REAL*8,DIMENSION(14) :: readRealParams
 Integer, DIMENSION(9) :: readIntParams
 
@@ -25,21 +19,23 @@ Integer, DIMENSION(9) :: readIntParams
 character(40) :: title
 character(200) :: description
 logical :: run 		!run simulation for this parameter set?
-integer :: m, n
+integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
 integer :: nSteps	!total number of "years"
 integer :: tPersist
 integer :: sEmerge
 integer :: vegmax	!maximum biomass
 integer :: tSteps	!number of iterations for evap calcs between veg change
-integer :: isSEmerge	!flag denotes whether to use random collonisation pc or storage based sEmerge
-REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
+integer :: isSEmerge	!flag denotes whether to use random collonisation pc or storage based sEmerge !Nanu: why is isSEmerge not a logical?
 real*8 :: pa		!mean annual precip
 real*8 :: ts
+!infiltration parameters:
 real*8 :: K0		!in mm/hr
 real*8 :: Kmax		!in mm/hr
 real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
-real*8 :: rf		! meter: maximum length for plant effect on infiltration
+real*8 :: rf		!meter: maximum length for plant effect on infiltration
+REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
+
 real*8 :: Emax		! 0.5 * (365.0* 24.0)  from mm/hr to mm/year
 real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
 real*8 :: rc		!meter: maximum length for plant water uptake
@@ -47,6 +43,12 @@ real*8 :: gamma		!relative reduction of soil evap under canopy
 real*8 :: bav		!scaling factor for Esb calc
 real*8 :: pc		!prob of collonisation of bare soil
 real*8 :: roughness	
+
+logical :: topogRoute	!if true, then use topography to route flows
+logical :: simErosion	!if true, then simulate erosion and update flow pathways
+logical :: simEvap		!if true, then simulate evaporation
+logical :: simVegEvolve	!if true, then simulate evolving vegetation
+logical :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
 
 !derived parameters:
 integer :: mn
@@ -59,8 +61,8 @@ real*8 :: Esb	  	!maximum bare soil evap rate
 real*8 :: Esv		!soil evap from under canopy
 real*8 :: Psv
 real*8 :: Psb
-real*8 :: pbar
-real*8 :: ie
+real*8 :: pbar		!water in each particle in mm
+real*8 :: ie		!effective rainfall intensity mm / year
 real*8 :: te		!years: length of a time step in evap calcs
 
 !for reading process:
@@ -72,14 +74,16 @@ logical :: Errors =.false. !Errors from input read process
 write(*,*) 'try to read "readTest.txt"'
 open(unitNumber, file='readTest.txt', status="old")
 
-DO 
+DO !loop to read and execute every parameter set
 	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
 		m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
-		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness)
+		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
+		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
     
     if(run) then
         call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+		
 		CALL RANDOM_SEED(size=l)
 		ALLOCATE(clock(l))
 		DO j=1,l
@@ -89,17 +93,11 @@ DO
 		CALL RANDOM_SEED(PUT = clock)
 		DEALLOCATE(clock)
 		
-		kv = 10.0d0 !readRealParams(15)
-		Dv = 1.0d0 !readRealParams(16)
 		
-		simflags = (/ 1,0,1,1,1, nSteps/) !what does these flags mean?
-		climParams = (/dble(np), pbar, ie, roughness  /)
-		infiltParams = (/K0,rf,kf, Kmax, dx,dy /)
-		evapParams = (/rc, kc,dble(tSteps),te,Psb,Psv,beta ,dble(ne)/)
-		vegParams = (/ dble(vegmax), dble(sEmerge),dble(tPersist),pc,dble(isSEmerge) /)
-		erParams = (/0.1d0, 0.1d0, 0.1d0, 0.1d0 /)
 		 
-		CALL SimCODE(m,n,mn,simflags,climParams,infiltParams,evapParams,vegParams,erParams,title)
+		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
+			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
+			rc, kc,tSteps,te,Psb,Psv,beta, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
 
     else
         write(*,*) "don't run simulation for this parameter set"
@@ -118,17 +116,33 @@ write(*,*) 'end of execution'
 write(*,*) ""
 
 
+
+
+
+
+
+
+
+
 CONTAINS
 
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
 	m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
-	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness)
+	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv, &
+	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
 
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
 
     integer, intent(out) :: m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge
-    real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness
+    real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
+	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
+	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
+	logical, intent(out) :: simEvap		!if true, then simulate evaporation
+	logical, intent(out) :: simVegEvolve	!if true, then simulate evolving vegetation
+	logical, intent(out) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+
+	
 	logical, intent(out) :: run !run simulation for this parameter set?
 	character(40), intent(out) :: title
 	character(200), intent(out) :: description
@@ -177,15 +191,16 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		PosEM = index(input, "!")
 		if(.not.PosEM==0) input = input(1:(PosEM-1))
 
+		!tabs to spaces
+		do
+			PosTab = index(input, "	") !thats a tab in the quotes
+			if(PosTab==0) exit
+			input(PosTab:PosTab) = " " ! and thats a space in the quotes
+		end do
 
 		if(input=="") then !ignore empty rows
 		else
-			!tabs to spaces
-			do
-				PosTab = index(input, "	") !thats a tab in the quotes
-				if(PosTab==0) exit
-				input(PosTab:PosTab) = " " ! and thats a space in the quotes
-			end do
+			
 			
 			PosEQ = index(input, "=")
 			if(PosEQ == 0) then
@@ -266,6 +281,24 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) pc
 					case("roughness")
 						read(inputValChar, *, IOSTAT=IOStatus) roughness
+					case("kv")
+						read(inputValChar, *, IOSTAT=IOStatus) kv
+					case("kb")
+						read(inputValChar, *, IOSTAT=IOStatus) kb
+					case("Dv")
+						read(inputValChar, *, IOSTAT=IOStatus) Dv
+					case("Db")
+						read(inputValChar, *, IOSTAT=IOStatus) Db
+					case("topogRoute")
+						read(inputValChar, *, IOSTAT=IOStatus) topogRoute
+					case("simErosion")
+						read(inputValChar, *, IOSTAT=IOStatus) simErosion
+					case("simEvap")
+						read(inputValChar, *, IOSTAT=IOStatus) simEvap
+					case("simVegEvolve")
+						read(inputValChar, *, IOSTAT=IOStatus) simVegEvolve
+					case("RandomInVeg")
+						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -287,7 +320,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		run = .false.
 	!if reading process was successful:
 	else 
-		write(*,*) "read parameter set without errors"
+		write(*,*) "read input without errors"
 		write(*,*) "using following input parameters:"
 		!repeat input parameters vor visual validation
 		write(*,*) 'title          = ', trim(title)
@@ -316,6 +349,15 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		write(*,*) "bav            = ", bav
 		write(*,*) "pc             = ", pc
 		write(*,*) "roughness      = ", roughness
+		write(*,*) "kv             = ", kv
+		write(*,*) "kb             = ", kb
+		write(*,*) "Dv             = ", Dv
+		write(*,*) "Db             = ", Db
+		write(*,*) "topogRoute     = ", topogRoute
+		write(*,*) "simErosion     = ", simErosion
+		write(*,*) "simEvap        = ",	simEvap
+		write(*,*) "simVegEvolve   = ", simVegEvolve
+		write(*,*) "RandomInVeg    = ", RandomInVeg
 	end if
 	
 	
@@ -362,19 +404,26 @@ end subroutine deriveInputParameters
 !#####################################################################################
 !###### SimCode ######################################################################
 !#####################################################################################
-SUBROUTINE SimCODE(m,n,mn,simflags,climParams,infiltParams,evapParams,vegParams,erParams, resultsFID)
+SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
+	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
+	rc, kc,eSteps,te,Psb,Psv,beta, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
  
 IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: m !# of rows
 INTEGER, INTENT(IN) :: n !# of columns
 INTEGER,INTENT(IN) :: mn !m*n
-INTEGER, DIMENSION(6), INTENT(IN) :: simflags
-REAL*8, DIMENSION(4), INTENT(IN) :: climParams  !climate parameters
-REAL*8, DIMENSION(6), INTENT(IN) :: infiltParams !veg and soil kernel parameters 
-REAL*8, DIMENSION(8), INTENT(IN) :: evapParams !evaporation parameters
-REAL*8, DIMENSION(5), INTENT(IN) :: vegParams !veg and soil kernel parameters 
-REAL*8, DIMENSION(4), INTENT(IN) :: erParams !veg and soil kernel parameters 
+INTEGER, INTENT(IN) :: np
+REAL*8, INTENT(IN) :: pbar
+REAL*8, INTENT(IN) :: ie
+logical, intent(out) :: topogRoute	!if true, then use topography to route flows
+logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
+logical, intent(out) :: simEvap		!if true, then simulate evaporation
+logical, intent(out) :: simVegEvolve	!if true, then simulate evolving vegetation
+logical, intent(out) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+
+
+
 CHARACTER(LEN=21), INTENT(IN) :: resultsFID  !results file id code
 !*************************************************************************************
 CHARACTER(len=10) :: fid
@@ -383,17 +432,21 @@ CHARACTER delimiter
 CHARACTER*150 command
 CHARACTER(len=255) :: cwd, savedir
 INTEGER :: i,j,k, m1,n1,outflow, sold
-INTEGER :: nSteps, eSteps, flag, solMax, ne
-
-REAL*8 :: K0, rfx, rfy, kf, Kmax, dx ,dy !infilt variables
-REAL*8 :: rcx, rcy, kc, te, Psb, Psv, beta  !evap variables
+INTEGER, intent(in) :: nSteps
+INTEGER :: eSteps, flag, solMax, ne
+!infilt variables
+REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
+Real*8 :: rfx, rfy
+!evap variables
+REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, beta  
 REAL*8,DIMENSION(7) :: eparams !evap input array
 
 REAL*8 :: rnd
 REAL*8 :: roughness
-REAL*8 :: kv, kb, Dv, Db
+!erosion parameters:
+REAL*8, intent(in) :: kv, kb, Dv, Db
 
-INTEGER :: sEmerge, tPersist, vegmax  !veg change variables
+INTEGER :: sEmerge, tPersist, vegmax, isSEmerge  !veg change variables
 REAL*8 :: pc  !veg change variable
 
 INTEGER, DIMENSION(mn,2) :: randOrder
@@ -402,7 +455,8 @@ REAL*8, DIMENSION(m,n) :: manningsN, infx  !kinematic water variables
 REAL*8, DIMENSION(m,n) :: Ksat, wfs, cumInfilt,  cumInfiltOld, inflow, infex !kinematic water variables
 REAL*8, DIMENSION(m,n,2) :: disOld,  disNew, iex !kinematic water variables
 
-INTEGER, DIMENSION(m,n) :: precip, newflowdirns, store,discharge,veg, eTActual
+INTEGER, DIMENSION(m,n) :: precip
+INTEGER, DIMENSION(m,n) :: newflowdirns, store,discharge,veg, eTActual
 INTEGER, DIMENSION(m,n) :: flowdirns, lakes, bareE, dummyveg, solutionOrder
 INTEGER, DIMENSION(m,n) :: solOrder
 INTEGER, DIMENSION(m,n,9) :: mask
@@ -410,65 +464,39 @@ REAL*8, DIMENSION(m,n) :: alpha, deltax
 
 LOGICAL :: lexist
 
+
 character(4) :: char_n !number of rows as character, used for output formating
 write(char_n,'(i4)') n 
 
-!simflags(1) = 1 !then use topography to route flows
-!simflags(2) = 1 and simflags(1) = 1 then simulate erosion and update flow pathways
-!simflags(3) = 1 then simulate evaporation
-!simflags(4) = 1 and simflags(1) = 1 then simulate evolving vegetation
-!simflags(5) = 1 allow veg to be randomly distributed initially, othewrwise set all veg to 0
-flag = simflags(4)
-nSteps = simflags(6)
+
+
 !**************************************************************************************
 
 !*************************************************************************************
 !*** Model Parameters ****************************************************************
 !************************************************************************************
 
-!PRINT*,"in Sim"
-!Climate /landscape parameters
-precip = int(climParams(1))
-pbar = climParams(2)
-ie = climParams(3)
-roughness = climParams(4)
+write(*,*) 'starting simulation'
 
-!infiltration kernel parameters
-K0 = infiltParams(1)
-rfx = infiltParams(2)
-rfy = infiltParams(2)
-kf =  infiltParams(3)
-Kmax = infiltParams(4)
-dx = infiltParams(5)
-dy = infiltParams(6)
 
-!evaporation kernel parameters
-rcx = evapParams(1)
-rcy = evapParams(1)
-kc = evapParams(2)
-eSteps = int(evapParams(3))
-te = evapParams(4)
-Psb = evapParams(5)
-Psv = evapParams(6)
-beta = evapParams(7)
-ne = int(evapParams(8))
+precip = np
+rfy = rf
+rfx = rf
+
+rcx = rc
+rcy = rc
+
 
 eSteps = max(min(ne,eSteps),1)
 
 eparams = (/dx,dy,te,pbar,Psb,Psv,beta /)
 
-!vegetation parameters
+!vegetation parameters !Nanu: why are vegetation parameters commented out? --> vegParams gets passed directly to VegChange()
 !vegmax = int(vegParams(1)) ! parameter set to define maximum biomass was 9
 !sEmerge = int(vegParams(2))
 !etPersist = int(vegParams(3))
 !pc = vegParams(4)
 !usePCFlag = int(vegParams(5))
-
-!erosion parameters 
-kv = erParams(1)
-kb = erParams(2)
-Dv = erParams(3)
-Db = erParams(4)
 
 
 !**************************************************************************************
@@ -486,7 +514,8 @@ DO i=1,m
    !ELSE
    !  topog(i,j)  = 0.0*Sin(real(i)/5.0)*Sin(real(j)/5.0) +0.2d0*dble(i)+0.1d0*dble(j) + 1000.d0
    !ENDIF
-   IF (simflags(5).gt.0) THEN
+   IF (RandomInVeg) THEN
+     if(j==1.and.i==1) print*,'random initial vegetation distribution'
      IF (rnd>0.9) THEN
        veg(i,j) = 1
      ELSE
@@ -546,18 +575,17 @@ flowdirns = -2
  !END DO
  
 write(fid,'(i3)') n  !internal write for colum number
-!PRINT *,"simflags",simflags
-IF (simflags(1).eq.1) THEN
-  ! CALL GD8(topog,flowdirns, m,n)
-  !CALL KMWOrder(flowdirns,m,n,solutionOrder)
-  !DO i=1,m
-  !  WRITE(*,'('//fid//'i3,a2,'//fid//'i3)') flowdirns(i,:),"--",solutionOrder(i,:)
-  !END DO
-   CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
-   !PRINT*,"out InfiltProb"
-   !READ*,
-   !PRINT *, infiltKern
-   !READ*,
+IF (topogRoute) THEN
+	! CALL GD8(topog,flowdirns, m,n)
+	!CALL KMWOrder(flowdirns,m,n,solutionOrder)
+	!DO i=1,m
+	!  WRITE(*,'('//fid//'i3,a2,'//fid//'i3)') flowdirns(i,:),"--",solutionOrder(i,:)
+	!END DO
+	CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
+	!PRINT*,"out InfiltProb"
+	!READ*,
+	!PRINT *, infiltKern
+	!READ*,
 END IF
 !WHERE (veg>0)
 !  flowResistance1= flowResistance0 + kb
@@ -568,137 +596,123 @@ END IF
 storeKern = 99999.d0
 
 
-!inquire(file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out',exist=lexist)
-!IF (lexist) THEN
-!  OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out',POSITION='APPEND')
-!  OPEN(2,file='SummaryResults'//trim(adjustl(resultsFID))//'.out',POSITION='APPEND')
-!ELSE
-  !OPEN(1,file='TStepResults'//trim(ADJUSTL(resultsFID))//'.out')
-  OPEN(2,file='./output/'//trim(adjustl(resultsFID))//' - SummaryResults.csv')
-  
-  !write(1,*) m,n,'veg,flowdirns,store,discharge,eTActual,bareE,topog,flowResistance1'
-  write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
-  
-  !Files for csv-output
-  OPEN(13,file='./output/'//trim(adjustl(resultsFID))//' - vegetation.csv')
-  OPEN(14,file='./output/'//trim(adjustl(resultsFID))//' - flowdirections.csv')
-  OPEN(15,file='./output/'//trim(adjustl(resultsFID))//' - store.csv')
-  OPEN(16,file='./output/'//trim(adjustl(resultsFID))//' - discharge.csv')
-  OPEN(17,file='./output/'//trim(adjustl(resultsFID))//' - eTActual.csv')
-  OPEN(18,file='./output/'//trim(adjustl(resultsFID))//' - bareE.csv')
-  OPEN(19,file='./output/'//trim(adjustl(resultsFID))//' - topography.csv')
-  OPEN(20,file='./output/'//trim(adjustl(resultsFID))//' - flowResistance.csv')
-  
-!END IF
+OPEN(2,file='./output/'//trim(adjustl(resultsFID))//' - SummaryResults.csv')
+write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
+
+OPEN(13,file='./output/'//trim(adjustl(resultsFID))//' - vegetation.csv')
+OPEN(14,file='./output/'//trim(adjustl(resultsFID))//' - flowdirections.csv')
+OPEN(15,file='./output/'//trim(adjustl(resultsFID))//' - store.csv')
+OPEN(16,file='./output/'//trim(adjustl(resultsFID))//' - discharge.csv')
+OPEN(17,file='./output/'//trim(adjustl(resultsFID))//' - eTActual.csv')
+OPEN(18,file='./output/'//trim(adjustl(resultsFID))//' - bareE.csv')
+OPEN(19,file='./output/'//trim(adjustl(resultsFID))//' - topography.csv')
+OPEN(20,file='./output/'//trim(adjustl(resultsFID))//' - flowResistance.csv')
 
 !***********************************************************************************
 !Timestep iterations
 DO j=1,nSteps
- !IF ((j>int(nSteps/2)).and.(maxval(veg).eq.0)) THEN
- !  CLOSE(1)
- !  CLOSE(2)
- !  RETURN
- !END IF
-  eTActual = 0
-  bareE = 0
-  !outflow = 0
-  DO k=1,1  !erosion, routing, evaporation, loop
-    IF (simflags(1).eq.1) THEN
-      
-      !PRINT*,"in Routing"
-      CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
-      !PRINT*,"out Routing"
-    END IF
-   
-    IF ((simflags(1).eq.1).and.(simflags(2).eq.1)) THEN
-      CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n)
-      CALL Splash(topog,veg, Dv, Db,m,n)
-      CALL GD8(topog,flowdirns, m,n)
-    END IF
-    IF (simflags(3).eq.1) THEN
-      !PRINT*,"in Evap"
-      CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,eparams)
-       !PRINT *, "End evap"
-       dummyveg = veg
-       CALL VegChange(dummyveg,m,n,vegParams, store, eTActual,1,0)
-       !PRINT *, "End vegChange1: Emerging Veg"
-       dummyveg = dummyveg - veg  !identify just the new veg
-      If (ne > eSteps) THEN
-        !PRINT *, "in evap2",ne-eSteps
-        CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy,eparams)
-        !PRINT *, "out evap2"
-      END IF
-    END IF
-  END DO
+	!IF ((j>int(nSteps/2)).and.(maxval(veg).eq.0)) THEN
+	!  CLOSE(1)
+	!  CLOSE(2)
+	!  RETURN
+	!END IF
+	eTActual = 0
+	bareE = 0
+	!outflow = 0
+	DO k=1,1  !erosion, routing, evaporation, loop !Nanu: why a loop here?
+		IF (topogRoute) THEN
+		  if(j==1) print*, 'topography is used to route flows'
+		  CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
+
+		END IF
+	   
+		!simulate erosion
+		IF ((topogRoute).and.(simErosion)) THEN
+		  if(j==1)  print*, 'simulating with erosion'
+		  CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n)
+		  CALL Splash(topog,veg, Dv, Db,m,n)
+		  CALL GD8(topog,flowdirns, m,n)
+		END IF
+	   
+		!simulate evaporation
+		IF (simEvap) THEN
+			if(j==1)  print*, 'simulating with evaporation'
+			
+			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,eparams)
+			dummyveg = veg
+			
+			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, tPersist, pc, 1, store, eTActual,0)
+			dummyveg = dummyveg - veg  !identify just the new veg
+			
+			If (ne > eSteps) THEN
+				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy,eparams)
+			END IF
+		END IF
+	END DO
   
-IF (MOD(j,1).eq.0) THEN
-  !flag = 1
-  !WRITE(1,*) "time step = ",j
-  DO i=1,m
-    !WRITE(1,'('//fid//'i3,'//fid//'i4,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'i12,'//fid//'e14.6,'//fid//'e14.6)') & 
-     ! veg(i,:),flowdirns(i,:),store(i,:),discharge(i,:),eTActual(i,:),bareE(i,:),topog(i,:),infiltKern(i,:)
-  END DO
-  WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
-  	sum(bareE), sum(store), sum(discharge), outflow
-  
-  !write csv-files
-  write(13,*) "time step = ", j, ";"
-  write(13,'('//char_n//'(i3,";"))') veg
-  
-  write(14,*) "time step = ", j, ";"
-  write(14,'('//char_n//'(i4,";"))') flowdirns
-  
-  write(15,*) "time step = ", j, ";"
-  write(15,'('//char_n//'(i12,";"))') store
-  
-  write(16,*) "time step = ", j, ";"
-  write(16,'('//char_n//'(i12,";"))') discharge
-  
-  write(17,*) "time step = ", j, ";"
-  write(17,'('//char_n//'(i12,";"))') eTActual
-  
-  write(18,*) "time step = ", j, ";"
-  write(18,'('//char_n//'(i12,";"))') bareE
-  
-  write(19,*) "time step = ", j, ";"
-  write(19,'('//char_n//'(e14.6,";"))') topog
-  
-  write(20,*) "time step = ", j, ";"
-  write(20,'('//char_n//'(e14.6,";"))') infiltKern
-ELSE
-  !flag = 0
-END IF  
+	IF (MOD(j,1).eq.0) THEN
+		WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+		sum(bareE), sum(store), sum(discharge), outflow
+
+		!write csv-files
+		write(13,*) "time step = ", j, ";"
+		write(13,'('//char_n//'(i3,";"))') veg
+
+		write(14,*) "time step = ", j, ";"
+		write(14,'('//char_n//'(i4,";"))') flowdirns
+
+		write(15,*) "time step = ", j, ";"
+		write(15,'('//char_n//'(i12,";"))') store
+
+		write(16,*) "time step = ", j, ";"
+		write(16,'('//char_n//'(i12,";"))') discharge
+
+		write(17,*) "time step = ", j, ";"
+		write(17,'('//char_n//'(i12,";"))') eTActual
+
+		write(18,*) "time step = ", j, ";"
+		write(18,'('//char_n//'(i12,";"))') bareE
+
+		write(19,*) "time step = ", j, ";"
+		write(19,'('//char_n//'(e14.6,";"))') topog
+
+		write(20,*) "time step = ", j, ";"
+		write(20,'('//char_n//'(e14.6,";"))') infiltKern
+
+	END IF  
 
 
  
-  flag = 1
-  IF ((simflags(3).eq.1).and.(flag.eq.1)) THEN
-     CALL VegChange(veg,m,n,vegParams, store, eTActual,1,1)
-    veg = veg + dummyveg  !add on emerging vegetation
-     CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
-     !infiltKern =   infiltKern * slopeFactor
+	IF ((simEvap).and.(simVegEvolve)) THEN
+		if(j==1) write(*,*) 'simulating with vegetation growth'
 
-     WHERE (veg>0)
-        flowResistance1 = flowResistance0 + kv
-     ELSEWHERE
-        flowResistance1 = flowResistance0
-      END WHERE
-  END IF
+		CALL VegChange(veg,m,n,vegmax, sEmerge, tPersist, pc, 1, store, eTActual,1)
+		veg = veg + dummyveg  !add on emerging vegetation
 
-  WRITE(*,'("% Complete : ",F6.2)') Real(j)/REAL(nSteps) *100.0
+		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
+		!infiltKern =   infiltKern * slopeFactor
+
+		WHERE (veg>0)
+		flowResistance1 = flowResistance0 + kv
+		ELSEWHERE
+		flowResistance1 = flowResistance0
+		END WHERE
+	END IF
+
+	WRITE(*,'("% Complete : ",F6.2)') Real(j)/REAL(nSteps) *100.0
+	
 END DO
 
- !CLOSE(1)
- !CLOSE(2)
- !close csv-files
- CLOSE(13)
- CLOSE(14)
- CLOSE(15)
- CLOSE(16)
- CLOSE(17)
- CLOSE(18)
- CLOSE(19)
- CLOSE(20)
+CLOSE(2)
+!close csv-files
+CLOSE(13)
+CLOSE(14)
+CLOSE(15)
+CLOSE(16)
+CLOSE(17)
+CLOSE(18)
+CLOSE(19)
+CLOSE(20)
 	
 END SUBROUTINE SimCODE
 
@@ -2802,28 +2816,23 @@ SUBROUTINE makeOrds(topog,ords, m,n)
     END DO
 END SUBROUTINE makeOrds
 !VegChange
-SUBROUTINE VegChange(veg,m,n,vegParams, store, actualET,isEmerge,isGrow)
+SUBROUTINE VegChange(veg,m,n,vegmax, sEmerge, etPersist, pc, isEmerge, store, actualET,isGrow)
  IMPLICIT NONE
  
  INTEGER, INTENT(IN) :: m, n, isGrow,isEmerge
- REAL*8, DIMENSION(5), INTENT(IN) :: vegParams
  INTEGER, DIMENSION(m,n), INTENT(INOUT) :: veg, store, actualET
  
  REAL*8 :: pc !prob of collonisation of bare soil
  INTEGER :: vegmax, i, j, sEmerge, etPersist, usePCFlag
  !REAL*8 :: rnd
  
- vegmax = int(vegParams(1)) ! parameter set to define maximum biomass was 9
- sEmerge = int(vegParams(2))
- etPersist = int(vegParams(3))
- pc = vegParams(4)
- usePCFlag = int(vegParams(5))  !flag denotes whether to use random collonisation pc or storage based sEmerge
+ usePCFlag = isEmerge  !flag denotes whether to use random collonisation pc or storage based sEmerge
  
  Do i=1,m
   DO j=1,n
     If(veg(i, j).eq.0) THEN 
-     If (isEmerge.gt.0) THEN
-      IF (usePCFlag.gt.0) THEN
+     If (isEmerge.gt.0) THEN !Nanu: why .gt.0, why not .eq.1
+      IF (usePCFlag.gt.0) THEN !Nanu: why this again? usePCFlag = isEmerge or not?
         If(store(i, j) > sEmerge) THEN
           store(i, j) = store(i, j) - sEmerge
           actualET(i,j) = actualET(i,j)+sEmerge

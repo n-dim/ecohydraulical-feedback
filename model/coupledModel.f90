@@ -464,6 +464,8 @@ REAL*8, DIMENSION(m,n) :: alpha, deltax
 
 LOGICAL :: lexist
 
+integer :: progress !for a progress bar
+
 
 character(4) :: char_n !number of rows as character, used for output formating
 write(char_n,'(i4)') n 
@@ -478,7 +480,7 @@ write(char_n,'(i4)') n
 
 write(*,*) 'starting simulation'
 
-
+progress = 0
 precip = np
 rfy = rf
 rfx = rf
@@ -681,8 +683,6 @@ DO j=1,nSteps
 
 	END IF  
 
-
- 
 	IF ((simEvap).and.(simVegEvolve)) THEN
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
@@ -699,9 +699,15 @@ DO j=1,nSteps
 		END WHERE
 	END IF
 
-	WRITE(*,'("% Complete : ",F6.2)') Real(j)/REAL(nSteps) *100.0
+	if(j==1) write(*,*) "timestep iteration"
+	!write progess bar:
+	progress = nint((Real(j)/Real(nSteps))*100)
+	write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
+		progress, repeat("=", progress/2), repeat("-", (50-progress/2))
+	if(j==nSteps) write(*,'(a)') "" ! to make a newline
 	
 END DO
+
 
 CLOSE(2)
 !close csv-files

@@ -491,15 +491,6 @@ rcy = rc
 
 eSteps = max(min(ne,eSteps),1)
 
-eparams = (/dx,dy,te,pbar,Psb,Psv,beta /)
-
-!vegetation parameters !Nanu: why are vegetation parameters commented out? --> vegParams gets passed directly to VegChange()
-!vegmax = int(vegParams(1)) ! parameter set to define maximum biomass was 9
-!sEmerge = int(vegParams(2))
-!etPersist = int(vegParams(3))
-!pc = vegParams(4)
-!usePCFlag = int(vegParams(5))
-
 
 !**************************************************************************************
 !**** Initial conditions ****************************************************************
@@ -640,14 +631,14 @@ DO j=1,nSteps
 		IF (simEvap) THEN
 			if(j==1)  print*, 'simulating with evaporation'
 			
-			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,eparams)
+			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,beta)
 			dummyveg = veg
 			
 			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, tPersist, pc, 1, store, eTActual,0)
 			dummyveg = dummyveg - veg  !identify just the new veg
 			
 			If (ne > eSteps) THEN
-				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy,eparams)
+				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,beta)
 			END IF
 		END IF
 	END DO
@@ -1520,7 +1511,7 @@ END DO
 
 END SUBROUTINE FindHoles
 !Evaporation
-SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,params)
+SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,beta)
   !This version cycles through sites and evaporates water from site and neighbouring sites if vegetated
   IMPLICIT NONE
    
@@ -1530,7 +1521,6 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,params)
   INTEGER, DIMENSION(:,:),  INTENT(INOUT) :: bareE
   REAL*8, INTENT(IN) :: rcx,rcy, kc
   INTEGER, INTENT(IN) :: tsteps
-  REAL*8, DIMENSION(7),  INTENT(IN) :: params
   REAL*8, INTENT(IN) :: dx, dy
   
   REAL*8 :: beta,te,pbar,Psb,Psv
@@ -1539,13 +1529,6 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,params)
   REAL*8, DIMENSION(-1*int(Floor(rcx/dx)):int(Floor(rcx/dx)),-1*int(Floor(rcx/dy)):int(Floor(rcx/dy))) :: uptakeprob
   INTEGER, DIMENSION(SIZE(store),2) :: posxy
   storeCounter = sum(store)
-  !dx = params(1)
-  !dy = params(2)
-  te = params(3)
-  pbar = params(4)
-  Psb = params(5)
-  Psv = params(6)
-  beta = params(7)
   
   n = SIZE(store,1) 
   m = SIZE(store,2)

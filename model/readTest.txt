@@ -8,12 +8,12 @@ n 	= 			10	!number of columns
 np 	= 			100 		!number of particles of rain falling
 roughness = 	0.1
 
-nSteps 	= 		100 			!total number of "years"
+nSteps 	= 		100 		!total number of "years"
 
 !veg change variables
-etPersist = 	200
-sEmerge = 		120
-isSEmerge = 	1			!flag denotes whether to use random collonisation pc or storage based sEmerge
+etPersist = 	200			!evapotranspiration rate over which plants start do grow
+storEmerge =	120			!storage based emerge of new plants
+useStorEmerge = T			!flag denotes whether to use random collonisation pc or storage based sEmerge
 vegmax = 		9			!maximum biomass
 pc = 			-1			!prob of collonisation of bare soil
 
@@ -21,11 +21,12 @@ pc = 			-1			!prob of collonisation of bare soil
 tSteps= 		200 		!number of iterations for evap calcs between veg change
 
 pa = 			400 		!mean annual precip
-ts =	 		1.287670000000000E-002  !duration raining !12.0/365.0 !duration in years of time raining
+ts =	 		1.287670000000000E-002  !duration of time raining in years (e.g.: days raining/days of year)
+
 
 !infiltration kernel parameters:
-K0 =  			0.3847440 	!in mm/hr 
-Kmax = 			1.6155901 	!in mm/hr
+K0 =  			0.3847440 	!intrinsic hydraulic conductivity of the soil in the absence of plants in mm/hr 
+Kmax = 			1.6155901 	!potential maximum hydraulic conductivity in mm/hr
 kf = 			0.8 		!per meter : rate of decline in plant effect on infiltration
 rf = 			5  			! meter: maximum length for plant effect on infiltration
 dx = 			1			!spatial dimesions of lattice cells
@@ -48,7 +49,7 @@ Db = 0.1d0 !m^2/kyr
 topogRoute	= T !if true, then use topography to route flows
 simErosion	= T !if true, then simulate erosion and update flow pathways
 simEvap		= T !if true, then simulate evaporation
-simVegEvolve	= T !if true, then simulate evolving vegetation
+simVegEvolve= T !if true, then simulate evolving vegetation
 RandomInVeg	= T !if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
 
 

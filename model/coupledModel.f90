@@ -4,15 +4,11 @@ PROGRAM Sensitivity
 IMPLICIT NONE
 
 REAL,PARAMETER  :: pi = 3.14159
-INTEGER :: infOrder, vegOrder
 INTEGER :: i, j !diversly used index variables for loops etc.
-INTEGER :: k, l, esteps 
+INTEGER :: k, l, eSteps 
 INTEGER, ALLOCATABLE ::clock(:)
-INTEGER :: infOrdermin,infOrdermax,vegOrdermin,vegOrdermax 
 REAL*8 :: kv, kb, Dv, Db, rnd
 INTEGER :: IOStatus !variable to hold read errors
-REAL*8,DIMENSION(14) :: readRealParams
-Integer, DIMENSION(9) :: readIntParams
 
 
 !input parameters:
@@ -23,12 +19,13 @@ integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
 integer :: nSteps	!total number of "years"
 integer :: etPersist!evapotranspiration rate over which plants start do grow
-integer :: sEmerge	!storage based emerge of new plants
+integer :: storEmerge	!storage based emerge of new plants
 integer :: vegmax	!maximum biomass
 integer :: tSteps	!number of iterations for evap calcs between veg change
-integer :: isSEmerge	!flag denotes whether to use random collonisation pc or storage based sEmerge !Nanu: why is isSEmerge not a logical?
+logical :: useStorEmerge	!flag denotes whether to use random collonisation pc or storage based storEmerge
 real*8 :: pa		!mean annual precip
 real*8 :: ts		!duration of time raining in years (e.g.: days raining/days of year)
+
 !infiltration parameters:
 real*8 :: K0		!intrinsic hydraulic conductivity of the soil in the absence of plants in mm/hr
 real*8 :: Kmax		!potential maximum hydraulic conductivity in mm/hr
@@ -76,7 +73,7 @@ open(unitNumber, file='readTest.txt', status="old")
 
 DO !loop to read and execute every parameter set
 	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
-		m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
 		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
     
@@ -84,6 +81,7 @@ DO !loop to read and execute every parameter set
         call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
+		!? Nanu: what does this block?
 		CALL RANDOM_SEED(size=l)
 		ALLOCATE(clock(l))
 		DO j=1,l
@@ -97,7 +95,7 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, etPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db,title)
 
     else
         write(*,*) "don't run simulation for this parameter set"
@@ -112,8 +110,7 @@ close(unitNumber)
 
 write(*,*) "-----------------------------"
 if(Errors)	write(*,*) 'Errors occured reading the input file, hence no simulation was run'
-write(*,*) 'end of execution'
-write(*,*) ""
+write(*,*) 'end of execution\n'
 
 
 
@@ -127,14 +124,15 @@ write(*,*) ""
 CONTAINS
 
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
-	m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv, &
 	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
 
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
 
-    integer, intent(out) :: m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge
+    integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
+	logical, intent(out) :: useStorEmerge
     real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
@@ -243,14 +241,14 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		          		read(inputValChar, *, IOSTAT=IOStatus) nSteps
 		       		case("etPersist")
 		       			read(inputValChar, *, IOSTAT=IOStatus) etPersist
-		   			case("sEmerge")
-		   				read(inputValChar, *, IOSTAT=IOStatus) sEmerge
+		   			case("storEmerge")
+		   				read(inputValChar, *, IOSTAT=IOStatus) storEmerge
 					case("vegmax")
 						read(inputValChar, *, IOSTAT=IOStatus) vegmax
 					case("tSteps")
 						read(inputValChar, *, IOSTAT=IOStatus) tSteps
-					case("isSEmerge")
-						read(inputValChar, *, IOSTAT=IOStatus) isSEmerge
+					case("useStorEmerge")
+						read(inputValChar, *, IOSTAT=IOStatus) useStorEmerge
 					case("dx")
 						read(inputValChar, *, IOSTAT=IOStatus) dx
 					case("pa")
@@ -330,11 +328,11 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		write(*,*) "n              = ", n
 		write(*,*) "np             = ", np
 		write(*,*) "nSteps         = ", nSteps
-		write(*,*) "etPersist       = ", etPersist
-		write(*,*) "sEmerge        = ", sEmerge
+		write(*,*) "etPersist      = ", etPersist
+		write(*,*) "storEmerge     = ", storEmerge
 		write(*,*) "vegmax         = ", vegmax
 		write(*,*) "tSteps         = ", tSteps
-		write(*,*) "isSemerge      = ", isSemerge
+		write(*,*) "useStorEmerge  = ", useStorEmerge
 		write(*,*) "dx             = ", dx
 		write(*,*) "pa             = ", pa
 		write(*,*) "ts             = ", ts
@@ -406,7 +404,7 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, etPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsFID)
  
 IMPLICIT NONE
 
@@ -446,7 +444,8 @@ REAL*8 :: roughness
 !erosion parameters:
 REAL*8, intent(in) :: kv, kb, Dv, Db
 
-INTEGER :: sEmerge, etPersist, vegmax, isSEmerge  !veg change variables
+INTEGER :: storEmerge, etPersist, vegmax !veg change variables
+logical :: useStorEmerge  
 REAL*8 :: pc  !veg change variable
 
 INTEGER, DIMENSION(mn,2) :: randOrder
@@ -634,7 +633,7 @@ DO j=1,nSteps
 			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
 			dummyveg = veg
 			
-			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, etPersist, pc, 1, store, eTActual,0)
+			CALL VegChange(dummyveg,m,n, vegmax, storEmerge, etPersist, pc, .true., store, eTActual,0)
 			dummyveg = dummyveg - veg  !identify just the new veg
 			
 			If (ne > eSteps) THEN
@@ -677,7 +676,7 @@ DO j=1,nSteps
 	IF ((simEvap).and.(simVegEvolve)) THEN
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
-		CALL VegChange(veg,m,n,vegmax, sEmerge, etPersist, pc, 1, store, eTActual,1)
+		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, .true., store, eTActual,1)
 		veg = veg + dummyveg  !add on emerging vegetation
 
 		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
@@ -2805,26 +2804,28 @@ SUBROUTINE makeOrds(topog,ords, m,n)
     END DO
 END SUBROUTINE makeOrds
 !VegChange
-SUBROUTINE VegChange(veg,m,n,vegmax, sEmerge, etPersist, pc, isEmerge, store, actualET,isGrow)
+SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, store, actualET,isGrow)
  IMPLICIT NONE
  
- INTEGER, INTENT(IN) :: m, n, isGrow,isEmerge
+ INTEGER, INTENT(IN) :: m, n, isGrow
+ logical, intent(in) :: useStorEmerge
+ logical :: usePCFlag
  INTEGER, DIMENSION(m,n), INTENT(INOUT) :: veg, store, actualET
  
  REAL*8 :: pc !prob of collonisation of bare soil
- INTEGER :: vegmax, i, j, sEmerge, etPersist, usePCFlag
+ INTEGER :: vegmax, i, j, storEmerge, etPersist
  !REAL*8 :: rnd
  
- usePCFlag = isEmerge  !flag denotes whether to use random collonisation pc or storage based sEmerge
+ usePCFlag = useStorEmerge  !flag denotes whether to use random collonisation pc or storage based storEmerge
  
  Do i=1,m
   DO j=1,n
     If(veg(i, j).eq.0) THEN 
-     If (isEmerge.gt.0) THEN !Nanu: why .gt.0, why not .eq.1
-      IF (usePCFlag.gt.0) THEN !Nanu: why this again? usePCFlag = isEmerge or not?
-        If(store(i, j) > sEmerge) THEN
-          store(i, j) = store(i, j) - sEmerge
-          actualET(i,j) = actualET(i,j)+sEmerge
+     If (useStorEmerge) THEN 
+      IF (usePCFlag) THEN !Nanu: why this again? usePCFlag = useStorEmerge or not?
+        If(store(i, j) > storEmerge) THEN
+          store(i, j) = store(i, j) - storEmerge
+          actualET(i,j) = actualET(i,j)+storEmerge
           veg(i, j) = 1
         !ELSE
           !store(i, j) = 0

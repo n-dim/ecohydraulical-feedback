@@ -22,18 +22,18 @@ logical :: run 		!run simulation for this parameter set?
 integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
 integer :: nSteps	!total number of "years"
-integer :: tPersist
-integer :: sEmerge
+integer :: etPersist!evapotranspiration rate over which plants start do grow
+integer :: sEmerge	!storage based emerge of new plants
 integer :: vegmax	!maximum biomass
 integer :: tSteps	!number of iterations for evap calcs between veg change
 integer :: isSEmerge	!flag denotes whether to use random collonisation pc or storage based sEmerge !Nanu: why is isSEmerge not a logical?
 real*8 :: pa		!mean annual precip
-real*8 :: ts
+real*8 :: ts		!duration of time raining in years (e.g.: days raining/days of year)
 !infiltration parameters:
-real*8 :: K0		!in mm/hr
-real*8 :: Kmax		!in mm/hr
-real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
-real*8 :: rf		!meter: maximum length for plant effect on infiltration
+real*8 :: K0		!intrinsic hydraulic conductivity of the soil in the absence of plants in mm/hr
+real*8 :: Kmax		!potential maximum hydraulic conductivity in mm/hr
+real*8 :: kf		!rate of decline in plant effect on infiltration in 1/m
+real*8 :: rf		!maximum length for plant effect on infiltration in m
 REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
 
 real*8 :: Emax		!maximum evapotranspiration; in mm/hr
@@ -76,7 +76,7 @@ open(unitNumber, file='readTest.txt', status="old")
 
 DO !loop to read and execute every parameter set
 	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
-		m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+		m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
 		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
     
@@ -97,7 +97,7 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, etPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
 
     else
         write(*,*) "don't run simulation for this parameter set"
@@ -127,14 +127,14 @@ write(*,*) ""
 CONTAINS
 
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
-	m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge, &
+	m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv, &
 	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
 
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
 
-    integer, intent(out) :: m, n, np, nSteps, tPersist, sEmerge, vegmax, tSteps, isSEmerge
+    integer, intent(out) :: m, n, np, nSteps, etPersist, sEmerge, vegmax, tSteps, isSEmerge
     real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
@@ -241,8 +241,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) np
 		          	case("nSteps")
 		          		read(inputValChar, *, IOSTAT=IOStatus) nSteps
-		       		case("tPersist")
-		       			read(inputValChar, *, IOSTAT=IOStatus) tPersist
+		       		case("etPersist")
+		       			read(inputValChar, *, IOSTAT=IOStatus) etPersist
 		   			case("sEmerge")
 		   				read(inputValChar, *, IOSTAT=IOStatus) sEmerge
 					case("vegmax")
@@ -330,7 +330,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		write(*,*) "n              = ", n
 		write(*,*) "np             = ", np
 		write(*,*) "nSteps         = ", nSteps
-		write(*,*) "tPersist       = ", tPersist
+		write(*,*) "etPersist       = ", etPersist
 		write(*,*) "sEmerge        = ", sEmerge
 		write(*,*) "vegmax         = ", vegmax
 		write(*,*) "tSteps         = ", tSteps
@@ -389,10 +389,10 @@ subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,
   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
   !by one evap process at any one time
-  te = (1-ts)/ne  !years: length of a time step in evap calcs
+  te = (1-ts)/ne  !length of a time step in evap calcs in years
 
-  Psb = te * Esb / pbar
-  Psv = te * Esv / pbar
+  Psb = te * Esb / pbar !bare soil
+  Psv = te * Esv / pbar	!same under canopy
   !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
   precip = np
     
@@ -406,7 +406,7 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, etPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
  
 IMPLICIT NONE
 
@@ -446,7 +446,7 @@ REAL*8 :: roughness
 !erosion parameters:
 REAL*8, intent(in) :: kv, kb, Dv, Db
 
-INTEGER :: sEmerge, tPersist, vegmax, isSEmerge  !veg change variables
+INTEGER :: sEmerge, etPersist, vegmax, isSEmerge  !veg change variables
 REAL*8 :: pc  !veg change variable
 
 INTEGER, DIMENSION(mn,2) :: randOrder
@@ -634,7 +634,7 @@ DO j=1,nSteps
 			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
 			dummyveg = veg
 			
-			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, tPersist, pc, 1, store, eTActual,0)
+			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, etPersist, pc, 1, store, eTActual,0)
 			dummyveg = dummyveg - veg  !identify just the new veg
 			
 			If (ne > eSteps) THEN
@@ -677,7 +677,7 @@ DO j=1,nSteps
 	IF ((simEvap).and.(simVegEvolve)) THEN
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
-		CALL VegChange(veg,m,n,vegmax, sEmerge, tPersist, pc, 1, store, eTActual,1)
+		CALL VegChange(veg,m,n,vegmax, sEmerge, etPersist, pc, 1, store, eTActual,1)
 		veg = veg + dummyveg  !add on emerging vegetation
 
 		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
@@ -2838,10 +2838,10 @@ SUBROUTINE VegChange(veg,m,n,vegmax, sEmerge, etPersist, pc, isEmerge, store, ac
      END IF
     ELSE
     If (isGrow.gt.0) THEN
-      If(real(actualET(i, j)) > REAL(eTPersist) ) THEN
+      If(real(actualET(i, j)) > REAL(etPersist) ) THEN
         veg(i, j) = min(veg(i, j) + 1,vegmax)
       ELSE
-        veg(i, j) = veg(i, j) - 1  !was veg(i, j) - 1
+        veg(i, j) = veg(i, j) - 1
       END IF
     END IF
     END IF

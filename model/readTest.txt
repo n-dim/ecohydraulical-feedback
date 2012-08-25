@@ -11,7 +11,7 @@ roughness = 	0.1
 nSteps 	= 		100 			!total number of "years"
 
 !veg change variables
-tPersist = 		200
+etPersist = 	200
 sEmerge = 		120
 isSEmerge = 	1			!flag denotes whether to use random collonisation pc or storage based sEmerge
 vegmax = 		9			!maximum biomass

@@ -36,7 +36,7 @@ real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
 real*8 :: rf		!meter: maximum length for plant effect on infiltration
 REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
 
-real*8 :: Emax		! 0.5 * (365.0* 24.0)  from mm/hr to mm/year
+real*8 :: Emax		!maximum evapotranspiration; in mm/hr
 real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
 real*8 :: rc		!meter: maximum length for plant water uptake
 real*8 :: gamma		!relative reduction of soil evap under canopy
@@ -51,12 +51,12 @@ logical :: simVegEvolve	!if true, then simulate evolving vegetation
 logical :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
 
 !derived parameters:
-integer :: mn
+integer :: mn		!simply n*m
 integer :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
   					!by one evap process at any one time
 integer :: precip
-real*8 :: beta
-real*8 :: alpha
+!real*8 :: beta		!= Emax
+real*8 :: alpha		!= (Kmax-K0)/K0
 real*8 :: Esb	  	!maximum bare soil evap rate
 real*8 :: Esv		!soil evap from under canopy
 real*8 :: Psv
@@ -82,7 +82,7 @@ DO !loop to read and execute every parameter set
     
     if(run) then
         call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
-            gamma,  mn, ne, precip, beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+            gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
 		CALL RANDOM_SEED(size=l)
 		ALLOCATE(clock(l))
@@ -97,7 +97,7 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,beta, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db,title)
 
     else
         write(*,*) "don't run simulation for this parameter set"
@@ -366,13 +366,13 @@ end subroutine readInput
 
 
 subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
- gamma,  mn, ne, precip, beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+ gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
  
   implicit none
   integer, intent(in) :: m, n, np
   real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
   integer, intent(out) :: mn, ne, precip
-  real*8, intent(out) :: beta, alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
+  real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
   
   mn = m*n
   dy = dx
@@ -382,18 +382,18 @@ subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,
  !K(r) = K0 +K0 *alpha*exp(-kf*r)
  !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
  !PInf[r_] := Min[1, K[r]/ie]
-  beta = Emax
- !ET(r) =  beta*exp(-kc*r)*dx*dy
+  !beta = Emax
+ !ET(r) =  Emax*exp(-kc*r)*dx*dy
   Esb = bav*Emax  !maximum bare soil evap rate
   Esv = gamma*Esb   !soil evap from under canopy
-  ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*beta/pbar)))
+  ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
   !by one evap process at any one time
   te = (1-ts)/ne  !years: length of a time step in evap calcs
 
   Psb = te * Esb / pbar
   Psv = te * Esv / pbar
-  !Pet(r) = te * dx * dy*beta*exp(- kc*r)/pbar
+  !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
   precip = np
     
 end subroutine deriveInputParameters
@@ -406,7 +406,7 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,beta, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, sEmerge, tPersist, pc, isSEmerge,kv, kb, Dv, Db, resultsFID)
  
 IMPLICIT NONE
 
@@ -438,7 +438,7 @@ INTEGER :: eSteps, flag, solMax, ne
 REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
 Real*8 :: rfx, rfy
 !evap variables
-REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, beta  
+REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
 REAL*8,DIMENSION(7) :: eparams !evap input array
 
 REAL*8 :: rnd
@@ -631,14 +631,14 @@ DO j=1,nSteps
 		IF (simEvap) THEN
 			if(j==1)  print*, 'simulating with evaporation'
 			
-			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,beta)
+			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
 			dummyveg = veg
 			
 			CALL VegChange(dummyveg,m,n, vegmax, sEmerge, tPersist, pc, 1, store, eTActual,0)
 			dummyveg = dummyveg - veg  !identify just the new veg
 			
 			If (ne > eSteps) THEN
-				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,beta)
+				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,Emax)
 			END IF
 		END IF
 	END DO
@@ -1511,7 +1511,7 @@ END DO
 
 END SUBROUTINE FindHoles
 !Evaporation
-SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,beta)
+SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
   !This version cycles through sites and evaporates water from site and neighbouring sites if vegetated
   IMPLICIT NONE
    
@@ -1523,7 +1523,7 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,
   INTEGER, INTENT(IN) :: tsteps
   REAL*8, INTENT(IN) :: dx, dy
   
-  REAL*8 :: beta,te,pbar,Psb,Psv
+  REAL*8 :: Emax,te,pbar,Psb,Psv
   INTEGER :: n, m, mn, i, j, k, a, b, di,dj, m1, n1, storeCounter
   REAL*8 :: rnd, baresoilprob, radius
   REAL*8, DIMENSION(-1*int(Floor(rcx/dx)):int(Floor(rcx/dx)),-1*int(Floor(rcx/dy)):int(Floor(rcx/dy))) :: uptakeprob
@@ -1548,7 +1548,7 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,
   END DO
   END DO
   
-   uptakeprob= uptakeprob/sum(uptakeprob)*dx*dx*beta*te/pbar
+   uptakeprob= uptakeprob/sum(uptakeprob)*dx*dx*Emax*te/pbar
   k=1
   Do i=1,m
   Do j=1,n

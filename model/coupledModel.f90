@@ -18,7 +18,7 @@ logical :: run 		!run simulation for this parameter set?
 integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
 integer :: nSteps	!total number of "years"
-integer :: etPersist!evapotranspiration rate over which plants start do grow
+integer :: etPersist	!evapotranspiration rate over which plants start do grow
 integer :: storEmerge	!storage based emerge of new plants
 integer :: vegmax	!maximum biomass
 integer :: tSteps	!number of iterations for evap calcs between veg change
@@ -68,8 +68,8 @@ logical :: anotherParamSet !are there multiple parameter Sets?
 logical :: Errors =.false. !Errors from input read process
 
 
-write(*,*) 'try to read "readTest.txt"'
-open(unitNumber, file='readTest.txt', status="old")
+write(*,*) 'try to read "inputParameter.txt"'
+open(unitNumber, file='inputParameter.txt', status="old")
 
 DO !loop to read and execute every parameter set
 	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
@@ -82,14 +82,14 @@ DO !loop to read and execute every parameter set
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
 		!? Nanu: what does this block?
-		CALL RANDOM_SEED(size=l)
-		ALLOCATE(clock(l))
-		DO j=1,l
-		  CALL SYSTEM_CLOCK(COUNT=clock(j))
-		  clock(j)=clock(j)+j
-		END DO
-		CALL RANDOM_SEED(PUT = clock)
-		DEALLOCATE(clock)
+		!CALL RANDOM_SEED(size=l)
+		!ALLOCATE(clock(l))
+		!DO j=1,l
+		!  CALL SYSTEM_CLOCK(COUNT=clock(j))
+		!  clock(j)=clock(j)+j
+		!END DO
+		!CALL RANDOM_SEED(PUT = clock)
+		!DEALLOCATE(clock)
 		
 		
 		 
@@ -147,7 +147,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
 
-    integer :: countTitle !how many "title" rows in input file? 
+    integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(221) :: input 	!whole row in input
 	character(20) :: inputParName !parameter Name 
@@ -157,16 +157,15 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	integer :: i
 	logical :: check = .false. ! if check was successful
     integer, save :: lineNum !line Number
-    character(9) :: lineNumChar
-	integer, save :: parameterSet
+    character(9) :: lineNumChar !line number as character
+	integer, save :: parameterSet !number of parameter set
 	character(9) :: parameterSetChar 
 	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
 	
 	!initiation of some variables:
 	run = .true.  !as default every parameter set gets run in the simulation
-    anotherParamSet = .false.
-    !Errors = .false.
-    countTitle = 0
+    anotherParamSet = .false. 
+    countTitle = 0 
 	title = ""
 	description = ""
 	
@@ -201,8 +200,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 			
 			
 			PosEQ = index(input, "=")
-			if(PosEQ == 0) then
-				inputParName = "error" 
+			if(PosEQ == 0) then !if there is no equal sign
+				inputParName = "error" !string that doesn't get recognized below and produces the default error message
 				inputValChar = ""
 			else
 				inputParName = trim(input(1: (PosEQ-1))) !parameter Name (before "=")
@@ -383,7 +382,7 @@ subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,
   !beta = Emax
  !ET(r) =  Emax*exp(-kc*r)*dx*dy
   Esb = bav*Emax  !maximum bare soil evap rate
-  Esv = gamma*Esb   !soil evap from under canopy
+  Esv = gamma*Esb   !maximum soil evap from under canopy
   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
   !by one evap process at any one time
@@ -404,7 +403,7 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsFID)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsName)
  
 IMPLICIT NONE
 
@@ -414,17 +413,13 @@ INTEGER,INTENT(IN) :: mn !m*n
 INTEGER, INTENT(IN) :: np
 REAL*8, INTENT(IN) :: pbar
 REAL*8, INTENT(IN) :: ie
-logical, intent(out) :: topogRoute	!if true, then use topography to route flows
-logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
-logical, intent(out) :: simEvap		!if true, then simulate evaporation
-logical, intent(out) :: simVegEvolve	!if true, then simulate evolving vegetation
-logical, intent(out) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
-
-
-
-CHARACTER(LEN=21), INTENT(IN) :: resultsFID  !results file id code
+logical, intent(in) :: topogRoute	!if true, then use topography to route flows
+logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
+logical, intent(in) :: simEvap		!if true, then simulate evaporation
+logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
+logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 !*************************************************************************************
-CHARACTER(len=10) :: fid
 CHARACTER(len=3) :: mc
 CHARACTER delimiter
 CHARACTER*150 command
@@ -463,7 +458,7 @@ REAL*8, DIMENSION(m,n) :: alpha, deltax
 
 LOGICAL :: lexist
 
-integer :: progress !for a progress bar
+integer :: progress !for the progress bar
 
 
 character(4) :: char_n !number of rows as character, used for output formating
@@ -483,10 +478,8 @@ progress = 0
 precip = np
 rfy = rf
 rfx = rf
-
 rcx = rc
 rcy = rc
-
 
 eSteps = max(min(ne,eSteps),1)
 
@@ -566,48 +559,29 @@ flowdirns = -2
  !  PRINT *,j + 100 ,'----------------------'
  !END DO
  
-write(fid,'(i3)') n  !internal write for colum number
+
 IF (topogRoute) THEN
-	! CALL GD8(topog,flowdirns, m,n)
-	!CALL KMWOrder(flowdirns,m,n,solutionOrder)
-	!DO i=1,m
-	!  WRITE(*,'('//fid//'i3,a2,'//fid//'i3)') flowdirns(i,:),"--",solutionOrder(i,:)
-	!END DO
 	CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
-	!PRINT*,"out InfiltProb"
-	!READ*,
-	!PRINT *, infiltKern
-	!READ*,
 END IF
-!WHERE (veg>0)
-!  flowResistance1= flowResistance0 + kb
-!ELSEWHERE
-!  flowResistance1= flowResistance0
-!END WHERE
-!infiltKern =   infiltKern * slopeFactor
+
 storeKern = 99999.d0
 
 
-OPEN(2,file='./output/'//trim(adjustl(resultsFID))//' - SummaryResults.csv')
+OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
 write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
 
-OPEN(13,file='./output/'//trim(adjustl(resultsFID))//' - vegetation.csv')
-OPEN(14,file='./output/'//trim(adjustl(resultsFID))//' - flowdirections.csv')
-OPEN(15,file='./output/'//trim(adjustl(resultsFID))//' - store.csv')
-OPEN(16,file='./output/'//trim(adjustl(resultsFID))//' - discharge.csv')
-OPEN(17,file='./output/'//trim(adjustl(resultsFID))//' - eTActual.csv')
-OPEN(18,file='./output/'//trim(adjustl(resultsFID))//' - bareE.csv')
-OPEN(19,file='./output/'//trim(adjustl(resultsFID))//' - topography.csv')
-OPEN(20,file='./output/'//trim(adjustl(resultsFID))//' - flowResistance.csv')
+OPEN(13,file='./output/'//trim(adjustl(resultsName))//' - vegetation.csv')
+OPEN(14,file='./output/'//trim(adjustl(resultsName))//' - flowdirections.csv')
+OPEN(15,file='./output/'//trim(adjustl(resultsName))//' - store.csv')
+OPEN(16,file='./output/'//trim(adjustl(resultsName))//' - discharge.csv')
+OPEN(17,file='./output/'//trim(adjustl(resultsName))//' - eTActual.csv')
+OPEN(18,file='./output/'//trim(adjustl(resultsName))//' - bareE.csv')
+OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
+OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
 
 !***********************************************************************************
 !Timestep iterations
 DO j=1,nSteps
-	!IF ((j>int(nSteps/2)).and.(maxval(veg).eq.0)) THEN
-	!  CLOSE(1)
-	!  CLOSE(2)
-	!  RETURN
-	!END IF
 	eTActual = 0
 	bareE = 0
 	!outflow = 0
@@ -673,7 +647,7 @@ DO j=1,nSteps
 
 	END IF  
 
-	IF ((simEvap).and.(simVegEvolve)) THEN
+	IF (simEvap.and.simVegEvolve) THEN
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
 		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, .true., store, eTActual,1)
@@ -683,9 +657,9 @@ DO j=1,nSteps
 		!infiltKern =   infiltKern * slopeFactor
 
 		WHERE (veg>0)
-		flowResistance1 = flowResistance0 + kv
+			flowResistance1 = flowResistance0 + kv
 		ELSEWHERE
-		flowResistance1 = flowResistance0
+			flowResistance1 = flowResistance0
 		END WHERE
 	END IF
 
@@ -698,9 +672,8 @@ DO j=1,nSteps
 	
 END DO
 
-
+!close files
 CLOSE(2)
-!close csv-files
 CLOSE(13)
 CLOSE(14)
 CLOSE(15)
@@ -712,7 +685,9 @@ CLOSE(20)
 	
 END SUBROUTINE SimCODE
 
-!Subroutine GAInfilt
+
+
+
 SUBROUTINE GAInfilt (m,n,dt,inflow, Ksat, wfs, cumInfilt, infex)
 !code for green-ampt infiltration calculation
 IMPLICIT NONE 
@@ -914,7 +889,8 @@ SUBROUTINE KWPrimer(m,n,topog, manningsN, mask,solOrder,flowdirns,alpha,deltax, 
   END DO
   
 END SUBROUTINE KWPrimer
-!KinematicWave
+
+
 SUBROUTINE KinematicWave(m,n,ndx, dt, iex,flowdirns,solOrder,solMax,mask,alpha,deltax,disOld,disNew)
 !This subroutine calculates the kinematic wave equation for surface runoff 
 !in a network for a single time step
@@ -1019,7 +995,8 @@ dummydisOld = disNew
   disOld = dummydisOld
 
 END SUBROUTINE KinematicWave
-!KMWOrder
+
+
 SUBROUTINE KMWOrder(flowdirns,m,n,solutionOrder)
 ! subroutine assigns values to the matrix solutionOrder to tell the Kinematic Wave subroutine
 !in which order to solve the KM equation on the drainage network
@@ -1066,7 +1043,9 @@ END DO
 END DO
 
 END SUBROUTINE KMWOrder
-!OneDRandList
+
+
+
 SUBROUTINE OneDRandList(a,mn)
   
   IMPLICIT NONE
@@ -1124,7 +1103,9 @@ SUBROUTINE Lookupfdir(dirn, dx,dy)
       dy =  -2
   END SELECT
 END SUBROUTINE Lookupfdir
-!RoutingWithKernel
+
+
+
 SUBROUTINE RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, newflowdirns, topog, store,discharge,outflow)
 
 IMPLICIT NONE
@@ -1247,7 +1228,9 @@ END DO
 END DO
 
 END SUBROUTINE RoutingWithKernel
-!InfiltProb
+
+
+
 SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
   IMPLICIT NONE         
   
@@ -1342,7 +1325,9 @@ SUBROUTINE ListConvolve(base,kernel,convol,m,n,m1,n1)
  DEALLOCATE(dummybase)
  DEALLOCATE(dummybase2)
 END SUBROUTINE ListConvolve
-!Erosion   
+
+
+
 SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
   IMPLICIT NONE
   Integer, INTENT(IN) :: m,n
@@ -1437,7 +1422,9 @@ SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
   topog = topog + deltaz
   
 END SUBROUTINE Erosion
-!Splash
+
+
+
 SUBROUTINE Splash(topog,veg, Dv, Db,m,n)
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: m, n
@@ -1479,7 +1466,9 @@ SUBROUTINE Splash(topog,veg, Dv, Db,m,n)
   
   
 END SUBROUTINE Splash
-!FindHoles
+
+
+
 SUBROUTINE FindHoles(newtopog,holes)
 IMPLICIT NONE
 
@@ -1509,7 +1498,9 @@ ENDDO
 END DO
 
 END SUBROUTINE FindHoles
-!Evaporation
+
+
+
 SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
   !This version cycles through sites and evaporates water from site and neighbouring sites if vegetated
   IMPLICIT NONE
@@ -1597,7 +1588,9 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,
   END DO
   
 END SUBROUTINE Evaporation
-!Neighbours
+
+
+
 SUBROUTINE Neighbours(order,posij, dom,neighbs)
   ! (* returns the positions of neighbouring cells depending upon the extent of the neighbourhood  *)
   ! (* order=1 is the 1st moore neighbourhood *)
@@ -1628,8 +1621,10 @@ SUBROUTINE Neighbours(order,posij, dom,neighbs)
      END DO
      END DO
     
-   END SUBROUTINE Neighbours
-!LSDs   
+END SUBROUTINE Neighbours
+
+
+
 SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
       IMPLICIT NONE
       
@@ -1740,8 +1735,10 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
   !PRINT *,"here"
   lsdList(3,:)=otherpos
   !PRINT *,"here"
-   END SUBROUTINE LSDs
-!RotateArray   
+END SUBROUTINE LSDs
+
+
+
 SUBROUTINE RotateArray(list,m,n,leftorRight)
      IMPLICIT NONE
      
@@ -1770,8 +1767,10 @@ SUBROUTINE RotateArray(list,m,n,leftorRight)
       END IF
      ENDIF
      END DO
-   END SUBROUTINE RotateArray
-!Pos1d   
+END SUBROUTINE RotateArray
+
+
+   
 SUBROUTINE Pos1d(list,m,n,match,rownum)
      IMPLICIT NONE
      !return the row position that is the same as match , returns 0,0 if no match 
@@ -1801,8 +1800,10 @@ SUBROUTINE Pos1d(list,m,n,match,rownum)
       END IF
     END DO
     
-   END SUBROUTINE Pos1D 
-!GD8   
+END SUBROUTINE Pos1D 
+
+
+
 Subroutine GD8(topog,flowdirns, m,n)
    
    IMPLICIT NONE
@@ -2185,7 +2186,9 @@ Subroutine GD8(topog,flowdirns, m,n)
   END IF 
    
 END SUBROUTINE GD8   
-!NewGD8
+
+
+
 Subroutine NewGD8(topog,lakes,flowdirns, m,n)
    IMPLICIT NONE
    
@@ -2506,7 +2509,9 @@ Subroutine NewGD8(topog,lakes,flowdirns, m,n)
    END DO num2AssignGT0
     
 END SUBROUTINE NewGD8
-!fdirLookup
+
+
+
 SUBROUTINE fdirLookup(dirnxy, idirn)
   IMPLICIT NONE
   
@@ -2535,8 +2540,9 @@ SUBROUTINE fdirLookup(dirnxy, idirn)
     idirn = -1  
   END IF
   !PRINT *,"idrn in fdirLookup", idirn
-  END SUBROUTINE fdirLookup
-!qsortd  
+END SUBROUTINE fdirLookup
+
+
 SUBROUTINE qsortd(x,ind,n,incdec)
  
 ! Code converted using TO_F90 by Alan Miller
@@ -2757,7 +2763,9 @@ RETURN
   
 
 END SUBROUTINE qsortd
-!endShift
+
+
+
 SUBROUTINE endShift(arr,rownum,mn,n)
   !puts a row at rownum to the last row of the array arr
   IMPLICIT NONE
@@ -2770,7 +2778,9 @@ SUBROUTINE endShift(arr,rownum,mn,n)
   END IF
   
 END SUBROUTINE endShift
-!makeOrds
+
+
+
 SUBROUTINE makeOrds(topog,ords, m,n)
   IMPLICIT NONE
   
@@ -2803,7 +2813,9 @@ SUBROUTINE makeOrds(topog,ords, m,n)
     ords(i,:)=(/Floor(Real(ind2(i))/Real(n))+x , ind2(i) - Floor(Real(ind2(i))/Real(n))*n+y /)
     END DO
 END SUBROUTINE makeOrds
-!VegChange
+
+
+
 SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, store, actualET,isGrow)
  IMPLICIT NONE
  

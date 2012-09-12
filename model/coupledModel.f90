@@ -600,7 +600,7 @@ OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
 DO j=1,nSteps
 	eTActual = 0
 	bareE = 0
-	!outflow = 0
+	outflow = 0
 	DO k=1,1  !erosion, routing, evaporation, loop !Nanu: why a loop here?
 		IF (topogRoute) THEN
 		  if(j==1) print*, 'topography is used to route flows'

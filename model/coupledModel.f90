@@ -4,10 +4,14 @@ PROGRAM Sensitivity
 IMPLICIT NONE
 
 REAL,PARAMETER  :: pi = 3.14159
+INTEGER :: infOrder, vegOrder !grid scale for facilitation and competition calcs 
 INTEGER :: i, j !diversly used index variables for loops etc.
-INTEGER :: k, l, eSteps 
-INTEGER, ALLOCATABLE ::clock(:)
-REAL*8 :: kv, kb, Dv, Db, rnd
+INTEGER :: k, l, esteps 
+INTEGER, ALLOCATABLE ::clock(:) !vector to get clock for random number generation
+INTEGER :: infOrdermin,infOrdermax,vegOrdermin,vegOrdermax !related in infOrder etc
+REAL*8 :: kv, kb, Dv, Db !Gaussian parameters for diffusive sediment transport for 
+!vegetated and bare sites, D's associated diffusion coefficients.
+REAL*8 :: rnd !random real
 INTEGER :: IOStatus !variable to hold read errors
 
 
@@ -18,8 +22,9 @@ logical :: run 		!run simulation for this parameter set?
 integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
 integer :: nSteps	!total number of "years"
-integer :: etPersist	!evapotranspiration rate over which plants start do grow
-integer :: storEmerge	!storage based emerge of new plants
+integer :: etPersist	!evapotranspiration rate over which plants start do grow 
+                        !(transpiration threshold for carbon assimilation)
+integer :: storEmerge	!water storage triggering plant emergence
 integer :: vegmax	!maximum biomass
 integer :: tSteps	!number of iterations for evap calcs between veg change
 logical :: useStorEmerge	!flag denotes whether to use random collonisation pc or storage based storEmerge
@@ -27,17 +32,17 @@ real*8 :: pa		!mean annual precip
 real*8 :: ts		!duration of time raining in years (e.g.: days raining/days of year)
 
 !infiltration parameters:
-real*8 :: K0		!intrinsic hydraulic conductivity of the soil in the absence of plants in mm/hr
-real*8 :: Kmax		!potential maximum hydraulic conductivity in mm/hr
+real*8 :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
+real*8 :: Kmax		!maximum potential hydraulic conductivity in mm/hr
 real*8 :: kf		!rate of decline in plant effect on infiltration in 1/m
 real*8 :: rf		!maximum length for plant effect on infiltration in m
 REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
 
-real*8 :: Emax		!maximum evapotranspiration; in mm/hr
+real*8 :: Emax		! Unstressed water use rate mm/hr !to mm/year
 real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
 real*8 :: rc		!meter: maximum length for plant water uptake
 real*8 :: gamma		!relative reduction of soil evap under canopy
-real*8 :: bav		!scaling factor for Esb calc
+real*8 :: bav		!scaling factor for bare soil evaporation Esb calc
 real*8 :: pc		!prob of collonisation of bare soil
 real*8 :: roughness	
 
@@ -45,19 +50,20 @@ logical :: topogRoute	!if true, then use topography to route flows
 logical :: simErosion	!if true, then simulate erosion and update flow pathways
 logical :: simEvap		!if true, then simulate evaporation
 logical :: simVegEvolve	!if true, then simulate evolving vegetation
-logical :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
 
 !derived parameters:
-integer :: mn		!simply n*m
+integer :: mn		!m*n
 integer :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
   					!by one evap process at any one time
-integer :: precip
 !real*8 :: beta		!= Emax
 real*8 :: alpha		!= (Kmax-K0)/K0
+  			!by one evap process at any one time
+integer :: precip	!number of rain "particles"
 real*8 :: Esb	  	!maximum bare soil evap rate
 real*8 :: Esv		!soil evap from under canopy
-real*8 :: Psv
-real*8 :: Psb
+real*8 :: Psv		!probability of soil evaporation at vegetated site
+real*8 :: Psb		!probability of soil evaporation at a bare site
 real*8 :: pbar		!water in each particle in mm
 real*8 :: ie		!effective rainfall intensity mm / year
 real*8 :: te		!years: length of a time step in evap calcs

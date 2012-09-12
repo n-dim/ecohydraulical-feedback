@@ -34,8 +34,8 @@ real*8 :: ts		!duration of time raining in years (e.g.: days raining/days of yea
 !infiltration parameters:
 real*8 :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
 real*8 :: Kmax		!maximum potential hydraulic conductivity in mm/hr
-real*8 :: kf		!rate of decline in plant effect on infiltration in 1/m
-real*8 :: rf		!maximum length for plant effect on infiltration in m
+real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
+real*8 :: rf		!meter: maximum length for plant effect on infiltration
 REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
 
 real*8 :: Emax		! Unstressed water use rate mm/hr !to mm/year

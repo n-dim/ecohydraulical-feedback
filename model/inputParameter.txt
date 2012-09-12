@@ -51,7 +51,7 @@ simErosion	= T !if true, then simulate erosion and update flow pathways
 simEvap		= T !if true, then simulate evaporation
 simVegEvolve= T !if true, then simulate evolving vegetation
 RandomInVeg	= T !if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
-
+useRandomSeed = F !if true, set random seed by clock
 
 !run=F
 	

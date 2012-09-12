@@ -51,6 +51,7 @@ logical :: simErosion	!if true, then simulate erosion and update flow pathways
 logical :: simEvap		!if true, then simulate evaporation
 logical :: simVegEvolve	!if true, then simulate evolving vegetation
 logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
+LOGICAL :: useRandomSeed !if true, set random seed by clock
 
 !derived parameters:
 integer :: mn		!m*n
@@ -87,17 +88,7 @@ DO !loop to read and execute every parameter set
         call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
-		!? Nanu: what does this block?
-		!CALL RANDOM_SEED(size=l)
-		!ALLOCATE(clock(l))
-		!DO j=1,l
-		!  CALL SYSTEM_CLOCK(COUNT=clock(j))
-		!  clock(j)=clock(j)+j
-		!END DO
-		!CALL RANDOM_SEED(PUT = clock)
-		!DEALLOCATE(clock)
-		
-		
+        if(useRandomSeed) CALL init_random_seed()
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
@@ -128,6 +119,22 @@ write(*,*) 'end of execution\n'
 
 
 CONTAINS
+
+SUBROUTINE init_random_seed()
+    INTEGER :: l, j
+    INTEGER, DIMENSION(:), ALLOCATABLE :: clock
+    write(*,*) "random seed is set by clock"
+
+    CALL RANDOM_SEED(size=l)
+    ALLOCATE(clock(l))
+    DO j=1,l
+        CALL SYSTEM_CLOCK(COUNT=clock(j))
+        clock(j)=clock(j)+j
+    END DO
+    write(*,*) "clock = ", clock
+    CALL RANDOM_SEED(PUT = clock)
+    DEALLOCATE(clock)
+END SUBROUTINE init_random_seed
 
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
@@ -302,6 +309,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) simVegEvolve
 					case("RandomInVeg")
 						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
+                    case("useRandomSeed")
+                        read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -361,6 +370,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		write(*,*) "simEvap        = ",	simEvap
 		write(*,*) "simVegEvolve   = ", simVegEvolve
 		write(*,*) "RandomInVeg    = ", RandomInVeg
+        write(*,*) "useRandomSeed  = ", useRandomSeed
 	end if
 	
 	

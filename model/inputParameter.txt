@@ -57,6 +57,7 @@ useRandomSeed = F !if true, set random seed by clock
 	
 !---------------------------
 title = 02
+run=F
 m = 8
 n = 8
 !np = 101

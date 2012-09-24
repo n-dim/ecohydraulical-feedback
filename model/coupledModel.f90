@@ -507,14 +507,10 @@ DO i=1,m
   DO j=1,n
    CALL random_number(rnd)
    flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
+
    CALL random_number(rnd)
-   !If(i<j) THEN
-   !If[i > j, 60 - ((i 1 + j 6) ), 60 - (( i 6 + j 1))]
    topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
-   !topog(i,j) = 1000.d0 +0.01d0*dble(i)+0.01d0*dble(j) + dble(rnd -0.5d0)*roughness
-   !ELSE
-   !  topog(i,j)  = 0.0*Sin(real(i)/5.0)*Sin(real(j)/5.0) +0.2d0*dble(i)+0.1d0*dble(j) + 1000.d0
-   !ENDIF
+
    IF (RandomInVeg) THEN
      if(j==1.and.i==1) print*,'random initial vegetation distribution'
      IF (rnd>0.9) THEN
@@ -532,48 +528,7 @@ lakes = 0
 flowdirns = -2
  
 
- !manningsN = 0.02d0
- !iex = 0.0d0
- !disOld = 1e-20
- !disNew = 1e-20
- !PRINT*,"Running GD8"
  CALL GD8(topog,flowdirns, m,n)
- !PRINT*,"Finished GD8"
- !READ*,
- !CALL KWPrimer(m,n,topog, manningsN, mask,solOrder, flowdirns,alpha,deltax, solMax)
- !Ksat=10.d0  
- !wfs = 90.d0 * 0.434d0
- !cumInfilt = 0.d0
- 
- !OPEN(3,file='Discharge.out')
- !DO j=1,100
- !  CALL random_number(rnd)
- !  inflow = 5.0 *rnd + disNew(:,:,2)  !precip + runon
- !  cumInfiltOld = cumInfilt
- !  CALL GAInfilt (m,n,0.1d0,inflow, Ksat, wfs, cumInfilt, infex)
- !  iex(:,:,1) = iex(:,:,2)
- !  iex(:,:,2) = 15.0 - (cumInfilt-cumInfiltOld)/1.0d0 !/dt
- !  CALL KinematicWave(m,n,2,0.1d0, iex,flowdirns,solOrder,solMax,mask,alpha,deltax,disOld,disNew)
- !DO i=1,m
- !  WRITE(3,'(32f16.6)') disNew(i,:,2)
- !END DO
- !  PRINT *,j,'----------------------'
- !END DO
- !iex = 0.0
- !DO j=1,100
- !  inflow = 0.0 + disNew(:,:,2)  !precip + runon
- !  cumInfiltOld = cumInfilt
- !  CALL GAInfilt (m,n,1.0d0,inflow, Ksat, wfs, cumInfilt, infex)
- !  iex(:,:,1) = iex(:,:,2)
- !  iex(:,:,2) = 0.d0 !- (cumInfilt-cumInfiltOld)/1.0d0 !/dt
- !  CALL KinematicWave(m,n,2,0.5d0, iex,flowdirns,solOrder,solMax,mask,alpha,deltax,disOld,disNew)
-  
- 
- !DO i=1,m
- !  WRITE(3,'(32f16.6)') disNew(i,:,2)
- !END DO
- !  PRINT *,j + 100 ,'----------------------'
- !END DO
  
 
 IF (topogRoute) THEN
@@ -760,7 +715,6 @@ DO y=1,n
     END IF
     F2 = Fnew
     ip = i - (F2 - F1)/dt
-    !PRINT *,"1 ip, i, f, dt, F2, F1, tp",ip, i, f, dt, F2, F1, tp
   ELSE
     F2 = F1 + i*dt !cumulative infilt if all infiltrates
     ff2 = Ks*(1.d0 + MS/F2) 
@@ -788,7 +742,6 @@ DO y=1,n
        END IF
       F2 = Fnew
       ip = (i*dt - (F2 - F1))/(dt - tp)
-      !PRINT *,"ip, i, dt, F2, F1, tp",ip, i, dt, F2, F1, tp
     END IF
   END IF
   
@@ -801,9 +754,6 @@ DO y=1,n
 END DO
 END DO
 
-!DO x=1,m
-!PRINT *, infex(x,:)
-!END DO
 
 END SUBROUTINE GAInfilt
 
@@ -871,7 +821,6 @@ SUBROUTINE KWPrimer(m,n,topog, manningsN, mask,solOrder,flowdirns,alpha,deltax, 
         END IF
       END DO
     ENDIF
-    !WRITE(*,'(a5,i2,i2,a1,9i2)') 'mask(',x,y,')',mask(x,y,:)
     !calculate deltax(x,y)
     If((flowdirns(x,y).eq.1).or.(flowdirns(x,y).eq.3).or.(flowdirns(x,y).eq.5).or.(flowdirns(x,y).eq.7)) THEN
       deltax(x,y) = (2.d0**0.5d0) * cellLength
@@ -882,7 +831,6 @@ SUBROUTINE KWPrimer(m,n,topog, manningsN, mask,solOrder,flowdirns,alpha,deltax, 
     
     !calculate alpha(x,y)
     CALL Lookupfdir(flowdirns(x,y),dx,dy)
-   ! PRINT *, x,y,dx,dy
     IF ((dx==-2).AND.(dy==-2)) THEN
       alpha(x,y) = (ManningsN(x,y) * (cellLength**(0.6666667d0)) / (0.0001d0)**(0.5d0))**0.6d0
       !use a default slope of 0.0001
@@ -892,7 +840,6 @@ SUBROUTINE KWPrimer(m,n,topog, manningsN, mask,solOrder,flowdirns,alpha,deltax, 
          !use a default slope of 0.0001
       ELSE
         slope = ((topog(x,y)-topog(x - dx,y-dy))/deltax(x,y))
-        !WRITE(*,'(2i3,5e14.7)') x, y, slope, topog(x,y),topog(x - dx,y-dy),deltax(x,y),REAL(ndx)
         IF (abs(slope)<0.0001d0) THEN
           slope = 0.0001d0
         END IF
@@ -957,7 +904,6 @@ dummydisOld = disNew
                 k = k + 1
                 If(mask(x,y,k).gt.0) THEN
                   QQi1t2 = QQi1t2 + disNew(x+i,y+j,ndx)
-		  !PRINT *,'(x,y)',x,y,',(x+i,y+j)=',x+i,y+j, '(k)=',k
                 END IF
               END DO
               END DO
@@ -975,7 +921,6 @@ dummydisOld = disNew
                     dt*(qi2t2 + qi2t1)/2.d0)/(dt/ (deltax(x,y)/real(ndx)) + &
                     alpha(x,y)*beta*((QQi2t1 + QQi1t2)/2.d0)**(beta - 1.d0))
           !nonlinear KMW discretization
-          !PRINT *,'QQi2t2',QQi2t2
           isConverged=.FALSE.
           DO While (isConverged .eqv. .FALSE.)
             
@@ -983,22 +928,15 @@ dummydisOld = disNew
                     - (dt/ (deltax(x,y)/real(ndx))*QQi1t2 + alpha(x,y)*(QQi2t1**beta) + & 
                     dt*(qi2t2 + qi2t1)/2.d0)
             dfQ22 = dt /  (deltax(x,y)/real(ndx)) + alpha(x,y)*beta*(QQi2t2**(beta - 1.d0))
-            !IF ((QQi2t2 - fQ22/dfQ22).lt.0) THEN
-            ! PRINT *, (QQi2t2)
-            !END IF
+
             QQi2t2 =  QQi2t2 - fQ22/dfQ22
             
             isConverged=Abs(fQ22).le.eta
              IF (QQi2t2.lt.0) THEN
-             !PRINT *, QQi2t2, QQi1t2, QQi2t1, qi2t2, qi2t1
-             !READ*,
               QQi2t2 = QQi1t2
               isConverged=.TRUE.
             END IF
             !problem here.  The outflow cell causes Nans .
-            !IF ((x.eq.y)) THEN
-            !  PRINT *,' fQ22, QQi2t2', fQ22,QQi2t2
-            !end IF
            
           END DO
          disNew(x,y,l+1) = QQi2t2
@@ -1007,7 +945,6 @@ dummydisOld = disNew
     END DO
     END DO   
   END DO
-  !disNew = dummydisNew
   disOld = dummydisOld
 
 END SUBROUTINE KinematicWave
@@ -1051,7 +988,6 @@ DO j=1,n  !loop though positions in matrix
         IF (flowdirns(x,y).eq.-1) THEN
            isRoute = .FALSE.
         END IF
-       !WRITE(*,'(a5,i3,a5,i3,a5,i3,a5,i3,a5,i3,a5,i3,a3)') 'x',x+dx,'y',y+dy,'newx',x ,'newy', y ,'dx',dx,'dy',dy,isRoute
       ENDIF
     ENDIF
   END DO
@@ -1145,13 +1081,10 @@ INTEGER, DIMENSION(9,2) :: neighbs
 tempSurfaceStore = 0
 discharge = 0
 !outflow = 0
-!PRINT *, "in Routing", infiltKern
-!READ*,
 CALL TwoDRandPos(randOrder,m,n,mn)  !randomly shuffel positions
 nIter = maxval(precip)
 
 donumParticles : DO i=1,nIter  !loop over nIter rainfall particles
-  !PRINT *, "Precip number = ",i
   dodomain : DO j=1,mn  !loop though positions in matrix
     x = randOrder(j,1)
     y = randOrder(j,2)
@@ -1159,8 +1092,6 @@ donumParticles : DO i=1,nIter  !loop over nIter rainfall particles
     isRoute = .TRUE.
 
  dowhileisRoute :  DO WHILE(isRoute)
-    !PRINT *, "x,y", x,y
-    !READ*,
       CALL random_number(rnum)
      Firstif : IF ((rnum<infiltKern(x,y)).AND.(store(x,y)<storeKern(x,y))) THEN
         store(x,y) = store(x,y) + 1
@@ -1263,8 +1194,7 @@ SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
  
   m1 = int(Floor(rfx/dx))
   n1 = int(Floor(rfy/dy))
-  !PRINT *, "in infiltProb, K0, ie, rfx,rfy,alpha",K0, ie, rfx,rfy,alpha
-  !READ*,
+
   DO i=-1*m1,m1
     Do j=-1*n1,n1
       radius = ((i*dx)**2.0d0+(j*dy)**2.0d0)**(0.5d0)
@@ -1291,8 +1221,7 @@ SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
      END DO
    ENd DO
    END DO
-  !PRINT*, "iprob",iProb
-  !READ*,
+
 END SUBROUTINE InfiltProb
 !ListConvolve
 SUBROUTINE ListConvolve(base,kernel,convol,m,n,m1,n1)
@@ -1310,7 +1239,6 @@ SUBROUTINE ListConvolve(base,kernel,convol,m,n,m1,n1)
   dn = floor(real(n1)/2.0)
   m2 = m+m1-1
   n2 = n+n1-1
-  !PRINT *,"m2,n2",m2,n2
   ALLOCATE(dummybase(m2,n2))
   ALLOCATE(dummybase2(m2,n2))
   
@@ -1388,7 +1316,6 @@ SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
 
      Qs_out(i, j) = 7000.d0*(slope**1.5d0) * (cellLength**2.d0)*flow(i, j) / flowResistance(i, j)**0.5d0
      Qs_in(posx, posy) = Qs_out(i, j) + Qs_in(posx, posy)
-     !PRINT*, "posx, posy" , posx, posy,"i, j", i, j , "slope", slope, "dx", dx(i,j), "Qs_out(i, j)",Qs_out(i, j)
     ELSEIF (fDirRef.le.0) THEN
       dx(i, j) = cellLength
       slope = 1.d0
@@ -1426,12 +1353,7 @@ SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
      deltaz(i, j) = -1.d0*((Qs_out(i, j) - Qs_in(i, j))/dx(i, j)/specificweight)
     END IF
   END DO
-  !PRINT *, deltaz(i,:)
-  !PRINT*,
-  !PRINT*,topog(i,:)+deltaz(i,:)
-  !  deltaz(i,1) = 0.0d0  !base level lowering rate
   END DO
-  !READ*,
   
   
   deltaz = deltaz * timestep
@@ -1563,7 +1485,6 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,
   END DO
   END DO
   
-  !PRINT *, "in evap, tsteps ",tsteps
   i=1
   Do WHILE ((i.le.tsteps).AND.(storeCounter.gt.0))
      i=i+1
@@ -1672,9 +1593,7 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
      z0 = topog(posxy(1), posxy(2))
      CALL Neighbours(order, posxy, dom, pos2)
      pos3=pos2((/1,2,3,6,9,8,7,4/),:)
-     !DO i=1,n1
-     !PRINT *, "pos3", pos3(i,:)
-     !END DO
+
      If(maxval(pos3) .eq.-99) THEN
        lsdList=RESHAPE((/ -99,-99,-99,-99,-99,-99 /),(/3,2/))  
        RETURN
@@ -1685,39 +1604,25 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
       ELSE
         slps(i) = -99999.d0
       end if
-      !  PRINT*, "slps",slps(i)
      end do 
      
-     !PRINT *, "maxval(slps)",maxval(slps)
      If(maxval(slps) < 0) THEN
       lsdList=RESHAPE((/ -99,-99,-99,-99,-99,-99 /),(/3,2/))     ! (* i.e. all neighbouring cells higher *)
       RETURN
      ELSE
       posx = maxloc(slps)
-      !PRINT *, "posx",posx
       LSD1 = pos3(posx(1),:)
-      !PRINT *,"LSD1",LSD1
-      !CALL Pos1d(pos2,(order*2+1)**2,2,LSD1,locs)
-      !posy = locs(1)
-      !Do i=1,size(locs)
-      !PRINT *, "locs",locs(i)
-      !END DO
-      ! PRINT *,"posy",posy
+
       CALL RotateArray(pos3,(order*2+1)**2-1,2,-1)
       clockpos = pos3(posx(1),:)
-      ! PRINT *, "clockpos", clockpos
       CALL RotateArray(pos3,(order*2+1)**2-1,2,2)
-      !CALL RotateArray(pos2,(order*2+1)**2,1,2)
       anticlockpos = pos3(posx(1),:)
-      ! PRINT *, "anticlockpos", anticlockpos
        
       If((clockpos(1) .ne. -99).and.(anticlockpos(1) .ne. -99)) THEN
        Slope1 = 1.0*(z0 - topog(clockpos(1), clockpos(2)))/ &
        ((posxy(1) - clockpos(1))**2 + (posxy(2) - clockpos(2))**2)**0.5
-      !PRINT *, "slope1", slope1
        Slope2 = 1.0*(z0 - topog(anticlockpos(1), anticlockpos(2)))/ &
        ((posxy(1) - anticlockpos(1))**2 + (posxy(2) - anticlockpos(2))**2)**0.5
-      !PRINT *, "slope2", slope2
        If(Slope1 > Slope2) THEN
          LSD2 = clockpos
          otherpos = anticlockpos
@@ -1725,7 +1630,6 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
          LSD2 = anticlockpos
          otherpos = clockpos
         END IF !(* end of If Slope1>Slope2 *)
-         !PRINT *, "LSD2", LSD2, "otherpos", otherpos
       ELSE
        If((clockpos(1) .eq.-99).and.(anticlockpos(1).eq.-99)) THEN
          LSD2 = (/-99,-99/)
@@ -1739,18 +1643,12 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
          END IF
        END IF
        END IF ! (* end of If clockpos!={"Null","Null"}anticlockpos!={"Null","Null"}, *)
-      !PRINT *,"here"
     END IF !(* end of If Max[slps]<0 *)
      END IF !  end of if posxy!=(/-99,-99/)
-  !PRINT *,"LSD1",LSD1
-!PRINT *,"LSD2",LSD2
-!PRINT *,"otherpos",otherpos
+
   lsdList(1,:) = LSD1
- ! PRINT *,"here"
   lsdList(2,:)= LSD2
-  !PRINT *,"here"
   lsdList(3,:)=otherpos
-  !PRINT *,"here"
 END SUBROUTINE LSDs
 
 
@@ -1799,11 +1697,9 @@ SUBROUTINE Pos1d(list,m,n,match,rownum)
     INTEGER :: test
     rownum=0
     k=1
-    !PRINT*, "match", match
     DO i=1,m
     test = 1
     DO j=1,n
-    !PRINT*, "list",list(i,:)
     IF (list(i,j).eq.match(j)) THEN
      test=test*1
     ELSE
@@ -1825,7 +1721,6 @@ Subroutine GD8(topog,flowdirns, m,n)
    IMPLICIT NONE
    
    INTEGER,INTENT(IN) :: m,n
-   !INTEGER, DIMENSION(m,n), INTENT(IN) :: lakes
    REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
    INTEGER, DIMENSION(m,n), INTENT(INOUT) :: flowdirns
    
@@ -1862,24 +1757,16 @@ Subroutine GD8(topog,flowdirns, m,n)
    LSD1 = lsdList(1,:)
    secondary1 = lsdList(2,:)
    otherAnglePosition1 = lsdList(3,:)
-   !PRINT *, " LSD1, secondary1, otherAnglePosition1", LSD1, secondary1, otherAnglePosition1
-   !PRINT *, "startcell-LSD1", startcell-LSD1
-   !READ*,
+
    
    CALL fdirLookup(startcell-LSD1, idirn)
-   !PRINT *, "idirn",idirn
    flowdirns(startcell(1), startcell(2)) = idirn
    CALL Pos1d(ords,mn,2,startcell,rownum)
    IF (rownum(1).ne.0) THEN
       CALL endShift(ords,rownum(1), mn,2)
       ords(mn,:)=(/0,0/)
    END IF
-    ! DO i=1,mn
-    ! PRINT *,"ords0",ords(i,:)
-    ! END DO
-    !READ*,
-     
-   !PRINT *, "flowdirns(startcell(1), startcell(2))",flowdirns(startcell(1), startcell(2))
+
    upstreamcell = startcell
    upflowdirn = startcell - LSD1
    upsecondary = secondary1
@@ -1887,13 +1774,7 @@ Subroutine GD8(topog,flowdirns, m,n)
    counter = 1
    
    ordsDo : DO While(ords(1,1).gt.0)
-    !Do i=1,m
-    !PRINT *,"1: ",flowdirns(i,:)
-    !END DO
-    !READ*,
-   ! PRINT *, "ords(1)",ords(1,:)
-   ! PRINT *, "startcell,targetcell",startcell,targetcell
-    
+
     mainif : If(targetcell(1).eq.-99) THEN
      startcell = ords(1,:)
      CALL LSDs(1, startcell, topog,m,n,lsdList)
@@ -1914,35 +1795,23 @@ Subroutine GD8(topog,flowdirns, m,n)
            CALL endShift(ords,rownum(1),mn,2)
            ords(mn,:)=(/0,0/)
          END IF
-       !DO i=1,mn
-        ! PRINT *, "ords1",ords(i,:)
-       !  END DO
-         
-     !If(topog(targetcell(1), targetcell(2)).gt. topog(startcell(1), startcell(2))) THEN
-     !   Print *,"1:"
-     !END IF
+
      
   ELSE !mainif :
   
      
-     !READ*,
      ifAlreadyAsigned : If(flowdirns(targetcell(1), targetcell(2)).gt. -2) THEN 
        
        !assign flow dirn to upstreamcell
        CALL Lookupfdir(idirn, dx,dy)
-       !PRINT *, "idirn",idirn
        !upstreamcell = targetcell +(/dx,dy/)
        flowdirns(upstreamcell(1), upstreamcell(2)) = idirn
-       !PRINT *, "upstreamcell , targetcell",upstreamcell , targetcell
        CALL Pos1d(ords,mn,2,upstreamcell,rownum)
          IF (rownum(1).ne.0) THEN
            CALL endShift(ords,rownum(1),mn,2)
            ords(mn,:)=(/0,0/)
          END IF
-         !DO i=1,mn
-         !PRINT *, "ords2",ords(i,:)
-         !END DO
-         !READ*,
+
        startcell = ords(1,:)
        
        CALL LSDs(1, startcell, topog,m,n,lsdList)
@@ -1960,10 +1829,6 @@ Subroutine GD8(topog,flowdirns, m,n)
        CALL RotateArray(ords,mn,2,-1)
        ords(mn,:)=(/0,0/)
        
-       !DO i=1,mn
-       !PRINT *,"ords3",ords(i,:)
-       !END DO
-       !READ*,
      
        ELSE !ifAlreadyAsigned 
        
@@ -1981,9 +1846,6 @@ Subroutine GD8(topog,flowdirns, m,n)
          ords(mn,:)=(/0,0/)
        END IF
        
-        !DO i=1,mn
-        ! PRINT *, "ords3.1",ords(i,:)
-        ! END DO
          
         startcell = ords(1,:)
         CALL LSDs(order, startcell, topog,m,n,lsdList)
@@ -2003,14 +1865,7 @@ Subroutine GD8(topog,flowdirns, m,n)
            CALL endShift(ords,rownum(1),mn,2)
            ords(mn,:)=(/0,0/)
          END IF
-         !DO i=1,mn
-         !PRINT *, "ords3.2",ords(i,:)
-         !END DO
-         !READ*,
-         
-        !If(topog(targetcell(1), targetcell(2)) > topog(startcell(1), startcell(2))) THEN
-        !  Print*, "3:"
-        !END IF
+
         
       ELSE !if ((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99))
         
@@ -2028,16 +1883,12 @@ Subroutine GD8(topog,flowdirns, m,n)
           z2 = z02
         END IF
         
-        !PRINT *,"z0,z1,z2",z0,z1,z2
-        !READ*,
+
         
         If((z1 > z0).AND.(z2 > z0)) THEN
           CALL fdirLookup(targetcell-LSD2, idirn)
           flowdirns(targetcell(1), targetcell(2)) = idirn
-         
-          !If(topog(LSD2(1), LSD2(2)) > topog(targetcell(1), targetcell(2))) THEN
-          !  Print*, "4:"
-          !END IF
+
          
          CALL Pos1d(ords,mn,2,targetcell,rownum)
          IF (rownum(1).ne.0) THEN
@@ -2045,12 +1896,7 @@ Subroutine GD8(topog,flowdirns, m,n)
            ords(mn,:)=(/0,0/)
          END IF
          
-        !  DO i=1,mn
-        ! PRINT *, "ords4",ords(i,:)
-        ! END DO
-        ! READ*,
          
-          
           startcell = LSD2
           CALL LSDs(1, startcell, topog,m,n,lsdList)
           LSD1 = lsdList(1,:)
@@ -2060,22 +1906,12 @@ Subroutine GD8(topog,flowdirns, m,n)
          If(LSD1(1) .ne.-99) THEN
           CALL fdirLookup(startcell-LSD1, idirn)
           flowdirns(startcell(1), startcell(2)) = idirn
-          
-         ! If(topog(LSD1(1), LSD1(2)) > topog(startcell(1), startcell(2))) THEN
-         !   Print*,"5:"
-         ! END IF
-          
-          CALL Pos1d(ords,mn,2,startcell,rownum)
+         CALL Pos1d(ords,mn,2,startcell,rownum)
           IF (rownum(1).ne.0) THEN
             CALL endShift(ords,rownum(1),mn,2)
             ords(mn,:)=(/0,0/)
           END IF
-           ! DO i=1,mn
-           !PRINT *, "ords5",ords(i,:)
-           !END DO
-           !READ*,
-          
-          
+         
           upflowdirn = startcell - LSD1
           upsecondary = secondary1
          
@@ -2088,11 +1924,7 @@ Subroutine GD8(topog,flowdirns, m,n)
             CALL endShift(ords,rownum(1),mn,2)
             ords(mn,:)=(/0,0/)
           END IF
-          !DO i=1,mn
-         !PRINT *, "ords6",ords(i,:)
-         !END DO
-         !READ*,
-           
+          
           upflowdirn = (/-99, -99/)
           upsecondary = (/-99, -99/)
         END IF !(LSD1(1) .ne.-99) 
@@ -2122,7 +1954,7 @@ Subroutine GD8(topog,flowdirns, m,n)
          test3 = (slp1 < slp2)
          
          If((test1.AND.test2).AND.test3) THEN
-          !PRINT *, "test1,2,and 3"
+
           If(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2))) THEN
                 CALL fdirLookup(targetcell-secondary2, idirn)
                 flowdirns(targetcell(1), targetcell(2)) = idirn
@@ -2130,22 +1962,14 @@ Subroutine GD8(topog,flowdirns, m,n)
             CALL fdirLookup(targetcell-LSD2, idirn)
             flowdirns(targetcell(1), targetcell(2)) = idirn
            
-           !If(topog(LSD2(1), LSD2(2)) > topog(targetcell(1), targetcell(2))) THEN
-           !   Print*, "6b:"
-           !END IF
-           
-          END IF !(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2)))
+         END IF !(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2)))
           
           CALL Pos1d(ords,mn,2,targetcell,rownum)
           IF (rownum(1).ne.0) THEN
             CALL endShift(ords,rownum(1),mn,2)
             ords(mn,:)=(/0,0/)
           END IF
-          ! DO i=1,mn
-         !PRINT *, "ords7",ords(i,:)
-         !END DO
-         !READ*,
-          
+         
           upstreamcell = targetcell
           upflowdirn = targetcell - secondary2
           upsecondary = secondary2
@@ -2155,21 +1979,14 @@ Subroutine GD8(topog,flowdirns, m,n)
            flowdirns(targetcell(1), targetcell(2)) = idirn
           
           If(topog(LSD2(1), LSD2(2)) > topog(targetcell(1), targetcell(2))) THEN 
-          ! Print*, "7:"
-          END IF
+         END IF
           
           CALL Pos1d(ords,mn,2,targetcell,rownum)
           IF (rownum(1).ne.0) THEN
             CALL endShift(ords,rownum(1), mn,2)
             ords(mn,:)=(/0,0/)
           END IF
-          
-          ! DO i=1,mn
-         !PRINT *, "ords8",ords(i,:)
-         !END DO
-         !READ*,
          
-          
           upstreamcell = targetcell
           upflowdirn = targetcell - LSD2
           upsecondary = secondary2
@@ -2180,12 +1997,7 @@ Subroutine GD8(topog,flowdirns, m,n)
       END IF ifAlreadyAsigned 
      
     END IF  mainif
-    
-       !DO i=1,mn
-       !  PRINT *, "ords end",ords(i,:)
-       !  END DO
-       !  READ*,
-         
+        
  END DO ordsDo
  
   !for perodic boundary conditions set lower
@@ -2251,28 +2063,16 @@ Subroutine NewGD8(topog,lakes,flowdirns, m,n)
      ords(mn,:)=(/0,0/)
    END IF
    isAssigned(startcell(1),startcell(2))=1
-   
-   !DO i=1,mn
-   !PRINT *,"ords",ords(i,:), " topog",topog(ords(i,1),ords(i,2))
-   !END DO
    isAss=.TRUE.   !dummy assignment to begin loop
    isOutflow=.TRUE.   !dummy assignment to begin loop
    reinit = .TRUE.
    startcell=(/1,1/)  !dummy assignment to begin loop
    startcell = ords(1,:)
    10 num2AssignGT0 : DO WHILE(startcell(1).ne.0)
-    
-    !DO i=1,m
-    !PRINT *,"1: flowdirns-",flowdirns(i,:)
-    !END DO
-    
-    !PRINT *, "2: isAss, isOutflow",isAss,isOutflow
-    !READ*,
-    
+   
     toReinit : IF(isAss.OR.isOutflow) THEN
        !This bit reinitialises all variables if beginning a new flow pathway
-        !PRINT *,"3: reinit", reinit
-        IF (reinit) THEN
+       IF (reinit) THEN
          startcell = ords(1,:)
        END IF
        PRINT *,"4: startcell", startcell
@@ -2282,13 +2082,7 @@ Subroutine NewGD8(topog,lakes,flowdirns, m,n)
            CALL endShift(ords,rownum(1),mn,2)
            ords(mn,:)=(/0,0/)
          END IF
-       
-       !READ*,
-       !DO i=1,mn
-       ! PRINT *,"ords", ords(i,:)
-       !END DO
-       !READ*,
-       
+      
         CALL LSDs(1, startcell, topog,m,n,lsdList)
         LSD1 = lsdList(1,:)
         secondary1 = lsdList(2,:)
@@ -2308,13 +2102,7 @@ Subroutine NewGD8(topog,lakes,flowdirns, m,n)
           CALL endShift(ords,rownum(1),mn,2)
           ords(mn,:)=(/0,0/)
         END IF
-        
-        !READ*,
-        !DO i=1,mn
-        !PRINT *,"ords", ords(i,:)
-        !END DO
-        !READ*,
-        
+       
         PRINT *,"7: isAssigned(targetcell(1),targetcell(2)).eq.1",isAssigned(targetcell(1),targetcell(2)).eq.1
         ifassigned1 : IF (isAssigned(targetcell(1),targetcell(2)).eq.1) THEN
             isAss=.TRUE.
@@ -2496,9 +2284,7 @@ Subroutine NewGD8(topog,lakes,flowdirns, m,n)
               !PRINT *,"21.00 neighbs(i)",neighbs(i,:)
               If (i.ne.5) THEN
                 IF (neighbs(i,1).ne.-99) THEN
-                  !PRINT *,"21.01: isOutflow",isOutflow 
-                   !PRINT *,"21.01:topog1,topog2", topog(neighbs(i,1),neighbs(i,2)),topog(targetcell(1),targetcell(2))
-                  isOutflow = (isOutflow.and.(topog(neighbs(i,1),neighbs(i,2))>topog(targetcell(1),targetcell(2))))
+                 isOutflow = (isOutflow.and.(topog(neighbs(i,1),neighbs(i,2))>topog(targetcell(1),targetcell(2))))
                 END IF
               END IF
             END DO
@@ -2555,7 +2341,6 @@ SUBROUTINE fdirLookup(dirnxy, idirn)
   ELSE
     idirn = -1  
   END IF
-  !PRINT *,"idrn in fdirLookup", idirn
 END SUBROUTINE fdirLookup
 
 
@@ -2565,7 +2350,6 @@ SUBROUTINE qsortd(x,ind,n,incdec)
 ! Date: 2002-12-18  Time: 11:55:47
 
 IMPLICIT NONE
-!INTEGER, PARAMETER  :: dp = SELECTED_REAL_KIND(12, 60)
 
 REAL*8, INTENT(IN)  :: x(n)
 INTEGER, INTENT(OUT)   :: ind(n)

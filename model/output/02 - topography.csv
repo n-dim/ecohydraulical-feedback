@@ -4,9 +4,9 @@
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
-           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
-           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
-           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;     -Infinity;     -Infinity;     -Infinity;     -Infinity;     -Infinity;     -Infinity;
+     -Infinity;     -Infinity;     -Infinity;  0.554570+154; -0.339014+154; -0.123357+153;  0.243393+152; -0.164521+155;
+ -0.126850+150; -0.154314+155; -0.162489+155; -0.142857+155; -0.154291+155; -0.132177+155; -0.174092+155; -0.231519+155;
  time step =            2 ;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
@@ -15,7 +15,7 @@
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
-           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;           NaN;           NaN;     -Infinity;     -Infinity;     -Infinity;     -Infinity;
  time step =            3 ;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;

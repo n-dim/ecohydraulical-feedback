@@ -484,60 +484,11 @@ write(char_n,'(i4)') n
 
 !**************************************************************************************
 
-!*************************************************************************************
-!*** Model Parameters ****************************************************************
-!************************************************************************************
-
 write(*,*) 'starting simulation'
 
-progress = 0
-precip = np
-rfy = rf
-rfx = rf
-rcx = rc
-rcy = rc
-
-eSteps = max(min(ne,eSteps),1)
-
-
-!**************************************************************************************
-!**** Initial conditions ****************************************************************
-!*************************
-DO i=1,m
-  DO j=1,n
-   CALL random_number(rnd)
-   flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
-   CALL random_number(rnd)
-   !If(i<j) THEN
-   !If[i > j, 60 - ((i 1 + j 6) ), 60 - (( i 6 + j 1))]
-   topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
-   !topog(i,j) = 1000.d0 +0.01d0*dble(i)+0.01d0*dble(j) + dble(rnd -0.5d0)*roughness
-   !ELSE
-   !  topog(i,j)  = 0.0*Sin(real(i)/5.0)*Sin(real(j)/5.0) +0.2d0*dble(i)+0.1d0*dble(j) + 1000.d0
-   !ENDIF
-   IF (RandomInVeg) THEN
-     if(j==1.and.i==1) print*,'random initial vegetation distribution'
-     IF (rnd>0.9) THEN
-       veg(i,j) = 1
-     ELSE
-       veg(i,j) = 0
-     END IF
-   ELSE
-    veg(i,j) = 0
-   END IF
- END DO
-END DO
-store=0
-lakes = 0
-flowdirns = -2
-
- CALL GD8(topog,flowdirns, m,n)
-
-IF (topogRoute) THEN
-	CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
-END IF
-
-storeKern = 99999.d0
+CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
+   eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
+   K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
 
 OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
@@ -659,9 +610,92 @@ CLOSE(20)
 END SUBROUTINE SimCODE
 
 
+!set initial Conditions
+SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
+   eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
+   K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+
+   IMPLICIT NONE
+
+   integer, INTENT(in) :: m, n		!number of rows and colums
+   INTEGER, intent(out) :: progress  !for the progress bar
+   INTEGER, DIMENSION(m,n), INTENT(out) :: precip
+   INTEGER, INTENT(in) :: np        !number of patricles of rain falling
+   REAL*8, INTENT(in) :: rf         !meter: maximum length for plant effect on infiltration
+   Real*8, INTENT(OUT) :: rfx, rfy
+   REAL*8, INTENT(in) :: rc         !meter: maximum length for plant water uptake
+   REAL*8, INTENT(OUT) :: rcx, rcy
+   INTEGER, INTENT(INOUT) :: eSteps
+   integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
+      !by one evap process at any one time
+   REAL*8, DIMENSION(m,n), intent(out) ::  topog, flowResistance0
+   logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
+   INTEGER, DIMENSION(m,n), intent(out) :: veg, store
+   INTEGER, DIMENSION(m,n), intent(out) :: flowdirns, lakes
+   logical, INTENT(in) :: topogRoute	!if true, then use topography to route flows
+   real*8, INTENT(in) :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
+   real*8, INTENT(in) :: kf		!per meter : rate of decline in plant effect on infiltration
+   real*8, INTENT(in) :: Kmax		!maximum potential hydraulic conductivity in mm/hr
+   real*8, INTENT(in) :: ie		!effective rainfall intensity mm / year
+   REAL*8, INTENT(in) :: dx, dy  	!spatial dimesions of lattice cells
+   REAL*8, DIMENSION(m,n), INTENT(out) ::  infiltKern, storeKern
+   REAL*8, INTENT(in) :: kb !Gaussian parameters for diffusive sediment transport for
+
+
+   INTEGER :: i,j
+   REAL*8 :: rnd !random real
+
+
+
+   progress = 0
+   precip = np
+   rfy = rf
+   rfx = rf
+   rcx = rc
+   rcy = rc
+
+   eSteps = max(min(ne,eSteps),1)
+
+
+   DO i=1,m
+      DO j=1,n
+         CALL random_number(rnd)
+         flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
+
+         CALL random_number(rnd)
+         topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
+
+         IF (RandomInVeg) THEN
+            IF(j==1.and.i==1) print*,'random initial vegetation distribution'
+            IF (rnd>0.9) THEN
+               veg(i,j) = 1
+            ELSE
+               veg(i,j) = 0
+            END IF
+         ELSE
+            veg(i,j) = 0
+         END IF
+      END DO
+   END DO
+
+   store=0
+   lakes = 0
+   flowdirns = -2
+
+   CALL GD8(topog,flowdirns, m,n)
+
+   IF (topogRoute) THEN
+   CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
+   END IF
+
+   storeKern = 99999.d0
+
+END SUBROUTINE setInitConditions
+
+
 !TwoDRandPos
-SUBROUTINE TwoDRandPos(randOrder,m, n,mn) 
-  
+SUBROUTINE TwoDRandPos(randOrder,m, n,mn)
+
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: m, n, mn

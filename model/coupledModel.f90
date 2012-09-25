@@ -530,51 +530,8 @@ END DO
 store=0
 lakes = 0
 flowdirns = -2
- 
 
- !manningsN = 0.02d0
- !iex = 0.0d0
- !disOld = 1e-20
- !disNew = 1e-20
- !PRINT*,"Running GD8"
  CALL GD8(topog,flowdirns, m,n)
- !PRINT*,"Finished GD8"
- !READ*,
- !CALL KWPrimer(m,n,topog, manningsN, mask,solOrder, flowdirns,alpha,deltax, solMax)
- !Ksat=10.d0  
- !wfs = 90.d0 * 0.434d0
- !cumInfilt = 0.d0
- 
- !OPEN(3,file='Discharge.out')
- !DO j=1,100
- !  CALL random_number(rnd)
- !  inflow = 5.0 *rnd + disNew(:,:,2)  !precip + runon
- !  cumInfiltOld = cumInfilt
- !  CALL GAInfilt (m,n,0.1d0,inflow, Ksat, wfs, cumInfilt, infex)
- !  iex(:,:,1) = iex(:,:,2)
- !  iex(:,:,2) = 15.0 - (cumInfilt-cumInfiltOld)/1.0d0 !/dt
- !  CALL KinematicWave(m,n,2,0.1d0, iex,flowdirns,solOrder,solMax,mask,alpha,deltax,disOld,disNew)
- !DO i=1,m
- !  WRITE(3,'(32f16.6)') disNew(i,:,2)
- !END DO
- !  PRINT *,j,'----------------------'
- !END DO
- !iex = 0.0
- !DO j=1,100
- !  inflow = 0.0 + disNew(:,:,2)  !precip + runon
- !  cumInfiltOld = cumInfilt
- !  CALL GAInfilt (m,n,1.0d0,inflow, Ksat, wfs, cumInfilt, infex)
- !  iex(:,:,1) = iex(:,:,2)
- !  iex(:,:,2) = 0.d0 !- (cumInfilt-cumInfiltOld)/1.0d0 !/dt
- !  CALL KinematicWave(m,n,2,0.5d0, iex,flowdirns,solOrder,solMax,mask,alpha,deltax,disOld,disNew)
-  
- 
- !DO i=1,m
- !  WRITE(3,'(32f16.6)') disNew(i,:,2)
- !END DO
- !  PRINT *,j + 100 ,'----------------------'
- !END DO
- 
 
 IF (topogRoute) THEN
 	CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)

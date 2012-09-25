@@ -36,13 +36,11 @@ real*8 :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
 real*8 :: Kmax		!maximum potential hydraulic conductivity in mm/hr
 real*8 :: kf		!per meter : rate of decline in plant effect on infiltration
 real*8 :: rf		!meter: maximum length for plant effect on infiltration
-Real*8 :: rfx, rfy
 REAL*8 :: dx, dy  	!spatial dimesions of lattice cells
 
 real*8 :: Emax		! Unstressed water use rate mm/hr !to mm/year
 real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
 real*8 :: rc		!meter: maximum length for plant water uptake
-real*8 :: rcx, rcy
 real*8 :: gamma		!relative reduction of soil evap under canopy
 real*8 :: bav		!scaling factor for bare soil evaporation Esb calc
 real*8 :: pc		!prob of collonisation of bare soil
@@ -81,29 +79,26 @@ write(*,*) 'try to read "inputParameter.txt"'
 open(unitNumber, file='inputParameter.txt', status="old")
 
 DO !loop to read and execute every parameter set
-   call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
-      m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
-      dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
-      topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
+	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
+		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
+		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
+		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
+    
+    if(run) then
+        call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
+            gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+		
+        if(useRandomSeed) CALL init_random_seed()
+		 
+		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
+			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db,title)
 
-   if(run) then
-      call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
-         gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te, rf, rfx, rfy, rc, rcx, rcy)
-
-      if(useRandomSeed) CALL init_random_seed()
-       
-      CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
-         np , pbar, ie, roughness,K0, rf, rfx, rfy, kf, Kmax, dx ,dy ,&
-         rc, rcx, rcy, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge, &
-         kv, kb, Dv, Db, title)
-
-   else
-
-      write(*,*) "don't run simulation for this parameter set"
-
-   end if
-     
-   if(.not.anotherParamSet) exit
+    else
+        write(*,*) "don't run simulation for this parameter set"
+    end if
+        
+    if(.not.anotherParamSet) exit
 
 
 END DO  !end of loop through parameter file
@@ -384,45 +379,36 @@ end subroutine readInput
 
 
 subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
- gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te, rf, rfx, rfy, rc, rcx, rcy)
+ gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
  
-   implicit none
-   integer, intent(in) :: m, n, np
-   real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
-   integer, intent(out) :: mn, ne, precip
-   real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
-   Real*8, intent(in) :: rf
-   Real*8, intent(out) :: rfx, rfy
-   Real*8, intent(in) :: rc
-   Real*8, intent(out) :: rcx, rcy
+  implicit none
+  integer, intent(in) :: m, n, np
+  real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
+  integer, intent(out) :: mn, ne, precip
+  real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
+  
+  mn = m*n
+  dy = dx
+  pbar = pa/dble(np) !water in each particle in mm
+  ie = pa / ts  !effective rainfall intensity mm / year
+  alpha = (Kmax-K0)/K0
+ !K(r) = K0 +K0 *alpha*exp(-kf*r)
+ !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
+ !PInf[r_] := Min[1, K[r]/ie]
+  !beta = Emax
+ !ET(r) =  Emax*exp(-kc*r)*dx*dy
+  Esb = bav*Emax  !maximum bare soil evap rate
+  Esv = gamma*Esb   !maximum soil evap from under canopy
+  ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
+  !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
+  !by one evap process at any one time
+  te = (1-ts)/ne  !length of a time step in evap calcs in years
 
-   rfy = rf
-   rfx = rf
-   rcx = rc
-   rcy = rc
-
-   mn = m*n
-   dy = dx
-   pbar = pa/dble(np) !water in each particle in mm
-   ie = pa / ts  !effective rainfall intensity mm / year
-   alpha = (Kmax-K0)/K0
-   !K(r) = K0 +K0 *alpha*exp(-kf*r)
-   !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
-   !PInf[r_] := Min[1, K[r]/ie]
-   !beta = Emax
-   !ET(r) =  Emax*exp(-kc*r)*dx*dy
-   Esb = bav*Emax  !maximum bare soil evap rate
-   Esv = gamma*Esb   !maximum soil evap from under canopy
-   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
-   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
-   !by one evap process at any one time
-   te = (1-ts)/ne  !length of a time step in evap calcs in years
-
-   Psb = te * Esb / pbar !bare soil
-   Psv = te * Esv / pbar	!same under canopy
-   !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
-   precip = np
-
+  Psb = te * Esb / pbar !bare soil
+  Psv = te * Esv / pbar	!same under canopy
+  !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
+  precip = np
+    
 end subroutine deriveInputParameters
 
 
@@ -432,9 +418,8 @@ end subroutine deriveInputParameters
 !###### SimCode ######################################################################
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
-	np , pbar, ie, roughness,K0, rf, rfx, rfy, kf, Kmax, dx ,dy ,&
-	rc, rcx, rcy, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge, &
-   kv, kb, Dv, Db, resultsName)
+	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsName)
  
 IMPLICIT NONE
 
@@ -460,10 +445,9 @@ INTEGER, intent(in) :: nSteps
 INTEGER :: eSteps, flag, solMax, ne
 !infilt variables
 REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
-Real*8, intent(in) :: rfx, rfy
+Real*8 :: rfx, rfy
 !evap variables
-REAL*8, intent(in) :: rcx, rcy
-REAL*8 :: rc, kc, te, Psb, Psv, Emax
+REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
 REAL*8,DIMENSION(7) :: eparams !evap input array
 
 REAL*8 :: rnd
@@ -502,7 +486,7 @@ write(char_n,'(i4)') n
 
 write(*,*) 'starting simulation'
 
-CALL setInitConditions(m, n, progress, precip, np, &
+CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
    K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
@@ -627,7 +611,7 @@ END SUBROUTINE SimCODE
 
 
 !set initial Conditions
-SUBROUTINE setInitConditions(m, n, progress, precip, np, &
+SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
    K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
@@ -637,6 +621,10 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, &
    INTEGER, intent(out) :: progress  !for the progress bar
    INTEGER, DIMENSION(m,n), INTENT(out) :: precip
    INTEGER, INTENT(in) :: np        !number of patricles of rain falling
+   REAL*8, INTENT(in) :: rf         !meter: maximum length for plant effect on infiltration
+   Real*8, INTENT(OUT) :: rfx, rfy
+   REAL*8, INTENT(in) :: rc         !meter: maximum length for plant water uptake
+   REAL*8, INTENT(OUT) :: rcx, rcy
    INTEGER, INTENT(INOUT) :: eSteps
    integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
       !by one evap process at any one time
@@ -661,6 +649,10 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, &
 
    progress = 0
    precip = np
+   rfy = rf
+   rfx = rf
+   rcx = rc
+   rcy = rc
 
    eSteps = max(min(ne,eSteps),1)
 

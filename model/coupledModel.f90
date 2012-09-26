@@ -551,12 +551,7 @@ DO j=1,nSteps
 		END WHERE
 	END IF
 
-	if(j==1) write(*,*) "timestep iteration"
-	!write progess bar:
-	progress = nint((Real(j)/Real(nSteps))*100)
-	write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
-		progress, repeat("=", progress/2), repeat("-", (50-progress/2))
-	if(j==nSteps) write(*,'(a)') "" ! to make a newline
+   CALL progressBar(j, nSteps, progress)
 	
 END DO
 
@@ -2566,6 +2561,22 @@ SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discha
    write(20,'('//char_n//'(e14.6,";"))') infiltKern
 
 END SUBROUTINE writeCSVraster
+
+! to display a progress bare in the console:
+SUBROUTINE progressBar(j, nSteps, progress)
+
+IMPLICIT NONE
+INTEGER, intent(in) :: j, nSteps
+Integer, intent(inout) :: progress
+
+if(j==1) write(*,*) "timestep iteration"
+!write progess bar:
+progress = nint((Real(j)/Real(nSteps))*100)
+write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
+progress, repeat("=", progress/2), repeat("-", (50-progress/2))
+if(j==nSteps) write(*,'(a)') "" ! to make a newline
+
+END SUBROUTINE progressBar
 
 END PROGRAM Sensitivity
 

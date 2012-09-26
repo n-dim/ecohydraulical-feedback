@@ -490,18 +490,7 @@ CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
    K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
-
-OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
-write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
-
-OPEN(13,file='./output/'//trim(adjustl(resultsName))//' - vegetation.csv')
-OPEN(14,file='./output/'//trim(adjustl(resultsName))//' - flowdirections.csv')
-OPEN(15,file='./output/'//trim(adjustl(resultsName))//' - store.csv')
-OPEN(16,file='./output/'//trim(adjustl(resultsName))//' - discharge.csv')
-OPEN(17,file='./output/'//trim(adjustl(resultsName))//' - eTActual.csv')
-OPEN(18,file='./output/'//trim(adjustl(resultsName))//' - bareE.csv')
-OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
-OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
+CALL openFiles(resultsName)
 
 !***********************************************************************************
 !Timestep iterations
@@ -596,16 +585,7 @@ DO j=1,nSteps
 	
 END DO
 
-!close files
-CLOSE(2)
-CLOSE(13)
-CLOSE(14)
-CLOSE(15)
-CLOSE(16)
-CLOSE(17)
-CLOSE(18)
-CLOSE(19)
-CLOSE(20)
+CALL closeFiles()
 	
 END SUBROUTINE SimCODE
 
@@ -2532,6 +2512,42 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, s
  END DO
   
 END SUBROUTINE VegChange
+
+SUBROUTINE openFiles(resultsName)
+
+   IMPLICIT NONE
+
+   CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+
+
+   OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
+   write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
+
+   OPEN(13,file='./output/'//trim(adjustl(resultsName))//' - vegetation.csv')
+   OPEN(14,file='./output/'//trim(adjustl(resultsName))//' - flowdirections.csv')
+   OPEN(15,file='./output/'//trim(adjustl(resultsName))//' - store.csv')
+   OPEN(16,file='./output/'//trim(adjustl(resultsName))//' - discharge.csv')
+   OPEN(17,file='./output/'//trim(adjustl(resultsName))//' - eTActual.csv')
+   OPEN(18,file='./output/'//trim(adjustl(resultsName))//' - bareE.csv')
+   OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
+   OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
+
+END SUBROUTINE openFiles
+
+SUBROUTINE closeFiles()
+
+   !close files
+   CLOSE(2)
+   CLOSE(13)
+   CLOSE(14)
+   CLOSE(15)
+   CLOSE(16)
+   CLOSE(17)
+   CLOSE(18)
+   CLOSE(19)
+   CLOSE(20)
+
+END SUBROUTINE closeFiles
 
 END PROGRAM Sensitivity
 

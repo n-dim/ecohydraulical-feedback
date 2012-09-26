@@ -490,7 +490,7 @@ CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
    K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
-CALL openFiles(resultsName)
+CALL openCSVrasterFiles(resultsName)
 
 !***********************************************************************************
 !Timestep iterations
@@ -530,33 +530,8 @@ DO j=1,nSteps
 	END DO
   
 	IF (MOD(j,1).eq.0) THEN
-		WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
-		sum(bareE), sum(store), sum(discharge), outflow
 
-		!write csv-files
-		write(13,*) "time step = ", j, ";"
-		write(13,'('//char_n//'(i3,";"))') veg
-
-		write(14,*) "time step = ", j, ";"
-		write(14,'('//char_n//'(i4,";"))') flowdirns
-
-		write(15,*) "time step = ", j, ";"
-		write(15,'('//char_n//'(i12,";"))') store
-
-		write(16,*) "time step = ", j, ";"
-		write(16,'('//char_n//'(i12,";"))') discharge
-
-		write(17,*) "time step = ", j, ";"
-		write(17,'('//char_n//'(i12,";"))') eTActual
-
-		write(18,*) "time step = ", j, ";"
-		write(18,'('//char_n//'(i12,";"))') bareE
-
-		write(19,*) "time step = ", j, ";"
-		write(19,'('//char_n//'(e14.6,";"))') topog
-
-		write(20,*) "time step = ", j, ";"
-		write(20,'('//char_n//'(e14.6,";"))') infiltKern
+      CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
 
 	END IF  
 
@@ -585,7 +560,7 @@ DO j=1,nSteps
 	
 END DO
 
-CALL closeFiles()
+CALL closeCSVrasterFiles()
 	
 END SUBROUTINE SimCODE
 
@@ -2513,7 +2488,8 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, s
   
 END SUBROUTINE VegChange
 
-SUBROUTINE openFiles(resultsName)
+!open (or create) files for writing the output as .csv files
+SUBROUTINE openCSVrasterFiles(resultsName)
 
    IMPLICIT NONE
 
@@ -2532,9 +2508,9 @@ SUBROUTINE openFiles(resultsName)
    OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
    OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
 
-END SUBROUTINE openFiles
+END SUBROUTINE openCSVrasterFiles
 
-SUBROUTINE closeFiles()
+SUBROUTINE closeCSVrasterFiles()
 
    !close files
    CLOSE(2)
@@ -2547,7 +2523,49 @@ SUBROUTINE closeFiles()
    CLOSE(19)
    CLOSE(20)
 
-END SUBROUTINE closeFiles
+END SUBROUTINE closeCSVrasterFiles
+
+
+!write output as multiple .csv files (one for every parameter) containing rasters for each timestep
+!additional a file SummaryResults.csv is created
+SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
+
+   IMPLICIT NONE
+
+   INTEGER, INTENT(in) :: m,n, outflow, i,j
+   character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
+   INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
+   REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
+
+   WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+   sum(bareE), sum(store), sum(discharge), outflow
+
+   !write csv-files
+   write(13,*) "time step = ", j, ";"
+   write(13,'('//char_n//'(i3,";"))') veg
+
+   write(14,*) "time step = ", j, ";"
+   write(14,'('//char_n//'(i4,";"))') flowdirns
+
+   write(15,*) "time step = ", j, ";"
+   write(15,'('//char_n//'(i12,";"))') store
+
+   write(16,*) "time step = ", j, ";"
+   write(16,'('//char_n//'(i12,";"))') discharge
+
+   write(17,*) "time step = ", j, ";"
+   write(17,'('//char_n//'(i12,";"))') eTActual
+
+   write(18,*) "time step = ", j, ";"
+   write(18,'('//char_n//'(i12,";"))') bareE
+
+   write(19,*) "time step = ", j, ";"
+   write(19,'('//char_n//'(e14.6,";"))') topog
+
+   write(20,*) "time step = ", j, ";"
+   write(20,'('//char_n//'(e14.6,";"))') infiltKern
+
+END SUBROUTINE writeCSVraster
 
 END PROGRAM Sensitivity
 

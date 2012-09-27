@@ -79,23 +79,23 @@ write(*,*) 'try to read "inputParameter.txt"'
 open(unitNumber, file='inputParameter.txt', status="old")
 
 DO !loop to read and execute every parameter set
-	call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
+   call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
 		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
     
-    if(run) then
-        call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
+   if(run) then
+      call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
-        if(useRandomSeed) CALL init_random_seed()
+      if(useRandomSeed) CALL init_random_seed()
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
 			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db,title)
 
     else
-        write(*,*) "don't run simulation for this parameter set"
+      write(*,*) "don't run simulation for this parameter set"
     end if
         
     if(.not.anotherParamSet) exit
@@ -144,9 +144,9 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
 
-    integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
+   integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
 	logical, intent(out) :: useStorEmerge
-    real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
+   real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
 	logical, intent(out) :: simEvap		!if true, then simulate evaporation
@@ -160,7 +160,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
 
-    integer :: countTitle !how many title rows have been read so far?
+   integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(221) :: input 	!whole row in input
 	character(20) :: inputParName !parameter Name 
@@ -169,8 +169,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	integer :: ioStatus
 	integer :: i
 	logical :: check = .false. ! if check was successful
-    integer, save :: lineNum !line Number
-    character(9) :: lineNumChar !line number as character
+   integer, save :: lineNum !line Number
+   character(9) :: lineNumChar !line number as character
 	integer, save :: parameterSet !number of parameter set
 	character(9) :: parameterSetChar 
 	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
@@ -211,7 +211,6 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		if(input=="") then !ignore empty rows
 		else
 			
-			
 			PosEQ = index(input, "=")
 			if(PosEQ == 0) then !if there is no equal sign
 				inputParName = "error" !string that doesn't get recognized below and produces the default error message
@@ -249,12 +248,12 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) m
 					case("np")
 						read(inputValChar, *, IOSTAT=IOStatus) np
-		          	case("nSteps")
-		          		read(inputValChar, *, IOSTAT=IOStatus) nSteps
-		       		case("etPersist")
-		       			read(inputValChar, *, IOSTAT=IOStatus) etPersist
-		   			case("storEmerge")
-		   				read(inputValChar, *, IOSTAT=IOStatus) storEmerge
+               case("nSteps")
+                  read(inputValChar, *, IOSTAT=IOStatus) nSteps
+               case("etPersist")
+                  read(inputValChar, *, IOSTAT=IOStatus) etPersist
+               case("storEmerge")
+                  read(inputValChar, *, IOSTAT=IOStatus) storEmerge
 					case("vegmax")
 						read(inputValChar, *, IOSTAT=IOStatus) vegmax
 					case("tSteps")
@@ -309,8 +308,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) simVegEvolve
 					case("RandomInVeg")
 						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
-                    case("useRandomSeed")
-                        read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
+               case("useRandomSeed")
+                  read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -379,36 +378,36 @@ end subroutine readInput
 
 
 subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
- gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+   gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
  
-  implicit none
-  integer, intent(in) :: m, n, np
-  real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
-  integer, intent(out) :: mn, ne, precip
-  real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
-  
-  mn = m*n
-  dy = dx
-  pbar = pa/dble(np) !water in each particle in mm
-  ie = pa / ts  !effective rainfall intensity mm / year
-  alpha = (Kmax-K0)/K0
- !K(r) = K0 +K0 *alpha*exp(-kf*r)
- !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
- !PInf[r_] := Min[1, K[r]/ie]
-  !beta = Emax
- !ET(r) =  Emax*exp(-kc*r)*dx*dy
-  Esb = bav*Emax  !maximum bare soil evap rate
-  Esv = gamma*Esb   !maximum soil evap from under canopy
-  ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
-  !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
-  !by one evap process at any one time
-  te = (1-ts)/ne  !length of a time step in evap calcs in years
+   implicit none
+   integer, intent(in) :: m, n, np
+   real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
+   integer, intent(out) :: mn, ne, precip
+   real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
 
-  Psb = te * Esb / pbar !bare soil
-  Psv = te * Esv / pbar	!same under canopy
-  !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
-  precip = np
-    
+   mn = m*n
+   dy = dx
+   pbar = pa/dble(np) !water in each particle in mm
+   ie = pa / ts  !effective rainfall intensity mm / year
+   alpha = (Kmax-K0)/K0
+   !K(r) = K0 +K0 *alpha*exp(-kf*r)
+   !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
+   !PInf[r_] := Min[1, K[r]/ie]
+   !beta = Emax
+   !ET(r) =  Emax*exp(-kc*r)*dx*dy
+   Esb = bav*Emax  !maximum bare soil evap rate
+   Esv = gamma*Esb   !maximum soil evap from under canopy
+   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
+   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
+   !by one evap process at any one time
+   te = (1-ts)/ne  !length of a time step in evap calcs in years
+
+   Psb = te * Esb / pbar !bare soil
+   Psv = te * Esv / pbar	!same under canopy
+   !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
+   precip = np
+
 end subroutine deriveInputParameters
 
 
@@ -421,66 +420,64 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
 	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsName)
  
-IMPLICIT NONE
+   IMPLICIT NONE
 
-INTEGER, INTENT(IN) :: m !# of rows
-INTEGER, INTENT(IN) :: n !# of columns
-INTEGER,INTENT(IN) :: mn !m*n
-INTEGER, INTENT(IN) :: np
-REAL*8, INTENT(IN) :: pbar
-REAL*8, INTENT(IN) :: ie
-logical, intent(in) :: topogRoute	!if true, then use topography to route flows
-logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
-logical, intent(in) :: simEvap		!if true, then simulate evaporation
-logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
-logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
-CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
-!*************************************************************************************
-CHARACTER(len=3) :: mc
-CHARACTER delimiter
-CHARACTER*150 command
-CHARACTER(len=255) :: cwd, savedir
-INTEGER :: i,j,k, m1,n1,outflow, sold
-INTEGER, intent(in) :: nSteps
-INTEGER :: eSteps, flag, solMax, ne
-!infilt variables
-REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
-Real*8 :: rfx, rfy
-!evap variables
-REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
-REAL*8,DIMENSION(7) :: eparams !evap input array
+   INTEGER, INTENT(IN) :: m !# of rows
+   INTEGER, INTENT(IN) :: n !# of columns
+   INTEGER,INTENT(IN) :: mn !m*n
+   INTEGER, INTENT(IN) :: np
+   REAL*8, INTENT(IN) :: pbar
+   REAL*8, INTENT(IN) :: ie
+   logical, intent(in) :: topogRoute	!if true, then use topography to route flows
+   logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
+   logical, intent(in) :: simEvap		!if true, then simulate evaporation
+   logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
+   logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+   CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+   !*************************************************************************************
+   CHARACTER(len=3) :: mc
+   CHARACTER delimiter
+   CHARACTER*150 command
+   CHARACTER(len=255) :: cwd, savedir
+   INTEGER :: i,j,k, m1,n1,outflow, sold
+   INTEGER, intent(in) :: nSteps
+   INTEGER :: eSteps, flag, solMax, ne
+   !infilt variables
+   REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
+   Real*8 :: rfx, rfy
+   !evap variables
+   REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
+   REAL*8,DIMENSION(7) :: eparams !evap input array
 
-REAL*8 :: rnd
-REAL*8 :: roughness
-!erosion parameters:
-REAL*8, intent(in) :: kv, kb, Dv, Db
+   REAL*8 :: rnd
+   REAL*8 :: roughness
+   !erosion parameters:
+   REAL*8, intent(in) :: kv, kb, Dv, Db
 
-INTEGER :: storEmerge, etPersist, vegmax !veg change variables
-logical :: useStorEmerge  
-REAL*8 :: pc  !veg change variable
+   INTEGER :: storEmerge, etPersist, vegmax !veg change variables
+   logical :: useStorEmerge  
+   REAL*8 :: pc  !veg change variable
 
-INTEGER, DIMENSION(mn,2) :: randOrder
-REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
-REAL*8, DIMENSION(m,n) :: manningsN, infx  !kinematic water variables
-REAL*8, DIMENSION(m,n) :: Ksat, wfs, cumInfilt,  cumInfiltOld, inflow, infex !kinematic water variables
-REAL*8, DIMENSION(m,n,2) :: disOld,  disNew, iex !kinematic water variables
+   INTEGER, DIMENSION(mn,2) :: randOrder
+   REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
+   REAL*8, DIMENSION(m,n) :: manningsN, infx  !kinematic water variables
+   REAL*8, DIMENSION(m,n) :: Ksat, wfs, cumInfilt,  cumInfiltOld, inflow, infex !kinematic water variables
+   REAL*8, DIMENSION(m,n,2) :: disOld,  disNew, iex !kinematic water variables
 
-INTEGER, DIMENSION(m,n) :: precip
-INTEGER, DIMENSION(m,n) :: newflowdirns, store,discharge,veg, eTActual
-INTEGER, DIMENSION(m,n) :: flowdirns, lakes, bareE, dummyveg, solutionOrder
-INTEGER, DIMENSION(m,n) :: solOrder
-INTEGER, DIMENSION(m,n,9) :: mask
-REAL*8, DIMENSION(m,n) :: alpha, deltax
+   INTEGER, DIMENSION(m,n) :: precip
+   INTEGER, DIMENSION(m,n) :: newflowdirns, store,discharge,veg, eTActual
+   INTEGER, DIMENSION(m,n) :: flowdirns, lakes, bareE, dummyveg, solutionOrder
+   INTEGER, DIMENSION(m,n) :: solOrder
+   INTEGER, DIMENSION(m,n,9) :: mask
+   REAL*8, DIMENSION(m,n) :: alpha, deltax
 
-LOGICAL :: lexist
+   LOGICAL :: lexist
 
-integer :: progress !for the progress bar
-
-
-character(4) :: char_n !number of rows as character, used for output formating
-write(char_n,'(i4)') n 
+   integer :: progress !for the progress bar
 
 
+   character(4) :: char_n !number of rows as character, used for output formating
+   write(char_n,'(i4)') n 
 
 !**************************************************************************************
 
@@ -1230,8 +1227,8 @@ SUBROUTINE Neighbours(order,posij, dom,neighbs)
   x0 = posij(1)
   y0 = posij(2)
  
-     k=1
-     Do i=(-1*order),order 
+   k=1
+   Do i=(-1*order),order
      DO j=(-1*order),order
       If (((x0+i).ge.1).and.((x0+i).le.xmax).and.((y0+j).ge.1).and.((y0+j).le.ymax)) THEN
         neighbs(k,1)=x0+i
@@ -1239,8 +1236,8 @@ SUBROUTINE Neighbours(order,posij, dom,neighbs)
       END IF
       k=k+1
      END DO
-     END DO
-    
+   END DO
+
 END SUBROUTINE Neighbours
 
 
@@ -2565,16 +2562,17 @@ END SUBROUTINE writeCSVraster
 ! to display a progress bare in the console:
 SUBROUTINE progressBar(j, nSteps, progress)
 
-IMPLICIT NONE
-INTEGER, intent(in) :: j, nSteps
-Integer, intent(inout) :: progress
+   IMPLICIT NONE
+   INTEGER, intent(in) :: j, nSteps
+   Integer, intent(inout) :: progress
 
-if(j==1) write(*,*) "timestep iteration"
-!write progess bar:
-progress = nint((Real(j)/Real(nSteps))*100)
-write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
-progress, repeat("=", progress/2), repeat("-", (50-progress/2))
-if(j==nSteps) write(*,'(a)') "" ! to make a newline
+   if(j==1) write(*,*) "timestep iteration"
+
+   !write progess bar:
+   progress = nint((Real(j)/Real(nSteps))*100)
+   write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
+   progress, repeat("=", progress/2), repeat("-", (50-progress/2))
+   if(j==nSteps) write(*,'(a)') "" ! to make a newline
 
 END SUBROUTINE progressBar
 

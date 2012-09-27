@@ -492,54 +492,56 @@ CALL openCSVrasterFiles(resultsName)
 !***********************************************************************************
 !Timestep iterations
 DO j=1,nSteps
-	eTActual = 0
+
+   eTActual = 0
 	bareE = 0
 	outflow = 0
-	DO k=1,1  !erosion, routing, evaporation, loop !Nanu: why a loop here?
-		IF (topogRoute) THEN
-		  if(j==1) print*, 'topography is used to route flows'
-		  CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
 
-		END IF
-	   
-		!simulate erosion
-		IF ((topogRoute).and.(simErosion)) THEN
-		  if(j==1)  print*, 'simulating with erosion'
-		  CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n)
-		  CALL Splash(topog,veg, Dv, Db,m,n)
-		  CALL GD8(topog,flowdirns, m,n)
-		END IF
-	   
-		!simulate evaporation
-		IF (simEvap) THEN
-			if(j==1)  print*, 'simulating with evaporation'
-			
-			CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
-			dummyveg = veg
-			
-			CALL VegChange(dummyveg,m,n, vegmax, storEmerge, etPersist, pc, .true., store, eTActual,0)
-			dummyveg = dummyveg - veg  !identify just the new veg
-			
-			If (ne > eSteps) THEN
-				CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,Emax)
-			END IF
-		END IF
-	END DO
-  
-	IF (MOD(j,1).eq.0) THEN
+   IF (topogRoute) THEN
+      if(j==1) print*, 'topography is used to route flows'
 
-      CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
+      CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
 
-	END IF  
+   
+      !simulate erosion
+      IF (simErosion) THEN
+         if(j==1)  print*, 'simulating with erosion'
 
-	IF (simEvap.and.simVegEvolve) THEN
+         CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n)
+         CALL Splash(topog,veg, Dv, Db,m,n)
+         CALL GD8(topog,flowdirns, m,n)
+
+      END IF
+   END IF
+
+   !simulate evaporation
+   IF (simEvap) THEN
+      if(j==1)  print*, 'simulating with evaporation'
+      
+      CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
+      dummyveg = veg
+      
+      CALL VegChange(dummyveg,m,n, vegmax, storEmerge, etPersist, pc, .true., store, eTActual,0)
+      dummyveg = dummyveg - veg  !identify just the new veg
+      
+      If (ne > eSteps) THEN
+         CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,Emax)
+      END IF
+
+   END IF
+
+   !write output
+   CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, &
+      store, discharge, outflow, flowdirns, topog, infiltKern)
+
+   !simulate vegetation evolve
+	IF (simEvap.and.simVegEvolve) THEN !Nanu: has this to be done after writing output?
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
 		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, .true., store, eTActual,1)
 		veg = veg + dummyveg  !add on emerging vegetation
 
 		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
-		!infiltKern =   infiltKern * slopeFactor
 
 		WHERE (veg>0)
 			flowResistance1 = flowResistance0 + kv

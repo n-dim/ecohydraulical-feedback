@@ -2,6 +2,89 @@
 
 \subsection{Overview}
 
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[node distance = 5mm, auto]
+    \node [stop] (start) {start};
+    \node [block, below=of start, node distance = 1cm] (read) {read input};
+    
+    \node [decision, below=of read, node distance = 1.5cm] (run) {run?};
+    \node [block, below=of run] (derive) {derive input parameters};
+    \node [decision, below=of derive] (useRandomSeed) {use random seed?};
+    \node [block, right of=useRandomSeed, node distance=3cm, text width=3.5em,] (initRandomSeed) {initiate random seed};
+    \node [block, below=of  useRandomSeed] (SimCode) {execute simulation};
+    \node [decision, below=of  SimCode, node distance=2.3cm] (repeat) {is there another parameter set?};
+    \node [stop, right of=repeat, node distance=4cm] (stop) {stop};
+    \path [line] (start) -- (read);
+    \path [line] (read) -- (run);
+    \path [line] (run) -- node {yes} (derive); % node [near start] {yes}
+    \path [line] (derive) -- (useRandomSeed);
+    \path [line] (useRandomSeed) -- node {yes} (initRandomSeed);
+    \path [line] (useRandomSeed) -- node {no} (SimCode);
+    \path [line] (initRandomSeed) |- (SimCode);
+    \path [line] (SimCode) -- (repeat);
+    \path [line] (repeat) -- node {no} (stop);
+    \path [line] (run) -| node [near start] {no} (stop);
+    \path [line] (repeat.west) -| ++(-.5, 0) |- node [near start, right] {yes} (read.west);
+\end{tikzpicture}
+\caption{flow chart of the main program}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[node distance=4mm, align=center, every path/.style={line}] %every join/.style={-latex'}
+    \matrix[row sep=4mm,column sep=8mm] {
+        \node [stop] (start) {start}; & \\
+        \node [block] (setInitCond) {set initial conditions}; & \\
+        \node [block] (open) {open (or create)\\ output files}; & \\
+        \node (iteration) [block] {timestep iteration \\ from $t_0$ to $t_{end}$}; & \\
+        &\node (zero) [block] {zero actual ET,\\ bare E and outflow}; & \\
+        &\node (usetopo) [decision] {use\\ topography to route flow?}; &    \node (rwk) [block] {route with kernel}; \node (simErosion) [decision, below=of rwk] {simulate\\ erosion?};
+        \node (erosion) [block, right=8mm of simErosion, ] {erosion}; 
+        \node (splash) [block, below=of erosion] {splash};
+        \node (GD8) [block, below=of splash] {GD8};\\
+        &\node (evap) [decision] {simulate with eva-poration?};  & \node (evaporation) [block] {evaporation};\node (vegChange) [block, below=of evaporation] {vegetation change};\\
+        & \node (write) [block] {write timestep\\ values into output};\\
+        &\node (vegEvolve?)[decision] {simEvap\\ and \\ simVegEvolve}; 
+        \node (endIteration?) [decision, below=8mm of vegEvolve?] {end of\\ iteration};
+        & 
+        \node (vegEvolve) [block] {vegetation evolve}; 
+        \node (changeInfilt) [block, below=of vegEvolve] {change infiltration \\ propterties}; 
+        \node (changeFlowRes) [block, below=of changeInfilt] {change flow \\ resistance};\\
+        & \node (close)[block] {close ouput files}; & \node (stop) [stop] {stop};\\
+    };
+    \path (start) -- (setInitCond);
+    \path (setInitCond) -- (open);
+    \path (open) -- (iteration);
+    \path (iteration.east) -| (zero.north);
+    \path (zero) -- (usetopo);
+    \path (usetopo) -- node [above] {yes} (rwk);
+    \path (usetopo) -- node [right] {no} (evap);
+    \path (rwk) -- (simErosion);
+    \path (simErosion) -- node [above] {yes} (erosion);
+    \path (erosion) -- (splash);
+    \path (splash) -- (GD8);
+    \path (simErosion) |-  node [near start, right] {no} (evap.north);
+    \path (GD8) |- (evap.north);
+    \path (evap) -- node [above] {yes} (evaporation);
+    \path (evaporation) -- (vegChange);
+    \path (vegChange) |- (write.east);
+    \path (evap) -- node [right] {no} (write);
+    \path (write) -- (vegEvolve?);
+    \path (vegEvolve?) -- node [above] {yes} (vegEvolve);
+    \path (vegEvolve) --  (changeInfilt);
+    \path (changeInfilt) -- (changeFlowRes);
+    \path (changeFlowRes) |- (endIteration?);
+    \path (vegEvolve?) -- node [right] {no} (endIteration?);
+    \path (endIteration?) -- node [right] {yes} (close);
+    \path (endIteration?.west) -| node [above, very near start] {no} (iteration);
+    \path (close) -- (stop);
+\end{tikzpicture}
+\end{center}
+\caption{flow chart of subroutine \texttt{SimCode} (simulation execution)}
+\end{figure}
+
 \subsection{Implementation strategy}
 
 

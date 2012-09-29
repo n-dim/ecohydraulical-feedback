@@ -122,6 +122,16 @@ tabsize=4}
 % \setVersion{0.1}
 % \increaseBuild 
 
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows, chains, positioning}
+
+% Define block styles
+\tikzstyle{decision} = [diamond, draw, 
+    text width=4.5em, text badly centered,  inner sep=0pt, rounded corners=0pt]
+\tikzstyle{block} = [rectangle, draw, text centered, rounded corners]
+\tikzstyle{line} = [draw, -latex', rounded corners=10pt]
+\tikzstyle{stop} = [draw, ellipse, minimum height=2em]
+
 %%%%%%%%%%% input-output description for subroutines %%%%%%%%%%%%%
 
 % needs \usepackage{xifthen} in the preamble

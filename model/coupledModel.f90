@@ -121,6 +121,14 @@ write(*,*) 'end of execution\n'
 CONTAINS
 
 SUBROUTINE init_random_seed()
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine initializes the random seed so each time it is run different realisations can be obtained
+!I found that compiling with g95 this subroutine effectively did not work
+!With gfortran however the clock could be used to set the seed to the random number generator
+
+!In condition: None
+!Out condition: The seed is set to the clock value in millisecods at the time of calling
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     INTEGER :: l, j
     INTEGER, DIMENSION(:), ALLOCATABLE :: clock
     write(*,*) "random seed is set by clock"
@@ -131,7 +139,7 @@ SUBROUTINE init_random_seed()
         CALL SYSTEM_CLOCK(COUNT=clock(j))
         clock(j)=clock(j)+j
     END DO
-    write(*,*) "clock = ", clock
+    !write(*,*) "clock = ", clock
     CALL RANDOM_SEED(PUT = clock)
     DEALLOCATE(clock)
 END SUBROUTINE init_random_seed
@@ -144,9 +152,9 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
 
-   integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
+   	integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
 	logical, intent(out) :: useStorEmerge
-   real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
+   	real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
 	logical, intent(out) :: simEvap		!if true, then simulate evaporation
@@ -160,7 +168,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
 
-   integer :: countTitle !how many title rows have been read so far?
+   	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(221) :: input 	!whole row in input
 	character(20) :: inputParName !parameter Name 
@@ -169,16 +177,16 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	integer :: ioStatus
 	integer :: i
 	logical :: check = .false. ! if check was successful
-   integer, save :: lineNum !line Number
-   character(9) :: lineNumChar !line number as character
+   	integer, save :: lineNum !line Number
+   	character(9) :: lineNumChar !line number as character
 	integer, save :: parameterSet !number of parameter set
 	character(9) :: parameterSetChar 
 	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
 	
 	!initiation of some variables:
 	run = .true.  !as default every parameter set gets run in the simulation
-    anotherParamSet = .false. 
-    countTitle = 0 
+    	anotherParamSet = .false. 
+    	countTitle = 0 
 	title = ""
 	description = ""
 	
@@ -419,15 +427,25 @@ end subroutine deriveInputParameters
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
 	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsName)
- 
+
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	!This subroutine does all the calculations after the input parameters have been set
+	!I had intended to provide some flexibility in how the model was run by setting flags
+	!topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg to control whether various
+	!components of the model would be simulated, if so then associated parameters will be used
+
+
    IMPLICIT NONE
 
    INTEGER, INTENT(IN) :: m !# of rows
    INTEGER, INTENT(IN) :: n !# of columns
    INTEGER,INTENT(IN) :: mn !m*n
-   INTEGER, INTENT(IN) :: np
-   REAL*8, INTENT(IN) :: pbar
+
+   INTEGER, INTENT(IN) :: np !number of rain particles
+   REAL*8, INTENT(IN) :: pbar !mean rain event intensity 
    REAL*8, INTENT(IN) :: ie
+
+   !Flags controlling simulation procedure
    logical, intent(in) :: topogRoute	!if true, then use topography to route flows
    logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
    logical, intent(in) :: simEvap		!if true, then simulate evaporation
@@ -435,47 +453,78 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
    !*************************************************************************************
+   
+   !characters for wrting and reading
    CHARACTER(len=3) :: mc
    CHARACTER delimiter
    CHARACTER*150 command
    CHARACTER(len=255) :: cwd, savedir
-   INTEGER :: i,j,k, m1,n1,outflow, sold
+
+   !counters
+   INTEGER :: i,j,k, m1,n1,
+   INTEGER :: outflow, sold
    INTEGER, intent(in) :: nSteps
    INTEGER :: eSteps, flag, solMax, ne
-   !infilt variables
+  
+   !infiltration variables
    REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
    Real*8 :: rfx, rfy
-   !evap variables
+   
+   !evaporation variables
    REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
    REAL*8,DIMENSION(7) :: eparams !evap input array
 
+   !random number
    REAL*8 :: rnd
    REAL*8 :: roughness
+   
    !erosion parameters:
    REAL*8, intent(in) :: kv, kb, Dv, Db
 
-   INTEGER :: storEmerge, etPersist, vegmax !veg change variables
+   !vegetation change variables
+   INTEGER :: storEmerge, etPersist, vegmax 
    logical :: useStorEmerge  
    REAL*8 :: pc  !veg change variable
 
+   !vector for shuffling position of solution order
    INTEGER, DIMENSION(mn,2) :: randOrder
+
+   !matricies defining spatial distribution of infiltration and runoff properties
    REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
-   REAL*8, DIMENSION(m,n) :: manningsN, infx  !kinematic water variables
+   
+   !kinematic wave and Geeen and Ampt infiltration parameters ----- not to be used
+   REAL*8, DIMENSION(m,n) :: manningsN, infx  
    REAL*8, DIMENSION(m,n) :: Ksat, wfs, cumInfilt,  cumInfiltOld, inflow, infex !kinematic water variables
    REAL*8, DIMENSION(m,n,2) :: disOld,  disNew, iex !kinematic water variables
-
-   INTEGER, DIMENSION(m,n) :: precip
-   INTEGER, DIMENSION(m,n) :: newflowdirns, store,discharge,veg, eTActual
-   INTEGER, DIMENSION(m,n) :: flowdirns, lakes, bareE, dummyveg, solutionOrder
-   INTEGER, DIMENSION(m,n) :: solOrder
-   INTEGER, DIMENSION(m,n,9) :: mask
    REAL*8, DIMENSION(m,n) :: alpha, deltax
 
+   !newflowdirns,  flowdirns: flow directions matrices, integer values from 0 - 9 define the flow direction
+   !lakes intended to define local sinks within a landscape
+   !solutionOrder and solOrder define integers classifying cells by the order in which the flow routing should be solved
+   INTEGER, DIMENSION(m,n) :: newflowdirns,  flowdirns
+   INTEGER, DIMENSION(m,n) ::, lakes, solutionOrder
+   INTEGER, DIMENSION(m,n) :: solOrder
+
+   !Water balance counters (of water particles)
+   !precip = annual rainfall (number of particles)
+   !store = water stored in unsaturated zone
+   !discharge = cumulative overland flow
+   !eTActual = number of water particles trnaspired by a plant at m,n
+   !bareE = bare soil evaporation
+   INTEGER, DIMENSION(m,n) :: precip
+   INTEGER, DIMENSION(m,n) :: store,discharge, eTActual, bareE
+   
+   !biomass
+   !integers defining he current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
+   INTEGER, DIMENSION(m,n) :: veg, dummyveg
+   
+   !mask = used by GD8 to solve for global flow routing
+   INTEGER, DIMENSION(m,n,9) :: mask
+   
+   !?????
    LOGICAL :: lexist
 
    integer :: progress !for the progress bar
-
-
    character(4) :: char_n !number of rows as character, used for output formating
    write(char_n,'(i4)') n 
 
@@ -493,13 +542,16 @@ CALL openCSVrasterFiles(resultsName)
 !Timestep iterations
 DO j=1,nSteps
 
+   !reset evaporation and runoff (from model domain) counters
    eTActual = 0
-	bareE = 0
-	outflow = 0
+   bareE = 0
+   outflow = 0
+
 
    IF (topogRoute) THEN
       if(j==1) print*, 'topography is used to route flows'
 
+      !routes and stores water from rain events 
       CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
 
    
@@ -507,9 +559,9 @@ DO j=1,nSteps
       IF (simErosion) THEN
          if(j==1)  print*, 'simulating with erosion'
 
-         CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n)
-         CALL Splash(topog,veg, Dv, Db,m,n)
-         CALL GD8(topog,flowdirns, m,n)
+         CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n) !fluvial sediment transport
+         CALL Splash(topog,veg, Dv, Db,m,n) !diffusive sediment transport
+         CALL GD8(topog,flowdirns, m,n) !recalculate flow directions given the new topography
 
       END IF
    END IF
@@ -535,15 +587,22 @@ DO j=1,nSteps
       store, discharge, outflow, flowdirns, topog, infiltKern)
 
    !simulate vegetation evolve
-	IF (simEvap.and.simVegEvolve) THEN !Nanu: has this to be done after writing output?
+	IF (simEvap.and.simVegEvolve) THEN 
+             !Nanu: has this to be done after writing output?
+             !Gavan: The evaporation is relevat for where plants are at the time
+             !The rational for writing the output before here was that the hydrology and soil 
+             !properties were relevant to where the plants were.
+
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
 		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, .true., store, eTActual,1)
 		veg = veg + dummyveg  !add on emerging vegetation
 
-		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern)
+		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern) 
+                !change soil properties in response to a change in the vegetation distribution 
 
-		WHERE (veg>0)
+		!could probably make this a function
+                WHERE (veg>0)
 			flowResistance1 = flowResistance0 + kv
 		ELSEWHERE
 			flowResistance1 = flowResistance0
@@ -644,7 +703,10 @@ END SUBROUTINE setInitConditions
 
 !TwoDRandPos
 SUBROUTINE TwoDRandPos(randOrder,m, n,mn)
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine returns a mn*2 vector with random positions from the spatial domain m * n
+!This allows to do the calculations progressively and randomly across the spatial domain
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: m, n, mn
@@ -666,7 +728,10 @@ end SUBROUTINE TwoDRandPos
 
 
 SUBROUTINE OneDRandList(a,mn)
-  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine returns a mn*1 vector with random positions from 1 to mn selected without replacement
+!Used to randomly shuffle selections
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: mn
@@ -683,8 +748,13 @@ SUBROUTINE OneDRandList(a,mn)
   end do
  
 END SUBROUTINE OneDRandList
+
 !Lookupfdir
 SUBROUTINE Lookupfdir(dirn, dx,dy)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine takes as input an integer defining a flow direction and returns the increment / 
+!decrement in the position of the cell to which water flows
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: dirn
   INTEGER, INTENT(OUT) :: dx, dy
@@ -726,7 +796,20 @@ END SUBROUTINE Lookupfdir
 
 
 SUBROUTINE RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, newflowdirns, topog, store,discharge,outflow)
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine routes water particles through the landscape
+!It requires as input the spatial distribution:
+!	of rainfall: precip
+!	of infiltration probability: infiltKern
+!	of storage capacity: storeKern
+!Also, 
+!	cumulative outflow (leaving model domain): outflow
+!	topography: topog
+!	flow directions: newflowdirns
+!It returns 
+!	the water infiltrated: store
+!	the cumulative amount of overland flow: discharge
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: m, n, mn
@@ -851,6 +934,17 @@ END SUBROUTINE RoutingWithKernel
 
 
 SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine determines the spatial distribution of soil properties
+!
+!
+!It requires as input the spatial distribution:
+!	of vegetation: veg
+! As well as infiltration parameters: Kmax, K0, ie, rfy, kf
+!	  and lattice dimensions: dx,dy
+!It returns 
+!	the infiltration probability: iProb
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE         
   
   INTEGER, INTENT(IN) :: m, n  !dimensions of the spatial arrays
@@ -897,8 +991,22 @@ SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
   !PRINT*, "iprob",iProb
   !READ*,
 END SUBROUTINE InfiltProb
+
 !ListConvolve
 SUBROUTINE ListConvolve(base,kernel,convol,m,n,m1,n1)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine calculates the convolution of a rectangual kernel (usually the limited spatial
+!extent of plant impact upon soil properties) over the spatial domain, with vegetation being the 
+!positions where the kernel is centered, unvegetated sites are not applied a centered kernel
+!
+!
+!It requires as input xxxxxxx:
+!	
+! As well as the dimensions of the spatial domain: m,n 
+!	  and the dimensions of the kernel: m1,n1
+!It returns 
+!	the convolution: convol
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: m, n, m1, n1
@@ -948,6 +1056,19 @@ END SUBROUTINE ListConvolve
 
 
 SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine simulates fluvial erosion along the flow network
+!
+!
+!It requires as input the spatial distribution:
+!	of vegetation: veg
+!	of topography: topog
+!	flow directions: newflowdirns
+!	the resistance to erosion: flowResistance
+!	the cumulative dischage that had occurred: discharge
+!It returns 
+!	the new topography: topog
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   Integer, INTENT(IN) :: m,n
   Integer, DIMENSION(m,n), INTENT(IN) :: discharge, newflowdirns,veg
@@ -1045,6 +1166,19 @@ END SUBROUTINE Erosion
 
 
 SUBROUTINE Splash(topog,veg, Dv, Db,m,n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine simulated local scale diffusive sediment redistribution
+!
+!
+!It requires as input the spatial distribution:
+!	of topography: topog
+!	of  vegetation: veg
+! As well as sediment diffusion coefficients for
+!	vegetated sites: Dv
+!	bare sites: Db
+!It returns 
+!	the topography: topog
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: m, n
   INTEGER, DIMENSION(m,n), INTENT(IN) :: veg
@@ -1089,6 +1223,16 @@ END SUBROUTINE Splash
 
 
 SUBROUTINE FindHoles(newtopog,holes)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine was intended to identify depressions in the topography that might trap flow
+!not fully tested
+!
+!
+!It requires as input the spatial distribution:
+!	of topography: veg
+!It returns 
+!	a mask identifying depressions: holes
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IMPLICIT NONE
 
 REAL*8, DIMENSION(:,:), INTENT(IN) :: newtopog
@@ -1122,6 +1266,22 @@ END SUBROUTINE FindHoles
 
 SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
   !This version cycles through sites and evaporates water from site and neighbouring sites if vegetated
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine determines the transpiration by idividual plants as well as the bare soil sites
+!and removes water from storage
+!
+!
+!It requires as input the spatial distribution:
+!	of vegetation: veg
+!	of water stored in the subsurface: store
+! As well as evaporation parameters: te,pbar,Psb,Psv,Emax, tsteps,rcx,rcy,kc
+!	  and lattice dimensions: dx,dy
+!It returns 
+!	the transpiration: eTActual
+!	the bare soil evaporation: bareE
+!	the new water storage: store
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   IMPLICIT NONE
    
   INTEGER, DIMENSION(:,:),  INTENT(IN) :: veg
@@ -1211,9 +1371,23 @@ END SUBROUTINE Evaporation
 
 
 SUBROUTINE Neighbours(order,posij, dom,neighbs)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine is used by the GD8 subroutine to identify which cells are in the immediate neighbourhood of a cell
+!
+!
+!It requires as input:
+!	the position: posij
+!	the order defined by the algorithm to define the size of the neighbourhood: order
+! 	As well as the domain: dom
+!	  and lattice dimensions: dx,dy
+!It returns 
+!	the cells defined as neighbours: neighbs
+
   ! (* returns the positions of neighbouring cells depending upon the extent of the neighbourhood  *)
-  ! (* order=1 is the 1st moore neighbourhood *)
+  ! (* i.e. order=1 is the 1st Moore neighbourhood *)
   !(retunrs (-99,-99) for positions outside domain
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   
   IMPLICIT NONE
   
@@ -1245,6 +1419,21 @@ END SUBROUTINE Neighbours
 
 
 SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !(* This function returns the matrix positions;
+      !LSD1: the position of the neighbouring cell with the steepest slope downhill;
+      !LSD2: the position of the neighbouring cell with second steepest slope adjacent LSD1;
+      !otherpos: the position of the other neighbouring cell the mirror reflection about LSD1 of LSD2;
+!
+!It requires as input:
+!	the topography: topog
+!	the order defined by the algorithm to define the size of the neighbourhood: order
+! 	As well as the position of the cell pinned for calculating the flow direction: posxy
+!It returns 
+!	a vector with the [i,j] of the position of LSD1 in row 1
+!	LSD2 in row 2 and otherpos in row3
+  !(retunrs (-99,-99) for positions outside the domain
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IMPLICIT NONE
       
       INTEGER, INTENT(IN) :: order,m ,n
@@ -1252,10 +1441,6 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
       REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
       INTEGER, DIMENSION(3,2), INTENT(OUT) :: lsdList
       
-      !(* This function returns the matrix positions;
-      !LSD1: the position of the neighbouring cell with the steepest slope downhill;
-      !LSD2: the position of the neighbouring cell with second steepest slope adjacent LSD1;
-      !otherpos: the position of the other neighbouring cell the mirror reflection about LSD1 of LSD2;
       
       REAL*8 :: z0, slope1, slope2
       INTEGER :: ymax, xmax, n1,i,posy
@@ -1359,6 +1544,15 @@ END SUBROUTINE LSDs
 
 
 SUBROUTINE RotateArray(list,m,n,leftorRight)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !(* This function returns an array with the values rotated 90 degrees clockwise or anticlockwise;
+!It requires as input:
+!	the array: list
+!	the direction of rotation: leftorRight
+!	the dimensions of the vector: m = rows, n = columns
+!It returns 
+!	the array: list
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      IMPLICIT NONE
      
      INTEGER, INTENT(IN) :: m,n
@@ -1391,6 +1585,15 @@ END SUBROUTINE RotateArray
 
    
 SUBROUTINE Pos1d(list,m,n,match,rownum)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !(* This function returns the position in a vector matching a value
+!It requires as input:
+!	the vector: list
+!	the value to match: match
+!	the dimensions of the vector: m = rows, n = columns
+!It returns 
+!	the number of the row matching the value: match
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      IMPLICIT NONE
      !return the row position that is the same as match , returns 0,0 if no match 
      INTEGER, INTENT(IN) :: m,n
@@ -1424,7 +1627,14 @@ END SUBROUTINE Pos1D
 
 
 Subroutine GD8(topog,flowdirns, m,n)
-   
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !(* This function implements Kyungrock's GD8 algorithm
+!It requires as input:
+!	the topography: topog
+!	the dimensions of the matrix: m = rows, n = columns
+!It returns 
+!	integers for the flow directions: flowdirns
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   
    IMPLICIT NONE
    
    INTEGER,INTENT(IN) :: m,n
@@ -1809,6 +2019,10 @@ END SUBROUTINE GD8
 
 
 Subroutine NewGD8(topog,lakes,flowdirns, m,n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ Ignore this
+This was an attempt at a faster algorithm but it does not work, yet
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
    IMPLICIT NONE
    
    INTEGER,INTENT(IN) :: m,n
@@ -2132,6 +2346,13 @@ END SUBROUTINE NewGD8
 
 
 SUBROUTINE fdirLookup(dirnxy, idirn)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !(* This subroutine takes the 
+!It requires as input:
+!	increment of the position relative to some position to which water may flow: dirnxy
+!It returns 
+!	the integer for the associated flow direction: idirn
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
   IMPLICIT NONE
   
   INTEGER, DIMENSION(2), INTENT(IN) :: dirnxy
@@ -2163,7 +2384,11 @@ END SUBROUTINE fdirLookup
 
 
 SUBROUTINE qsortd(x,ind,n,incdec)
- 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine implemnets Alan Miller's Quick-Sort code
+!a divide and conquor approach to sort a vector into decreasing order
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 ! Code converted using TO_F90 by Alan Miller
 ! Date: 2002-12-18  Time: 11:55:47
 
@@ -2386,7 +2611,9 @@ END SUBROUTINE qsortd
 
 
 SUBROUTINE endShift(arr,rownum,mn,n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !puts a row at rownum to the last row of the array arr
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   
   INTEGER, DIMENSION(mn,n), INTENT(INOUT) :: arr
@@ -2401,6 +2628,12 @@ END SUBROUTINE endShift
 
 
 SUBROUTINE makeOrds(topog,ords, m,n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine
+!	takes topography as input: topog
+!	the dimensions of the input array: m, n
+!It returns an ordered array with an integer specifying the rank of the elevation: ords
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   
   REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
@@ -2436,6 +2669,19 @@ END SUBROUTINE makeOrds
 
 
 SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, store, actualET,isGrow)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!This subroutine impments the simple algorithm to change vegetation/bare soil status and update biomass
+!It takes as input
+!	vegetation: veg
+!	the dimensions of the input array: m, n
+!	vegetation parameters: vegmax, storEmerge, etPersist, pc
+!	flags for tuning: useStorEmerge, isGrow
+!	the water storeage
+!	the spatial distribution of actual evapotranspiration: actualET
+!It returns
+!	the new vegetation distribution and biomass
+!	new storage (accounting for use by emerging plants): store
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  IMPLICIT NONE
  
  INTEGER, INTENT(IN) :: m, n, isGrow
@@ -2448,7 +2694,10 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, s
  !REAL*8 :: rnd
  
  usePCFlag = useStorEmerge  !flag denotes whether to use random collonisation pc or storage based storEmerge
- 
+ !Gavan: is this a global varable then??
+ !pc was intendent to be used to allow random collonisation of any cell, irrespective the amount of water avalable
+ !I didn't like this so tended not to use it
+
  Do i=1,m
   DO j=1,n
     If(veg(i, j).eq.0) THEN 

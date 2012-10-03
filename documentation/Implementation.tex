@@ -11,8 +11,8 @@
     
     \node [decision, below=of read, node distance = 1.5cm] (run) {run?};
     \node [block, below=of run] (derive) {derive input parameters};
-    \node [decision, below=of derive, inner sep=0pt] (useRandomSeed) {use\\ random\\ seed?};
-    \node [block, right of=useRandomSeed, node distance=3cm, text width=3.5em,] (initRandomSeed) {initiate random seed};
+    \node [decision, below=of derive, inner sep=0pt] (useRandomSeed) {random\\ seed\\ by clock?};
+    \node [block, right of=useRandomSeed, node distance=3cm, text width=3.5em,] (initRandomSeed) {set random seed by clock};
     \node [block, below=of  useRandomSeed] (SimCode) {execute simulation};
     \node [decision, below=of  SimCode, node distance=2.3cm, inner sep=0pt] (repeat) {is there\\ another\\ parameter\\ set?};
     \node [stop, below=of repeat] (stop) {stop};

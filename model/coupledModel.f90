@@ -454,14 +454,14 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
    !*************************************************************************************
    
-   !characters for wrting and reading
+   !characters for writing and reading
    CHARACTER(len=3) :: mc
    CHARACTER delimiter
    CHARACTER*150 command
    CHARACTER(len=255) :: cwd, savedir
 
    !counters
-   INTEGER :: i,j,k, m1,n1,
+   INTEGER :: i,j,k, m1,n1
    INTEGER :: outflow, sold
    INTEGER, intent(in) :: nSteps
    INTEGER :: eSteps, flag, solMax, ne
@@ -502,27 +502,24 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    !lakes intended to define local sinks within a landscape
    !solutionOrder and solOrder define integers classifying cells by the order in which the flow routing should be solved
    INTEGER, DIMENSION(m,n) :: newflowdirns,  flowdirns
-   INTEGER, DIMENSION(m,n) ::, lakes, solutionOrder
+   INTEGER, DIMENSION(m,n) :: lakes, solutionOrder
    INTEGER, DIMENSION(m,n) :: solOrder
 
    !Water balance counters (of water particles)
    !precip = annual rainfall (number of particles)
    !store = water stored in unsaturated zone
    !discharge = cumulative overland flow
-   !eTActual = number of water particles trnaspired by a plant at m,n
+   !eTActual = number of water particles transpired by a plant at m,n
    !bareE = bare soil evaporation
    INTEGER, DIMENSION(m,n) :: precip
    INTEGER, DIMENSION(m,n) :: store,discharge, eTActual, bareE
    
    !biomass
-   !integers defining he current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
+   !integers defining the current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
    INTEGER, DIMENSION(m,n) :: veg, dummyveg
    
    !mask = used by GD8 to solve for global flow routing
    INTEGER, DIMENSION(m,n,9) :: mask
-   
-   !?????
-   LOGICAL :: lexist
 
    integer :: progress !for the progress bar
    character(4) :: char_n !number of rows as character, used for output formating
@@ -2020,8 +2017,8 @@ END SUBROUTINE GD8
 
 Subroutine NewGD8(topog,lakes,flowdirns, m,n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- Ignore this
-This was an attempt at a faster algorithm but it does not work, yet
+!Ignore this
+!This was an attempt at a faster algorithm but it does not work, yet
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
    IMPLICIT NONE
    

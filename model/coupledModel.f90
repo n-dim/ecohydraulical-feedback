@@ -494,10 +494,8 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    
    !newflowdirns,  flowdirns: flow directions matrices, integer values from 0 - 9 define the flow direction
    !lakes intended to define local sinks within a landscape
-   !solutionOrder and solOrder define integers classifying cells by the order in which the flow routing should be solved
    INTEGER, DIMENSION(m,n) :: newflowdirns,  flowdirns
-   INTEGER, DIMENSION(m,n) :: lakes, solutionOrder
-   INTEGER, DIMENSION(m,n) :: solOrder
+   INTEGER, DIMENSION(m,n) :: lakes
 
    !Water balance counters (of water particles)
    !precip = annual rainfall (number of particles)

@@ -1,14 +1,14 @@
  time step =            1 ;
-  0.116387+149;  0.310845+149;  0.362378+149;  0.486174+149;  0.333409+149; -0.400420+149; -0.130707+150; -0.158065+150;
-  0.262866+149;  0.283192+154;  0.189952+154;           NaN;           NaN;           NaN;     +Infinity;     +Infinity;
-           NaN;           NaN;     +Infinity;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
  time step =            2 ;
-     +Infinity;     +Infinity;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
+           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;
            NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;           NaN;

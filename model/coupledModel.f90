@@ -43,8 +43,7 @@ real*8 :: kc		!per meter : rate of decline in plant water uptake with distance
 real*8 :: rc		!meter: maximum length for plant water uptake
 real*8 :: gamma		!relative reduction of soil evap under canopy
 real*8 :: bav		!scaling factor for bare soil evaporation Esb calc
-real*8 :: pc		!prob of collonisation of bare soil
-real*8 :: roughness	
+real*8 :: roughness
 
 logical :: topogRoute	!if true, then use topography to route flows
 logical :: simErosion	!if true, then simulate erosion and update flow pathways
@@ -81,7 +80,7 @@ open(unitNumber, file='inputParameter.txt', status="old")
 DO !loop to read and execute every parameter set
    call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
-		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv,&
+		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
 		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
     
    if(run) then
@@ -92,7 +91,7 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db,title)
 
     else
       write(*,*) "don't run simulation for this parameter set"
@@ -146,7 +145,7 @@ END SUBROUTINE init_random_seed
 
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
-	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv, &
+	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
 	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
 
 	IMPLICIT NONE
@@ -154,7 +153,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 
    	integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
 	logical, intent(out) :: useStorEmerge
-   	real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, pc, roughness, kv, Dv
+   	real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
 	logical, intent(out) :: simEvap		!if true, then simulate evaporation
@@ -294,8 +293,6 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) gamma
 					case("bav")
 						read(inputValChar, *, IOSTAT=IOStatus) bav
-					case("pc")
-						read(inputValChar, *, IOSTAT=IOStatus) pc
 					case("roughness")
 						read(inputValChar, *, IOSTAT=IOStatus) roughness
 					case("kv")
@@ -366,7 +363,6 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 		write(*,*) "rc             = ", rc
 		write(*,*) "gamma          = ", gamma
 		write(*,*) "bav            = ", bav
-		write(*,*) "pc             = ", pc
 		write(*,*) "roughness      = ", roughness
 		write(*,*) "kv             = ", kv
 		write(*,*) "kb             = ", kb
@@ -426,7 +422,7 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, pc, useStorEmerge,kv, kb, Dv, Db, resultsName)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db, resultsName)
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!This subroutine does all the calculations after the input parameters have been set
@@ -483,8 +479,7 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 
    !vegetation change variables
    INTEGER :: storEmerge, etPersist, vegmax 
-   logical :: useStorEmerge  
-   REAL*8 :: pc  !veg change variable
+   logical :: useStorEmerge
 
    !vector for shuffling position of solution order
    INTEGER, DIMENSION(mn,2) :: randOrder
@@ -562,7 +557,7 @@ DO j=1,nSteps
       CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
       dummyveg = veg
       
-      CALL VegChange(dummyveg,m,n, vegmax, storEmerge, etPersist, pc, .true., store, eTActual,0)
+      CALL VegChange(dummyveg,m,n, vegmax, storEmerge, etPersist, .true., store, eTActual,0)
       dummyveg = dummyveg - veg  !identify just the new veg
       
       If (ne > eSteps) THEN
@@ -584,7 +579,7 @@ DO j=1,nSteps
 
 		if(j==1) write(*,*) 'simulating with vegetation growth'
 
-		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, .true., store, eTActual,1)
+		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, .true., store, eTActual,1)
 		veg = veg + dummyveg  !add on emerging vegetation
 
 		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern) 
@@ -2658,13 +2653,13 @@ END SUBROUTINE makeOrds
 
 
 
-SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, store, actualET,isGrow)
+SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, useStorEmerge, store, actualET,isGrow)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !This subroutine impments the simple algorithm to change vegetation/bare soil status and update biomass
 !It takes as input
 !	vegetation: veg
 !	the dimensions of the input array: m, n
-!	vegetation parameters: vegmax, storEmerge, etPersist, pc
+!	vegetation parameters: vegmax, storEmerge, etPersist
 !	flags for tuning: useStorEmerge, isGrow
 !	the water storeage
 !	the spatial distribution of actual evapotranspiration: actualET
@@ -2676,23 +2671,14 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, s
  
  INTEGER, INTENT(IN) :: m, n, isGrow
  logical, intent(in) :: useStorEmerge
- logical :: usePCFlag
  INTEGER, DIMENSION(m,n), INTENT(INOUT) :: veg, store, actualET
  
- REAL*8 :: pc !prob of collonisation of bare soil
  INTEGER :: vegmax, i, j, storEmerge, etPersist
- !REAL*8 :: rnd
- 
- usePCFlag = useStorEmerge  !flag denotes whether to use random collonisation pc or storage based storEmerge
- !Gavan: is this a global varable then??
- !pc was intendent to be used to allow random collonisation of any cell, irrespective the amount of water avalable
- !I didn't like this so tended not to use it
 
  Do i=1,m
   DO j=1,n
     If(veg(i, j).eq.0) THEN 
      If (useStorEmerge) THEN 
-      IF (usePCFlag) THEN !Nanu: why this again? usePCFlag = useStorEmerge or not?
         If(store(i, j) > storEmerge) THEN
           store(i, j) = store(i, j) - storEmerge
           actualET(i,j) = actualET(i,j)+storEmerge
@@ -2700,12 +2686,6 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, pc, useStorEmerge, s
         !ELSE
           !store(i, j) = 0
         END IF
-      ELSE
-        CALL random_number(rnd)
-        If(rnd < pc) THEN
-          veg(i, j) = 1
-        END IF
-      END IF !end if (usePCFlag.lt.0)
      END IF
     ELSE
     If (isGrow.gt.0) THEN

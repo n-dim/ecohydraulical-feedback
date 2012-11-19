@@ -15,7 +15,6 @@ etPersist = 	200			!evapotranspiration rate over which plants start do grow
 storEmerge =	120			!storage based emerge of new plants
 useStorEmerge = T			!flag denotes whether to use random collonisation pc or storage based sEmerge
 vegmax = 		9			!maximum biomass
-pc = 			-1			!prob of collonisation of bare soil
 
 
 tSteps= 		200 		!number of iterations for evap calcs between veg change

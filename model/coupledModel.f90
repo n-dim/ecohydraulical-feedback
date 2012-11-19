@@ -491,12 +491,6 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 
    !matricies defining spatial distribution of infiltration and runoff properties
    REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
-   
-   !kinematic wave and Geeen and Ampt infiltration parameters ----- not to be used
-   REAL*8, DIMENSION(m,n) :: manningsN, infx  
-   REAL*8, DIMENSION(m,n) :: Ksat, wfs, cumInfilt,  cumInfiltOld, inflow, infex !kinematic water variables
-   REAL*8, DIMENSION(m,n,2) :: disOld,  disNew, iex !kinematic water variables
-   REAL*8, DIMENSION(m,n) :: alpha, deltax
 
    !newflowdirns,  flowdirns: flow directions matrices, integer values from 0 - 9 define the flow direction
    !lakes intended to define local sinks within a landscape

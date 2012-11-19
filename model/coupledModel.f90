@@ -530,8 +530,8 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 write(*,*) 'starting simulation'
 
 CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
-   eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
-   K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
 CALL openCSVrasterFiles(resultsName)
 
@@ -617,8 +617,8 @@ END SUBROUTINE SimCODE
 
 !set initial Conditions
 SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
-   eSteps, ne, flowResistance0, topog, RandomInVeg, veg, store, lakes, flowdirns, topogRoute, &
-   K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
 
    IMPLICIT NONE
 
@@ -633,7 +633,7 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
    INTEGER, INTENT(INOUT) :: eSteps
    integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
       !by one evap process at any one time
-   REAL*8, DIMENSION(m,n), intent(out) ::  topog, flowResistance0
+   REAL*8, DIMENSION(m,n), intent(out) ::  topog, flowResistance0, flowResistance1
    logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
    INTEGER, DIMENSION(m,n), intent(out) :: veg, store
    INTEGER, DIMENSION(m,n), intent(out) :: flowdirns, lakes
@@ -683,6 +683,7 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
       END DO
    END DO
 
+   flowResistance1 = flowResistance0
    store=0
    lakes = 0
    flowdirns = -2

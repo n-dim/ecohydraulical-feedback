@@ -337,46 +337,47 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	!if reading process was successful:
 	else 
 		write(*,*) "read input without errors"
-		write(*,*) "using following input parameters:"
-		!repeat input parameters vor visual validation
-		write(*,*) 'title          = ', trim(title)
-		write(*,*) "description    = ", trim(description)
-		write(*,*) "run simulation = ", run
-		write(*,*) "m              = ", m
-		write(*,*) "n              = ", n
-		write(*,*) "np             = ", np
-		write(*,*) "nSteps         = ", nSteps
-		write(*,*) "etPersist      = ", etPersist
-		write(*,*) "storEmerge     = ", storEmerge
-		write(*,*) "vegmax         = ", vegmax
-		write(*,*) "tSteps         = ", tSteps
-		write(*,*) "useStorEmerge  = ", useStorEmerge
-		write(*,*) "dx             = ", dx
-		write(*,*) "pa             = ", pa
-		write(*,*) "ts             = ", ts
-		write(*,*) "K0             = ", K0
-		write(*,*) "Kmax           = ", Kmax
-		write(*,*) "kf             = ", kf
-		write(*,*) "rf             = ", rf
-		write(*,*) "Emax           = ", Emax
-		write(*,*) "kc             = ", kc
-		write(*,*) "rc             = ", rc
-		write(*,*) "gamma          = ", gamma
-		write(*,*) "bav            = ", bav
-		write(*,*) "roughness      = ", roughness
-		write(*,*) "kv             = ", kv
-		write(*,*) "kb             = ", kb
-		write(*,*) "Dv             = ", Dv
-		write(*,*) "Db             = ", Db
-		write(*,*) "topogRoute     = ", topogRoute
-		write(*,*) "simErosion     = ", simErosion
-		write(*,*) "simEvap        = ",	simEvap
-		write(*,*) "simVegEvolve   = ", simVegEvolve
-		write(*,*) "RandomInVeg    = ", RandomInVeg
-        write(*,*) "useRandomSeed  = ", useRandomSeed
+		write(*,*) 'control input parameters in "output/', trim(title), ' - inputParameter.txt"'
+      OPEN(123,file='./output/'//trim(adjustl(title))//' - inputParameter.txt')
+      write(123,*) 'title          = ', trim(title)
+      write(123,*) "description    = ", trim(description)
+      write(123,*) "run            = ", run
+      write(123,*) "m              = ", m
+      write(123,*) "n              = ", n
+      write(123,*) "np             = ", np
+      write(123,*) "nSteps         = ", nSteps
+      write(123,*) "etPersist      = ", etPersist
+      write(123,*) "storEmerge     = ", storEmerge
+      write(123,*) "vegmax         = ", vegmax
+      write(123,*) "tSteps         = ", tSteps
+      write(123,*) "dx             = ", dx
+      write(123,*) "pa             = ", pa
+      write(123,*) "ts             = ", ts
+      write(123,*) "K0             = ", K0
+      write(123,*) "Kmax           = ", Kmax
+      write(123,*) "kf             = ", kf
+      write(123,*) "rf             = ", rf
+      write(123,*) "Emax           = ", Emax
+      write(123,*) "kc             = ", kc
+      write(123,*) "rc             = ", rc
+      write(123,*) "gamma          = ", gamma
+      write(123,*) "bav            = ", bav
+      write(123,*) "roughness      = ", roughness
+      write(123,*) "kv             = ", kv
+      write(123,*) "kb             = ", kb
+      write(123,*) "Dv             = ", Dv
+      write(123,*) "Db             = ", Db
+      write(123,*) "useStorEmerge  = ", useStorEmerge
+      write(123,*) "topogRoute     = ", topogRoute
+      write(123,*) "simErosion     = ", simErosion
+      write(123,*) "simEvap        = ",	simEvap
+      write(123,*) "simVegEvolve   = ", simVegEvolve
+      write(123,*) "RandomInVeg    = ", RandomInVeg
+      write(123,*) "useRandomSeed  = ", useRandomSeed
+      CLOSE(123)
 	end if
-	
-	
+
+
 return
 end subroutine readInput
 

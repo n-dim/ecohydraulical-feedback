@@ -1,6 +1,36 @@
 library(fields)
 #library(rgl)
 
+readCSV <- function(file=NA) {
+  if(is.na(file)) file <- file.choose()
+  Temp <- read.table(file, sep="=", colClasses="character", strip.white=T)
+  parameter <- as.list(Temp[,2])
+  names(parameter) <- Temp[,1]
+  formats <- c(rep("character", 2), "logical", rep("numeric", 25), rep("logical", 7))
+  for(i in 1:length(parameter)){
+    parameter[i] <- as(parameter[i], formats[i])
+  }
+
+  attach(parameter)
+  rasterSets <- c("bareE", "discharge", "eTActual", "flowdirections", "flowResistance", "store", "topography", "vegetation")
+  rasters <- vector("list", length(rasterSets))
+  for(i in 1:length(rasterSets)){
+    for(j in 1:nSteps){
+        Temp <- as.matrix(read.table(file=paste("../model/output/", title, " - ", rasterSets[i], ".csv", sep=""), sep=";", skip=(1+(j-1)*(m+1)), nrow=m, header=F))
+        colnames(Temp) <- NULL  
+        rasters[[i]][[j]] <- Temp[1:n,1:m]
+    }
+  }
+  names(rasters) <- rasterSets
+  
+  Summary <- read.table(file=paste("../model/output/", title, " - ", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
+  
+  detach("parameter")
+  message(paste('read input from parameterset "', parameter$title, '"', sep=""))
+  return(list(parameter=parameter, Summary=Summary, rasters=rasters))
+  
+}
+
 lookupfdir <-function(fdir) {
    switch(paste(fdir,"",sep=""),
        '1' = c(-1,-1),
@@ -46,7 +76,6 @@ fdirPlot <- function(imData,fdirs) {
   }
 }
 
-setwd('c:/christoph/paper/gavan/model')
 
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
 par(oma=c(0,0,0,0))
@@ -69,6 +98,8 @@ for (k in 1:1) {
   #bareEvap   <-    array(data=NA,dim=c(nrows,ncols,dimres),dimnames=c("x","y","t"))
   topog      <-    array(data=NA,dim=c(nrows,ncolms,dimres),dimnames=c("x","y","t"))
   #infiltProb <-    array(data=NA,dim=c(nrows,ncols,dimres),dimnames=c("x","y","t"))
+
+  #read file in old format:
   strm <-file(paste(paste('TStepResults',1,sep=""),'_1.out',sep=""),open = "r")
   readLines(con=strm,n=1);
 

@@ -60,15 +60,15 @@
         
         &\node (evap) [decision] {simulate with\\ evaporation?};  
         & \node (evaporation) [block] {\texttt{Evaporation()}};
-        \node [description, right=of evaporation] {\annote[Nanu]{evaporation}{from vegetated sites?}};
+        \node [description, right=of evaporation] {evapotranspiration};
         
         \node (vegChange) [block, below=of evaporation] {\texttt{VegChange()}};
         \node [description, right=of vegChange] {vegetation change};\\
         & \node (write) [block] {write timestep\\ values into output};\\
-        &\node (vegEvolve?)[decision] {simEvap\\ and \\ simVegEvolve}; 
-        \node (endIteration?) [decision, below=8mm of vegEvolve?] {end of\\ iteration};
+        &\node (vegEvolve?)[decision] {simEvap\\ and \\ simVegEvolve?}; 
+        \node (endIteration?) [decision, below=8mm of vegEvolve?] {end of\\ iteration?};
         & 
-        \node (vegEvolve) [block] {vegetation evolve}; 
+        \node (vegEvolve) [block] {vegetation growth}; 
         \node [description, right=of vegEvolve] {\texttt{VegChange()} with flag \texttt{isGrow} $=$ \texttt{TRUE}};
         
         \node (changeInfilt) [block, below=of vegEvolve] {\texttt{InfiltProb()}}; 

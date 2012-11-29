@@ -1,0 +1,42 @@
+\include{head}
+
+\begin{document}
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[node distance=4mm, align=center, every path/.style={line}, every node/.style={font=\footnotesize}] %every join/.style={-latex'}
+    \matrix[row sep=4mm,column sep=6mm] {
+        \node [stop] (start) {start};\\
+        \node [block] (zero) {\texttt{tempSurfaceStore}$=0;$\\ \texttt{discharge} $=0$};\\
+        \node [block] (shuffle) {randomly shuffle positions};\\
+        \node [block] (iterPrecip) {iteration over rainfall particles}; \\
+        \node [block] (iterRaster) {iteration over $(x,y)$}; \\
+        \node [block] (rnum) {create random number};\\
+        \node [block] (saveStorage?) {is? \\ \texttt{rnum} $<$ infiltration Kernel at $(x,y)$ \\ and \\ store at $(x,y) <$ storage Kernel at $(x,y)$}; 
+        & \node [block] (saveStorage) {save particle in storage};\\
+        \node [decision] (boundary) {is \\ periodic boundary \\ condition?};\\
+        \node [block] (lookupfdir) {lookup flow direction};\\
+        \node [block] () {save particle in discharge};\\
+        \node [block] (flowOverBoundary){flow reaches boundary?}; 
+        & \node [block] (isDepression?) {is depression?}; 
+        & \node [block] (tempSurfaceStore) {add particle to \\ temporal surface Storage};\\
+        && \node [block] {spread out particle over \\ neighboring lower cells};\\
+        \node [block] (outflow) {save particle in outflow};\\
+        };
+        \node [description, right=of shuffle] {with subroutine \texttt{TwoDRandPos()}};
+        \node [description, right=of rnum] {\texttt{rnum}};
+
+        \path [line] (saveStorage?) -- node [above] {yes} (saveStorage);
+        \path [line] (saveStorage?) -- node [right] {no} (boundary);
+        \path [line] (flowOverBoundary) -- node [right] {true} (outflow);
+        \path [line] (flowOverBoundary) -- node [above] {else} (isDepression?);
+        \path [line] (isDepression?) -- node [above] {true} (tempSurfaceStore);
+
+\end{tikzpicture}
+\end{center}
+\caption{flow chart of subroutine \texttt{SimCode} (simulation execution)}
+\end{figure}
+
+
+
+\end{document}

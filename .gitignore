@@ -13,3 +13,17 @@ documentation/GavsDocumentation.out
 
 model/test.f90
 model/coupledModel.f90.orig
+
+*.idx
+
+*.ilg
+
+*.ind
+
+*.log
+
+*.nlo
+
+documentation/RoutingWithKernel.synctex.gz
+
+*.aux

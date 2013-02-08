@@ -2494,7 +2494,7 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, useStorEmerge, store
 !	the dimensions of the input array: m, n
 !	vegetation parameters: vegmax, storEmerge, etPersist
 !	flags for tuning: useStorEmerge, isGrow
-!	the water storeage
+!	the water storage
 !	the spatial distribution of actual evapotranspiration: actualET
 !It returns
 !	the new vegetation distribution and biomass

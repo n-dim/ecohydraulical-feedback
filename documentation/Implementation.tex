@@ -120,16 +120,16 @@
 \subroutine{SimCODE}{m, n, mn, simflags, climParams, infiltParams, evapParams,\\ vegParams, erParams, resultsFID}
 
 \inout{
-\inoutentry[emph]{m}{integer}{}{number of rows}
-\inoutentry{n}{integer}{}{number of colums}
-\inoutentry{mn}{integer}{}{$=$ \texttt{m$\cdot$n}}
-\inoutentry{simflags}{integer}{6}{{[}1{]} $\ldots$ is for this, {[}2{]} $\ldots$ is for that, \note[Nanu]{should be explained!}}
-\inoutentry{climParams}{8-byte real}{4}{\ \annote[Nanu]{climate parameters}{how to input these?}}
-\inoutentry{infiltParams}{8-byte real}{6}{\ \remove[Nanu]{vegetation and} soil kernel parameters}
-\inoutentry{evapParams}{8-byte real}{8}{evaporation parameters}
-\inoutentry{vegParams}{8-byte real}{5}{vegetation \remove[Nanu]{and soil kernel} parameters}
-\inoutentry{erParams}{8-byte real}{4}{\ \annote[Nanu]{vegetation and soil kernel parameters}{what specific?}}
-\inoutentry{resultsFID}{character}{len=8}{results file id code}
+\inoutentry[emph]{m}{integer}{}{}{}{number of rows}
+\inoutentry{n}{integer}{}{}{}{number of colums}
+\inoutentry{mn}{integer}{}{}{}{$=$ \texttt{m$\cdot$n}}
+\inoutentry{simflags}{integer}{6}{}{}{{[}1{]} $\ldots$ is for this, {[}2{]} $\ldots$ is for that, \note[Nanu]{should be explained!}}
+\inoutentry{climParams}{8-byte real}{4}{}{}{\ \annote[Nanu]{climate parameters}{how to input these?}}
+\inoutentry{infiltParams}{8-byte real}{6}{}{}{\ \remove[Nanu]{vegetation and} soil kernel parameters}
+\inoutentry{evapParams}{8-byte real}{8}{}{}{evaporation parameters}
+\inoutentry{vegParams}{8-byte real}{5}{}{}{vegetation \remove[Nanu]{and soil kernel} parameters}
+\inoutentry{erParams}{8-byte real}{4}{}{}{\ \annote[Nanu]{vegetation and soil kernel parameters}{what specific?}}
+\inoutentry{resultsFID}{character}{len=8}{}{}{results file id code}
 }{
 }
 
@@ -150,14 +150,14 @@
 \annote[Nanu]{Green-ampt infiltration calculation.}{Literature?}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{dt}{8-byte real}{}{}
-\inoutentry{inflow}{8-byte real}{\mn}{surface runon + precipitation ($R+P$)}
-\inoutentry{wfs}{8-byte real}{\mn}{\ \annote[Nanu]{wetting front suction {*} moisture deficit}{formula?}}
-\inoutentry{cumInfilt}{8-byte real}{\mn}{\ \annote[Nanu]{cumulative infiltration}{nomenclature?}}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{dt}{8-byte real}{}{}{}{}
+\inoutentry{inflow}{8-byte real}{\mn}{}{}{surface runon + precipitation ($R+P$)}
+\inoutentry{wfs}{8-byte real}{\mn}{}{}{\ \annote[Nanu]{wetting front suction {*} moisture deficit}{formula?}}
+\inoutentry{cumInfilt}{8-byte real}{\mn}{}{}{\ \annote[Nanu]{cumulative infiltration}{nomenclature?}}
 }{
-\inoutentry{infex}{8-byte real}{\mn}{infiltration excess}
-\inoutentry{cumInfilt}{8-byte real}{\mn}{cumulative infiltration}
+\inoutentry{infex}{8-byte real}{\mn}{}{}{infiltration excess}
+\inoutentry{cumInfilt}{8-byte real}{\mn}{}{}{cumulative infiltration}
 }
 
 \subsubsection{\annote[Nanu]{TwoDRandPos}{cannot guess what this means}}
@@ -165,10 +165,10 @@
 \subroutine{TwoDRandPos}{randOrder, m, n, mn}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}{}{}
 }{
-\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}
+\inoutentry{randOrder}{integer}{\texttt{mn,2}}{}{}{}
 }
 
 
@@ -187,16 +187,16 @@ x 1 array where 1s indicate that a neighbour (as defined by the position
 in mask(x,y) ) discharges to the cell at x,y
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{topog}{integer}{\texttt{mn,n}}{}
-\inoutentry{manningsN}{integer}{\texttt{mn,n}}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{topog}{integer}{\texttt{mn,n}}{}{}{}
+\inoutentry{manningsN}{integer}{\texttt{mn,n}}{}{}{}
 }{
-\inoutentry{deltax}{8-byte real}{\mn}{}
-\inoutentry{alpha}{8-byte real}{\mn}{}
-\inoutentry{solMax}{integer}{}{}
-\inoutentry{solOrder}{integer}{\mn}{}
-\inoutentry{flowdirns}{integer}{\mn}{flow directions}
-\inoutentry{mask}{integer}{\texttt{m},\texttt{n},9}{}
+\inoutentry{deltax}{8-byte real}{\mn}{}{}{}
+\inoutentry{alpha}{8-byte real}{\mn}{}{}{}
+\inoutentry{solMax}{integer}{}{}{}{}
+\inoutentry{solOrder}{integer}{\mn}{}{}{}
+\inoutentry{flowdirns}{integer}{\mn}{}{}{flow directions}
+\inoutentry{mask}{integer}{\texttt{m},\texttt{n},9}{}{}{}
 }
 
 \begin{usessubs}
@@ -232,19 +232,19 @@ iex(m,n,2)=qitPlus
 \annote[Nanu]{\texttt{init} a value passed to initialise the variables}{same for this}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{ndx}{integer}{}{}
-\inoutentry{solMax}{integer}{}{}
-\inoutentry{flowdirns}{integer}{\mn}{flow directions}
-\inoutentry{solOrder}{integer}{\mn}{}
-\inoutentry{mask}{integer}{\mn}{}
-\inoutentry{alpha}{8-byte real}{\mn}{}
-\inoutentry{deltax}{8-byte real}{\mn}{}
-\inoutentry{dt}{8-byte real}{}{time step}
-\inoutentry{disOld,disNew}{8-byte real}{\mn\texttt{,ndx}}{}
-\inoutentry{iex}{8-byte real}{\texttt{m},\texttt{n},2}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{ndx}{integer}{}{}{}{}
+\inoutentry{solMax}{integer}{}{}{}{}
+\inoutentry{flowdirns}{integer}{\mn}{}{}{flow directions}
+\inoutentry{solOrder}{integer}{\mn}{}{}{}
+\inoutentry{mask}{integer}{\mn}{}{}{}
+\inoutentry{alpha}{8-byte real}{\mn}{}{}{}
+\inoutentry{deltax}{8-byte real}{\mn}{}{}{}
+\inoutentry{dt}{8-byte real}{}{}{}{time step}
+\inoutentry{disOld,disNew}{8-byte real}{\mn\texttt{,ndx}}{}{}{}
+\inoutentry{iex}{8-byte real}{\texttt{m},\texttt{n},2}{}{}{}
 }{
-\inoutentry{disOld, disNew}{8-byte real}{\texttt{m},\texttt{n},\texttt{ndx}}{}
+\inoutentry{disOld, disNew}{8-byte real}{\texttt{m},\texttt{n},\texttt{ndx}}{}{}{}
 }
 
 \subsubsection{Kinematic wave order}
@@ -258,10 +258,10 @@ equation on the drainage network. Values of 1 assigned to top of catchment,
 distance to that point from all points above it.
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{flowdirns}{integer}{\texttt{m},\texttt{n}}{flow directions}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{flowdirns}{integer}{\texttt{m},\texttt{n}}{}{}{flow directions}
 }{
-\inoutentry{solutionOrder}{integer}{\texttt{n},\texttt{n}}{}
+\inoutentry{solutionOrder}{integer}{\texttt{n},\texttt{n}}{}{}{}
 }
 
 \begin{usessubs}
@@ -273,10 +273,10 @@ distance to that point from all points above it.
 \subroutine{OneDRandList}{a, mn}
 
 \inout{
-\inoutentry{mn}{integer}{}{}
-\inoutentry{a}{integer}{\texttt{mn},2}{}
+\inoutentry{mn}{integer}{}{}{}{}
+\inoutentry{a}{integer}{\texttt{mn},2}{}{}{}
 }{
-\inoutentry{a}{integer}{\texttt{mn},2}{}
+\inoutentry{a}{integer}{\texttt{mn},2}{}{}{}
 }
 
 \subsubsection{Lookup for direction}
@@ -284,9 +284,9 @@ distance to that point from all points above it.
 \subroutine{Lookupfdir}{dirn, dx, dy}
 
 \inout{
-\inoutentry{dirn}{integer}{}{}
+\inoutentry{dirn}{integer}{}{}{}{}
 }{
-\inoutentry{dx,dy}{integer}{}{}
+\inoutentry{dx,dy}{integer}{}{}{}{}
 }
 
 
@@ -295,21 +295,24 @@ distance to that point from all points above it.
 \subroutine{RoutingWithKernel}{m, n, mn, precip, infiltKern, storeKern,
 newflowdirns,\\ topog, store, discharge, outflow}
 
+This subroutine routes water particles through the landscape.
+
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{mn}{integer}{}{}
-\inoutentry{infiltKern}{8-byte real}{\mn}{}
-\inoutentry{storeKern}{8-byte real}{\mn}{}
-\inoutentry{topog}{8-byte real}{\mn}{}
-\inoutentry{precip}{integer}{\mn}{}
-\inoutentry{store}{integer}{\mn}{}
-\inoutentry{newflowdirns}{integer}{\mn}{flow directions}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{mn}{integer}{}{}{}{}
+\inoutentry{infiltKern}{8-byte real}{\mn}{}{}{infiltration probability}
+\inoutentry{storeKern}{8-byte real}{\mn}{}{}{storage capacity}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{topography}
+\inoutentry{precip}{integer}{\mn}{}{}{rainfall}
+\inoutentry{store}{integer}{\mn}{}{}{}
+\inoutentry{newflowdirns}{integer}{\mn}{}{}{flow directions}
 }{
-\inoutentry{outflow}{integer}{}{}
-\inoutentry{store}{integer}{\mn}{}
-\inoutentry{newflowdirns}{integer}{\mn}{new flow directions}
-\inoutentry{discharge}{integer}{\mn}{}
+\inoutentry{outflow}{integer}{}{}{}{cumulative outflow (leaving model domain)}
+\inoutentry{store}{integer}{\mn}{}{}{water infiltrated}
+\inoutentry{newflowdirns}{integer}{\mn}{}{}{new flow directions}
+\inoutentry{discharge}{integer}{\mn}{}{}{cumulative amount of overland flow}
 }
+
 
 \begin{description}
 \item [{Notice:}] Periodic boundary conditions can only really be defined
@@ -334,16 +337,16 @@ the direction of lower x and y.
 This subroutine calculates the spatial distributed infiltration probability.
 
 \inout{
-\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
-\inoutentry{rfx, rfy}{integer}{}{maximum radius for plant effects on soil properties}
-\inoutentry{kf}{integer}{}{}
-\inoutentry{veg}{integer}{\mn}{vegetation matrix}
-\inoutentry{K0}{8-byte real}{}{}
-\inoutentry{ie}{8-byte real}{}{}
-\inoutentry{Kmax}{8-byte real}{}{}
-\inoutentry{dx, dy}{8-byte real}{}{length scales of lattice}
+\inoutentry{m,n}{integer}{}{}{}{dimensions of the spatial arrays}
+\inoutentry{rfx, rfy}{integer}{}{}{}{maximum radius for plant effects on soil properties}
+\inoutentry{kf}{integer}{}{}{}{}
+\inoutentry{veg}{integer}{\mn}{}{}{vegetation matrix}
+\inoutentry{K0}{8-byte real}{}{}{}{}
+\inoutentry{ie}{8-byte real}{}{}{}{}
+\inoutentry{Kmax}{8-byte real}{}{}{}{}
+\inoutentry{dx, dy}{8-byte real}{}{}{}{length scales of lattice}
 }{
-\inoutentry{iProb}{8-byte real}{\mn}{infiltration probability matrix}
+\inoutentry{iProb}{8-byte real}{\mn}{}{}{infiltration probability matrix}
 }
 
 \subsubsection{List Convolve}
@@ -351,12 +354,12 @@ This subroutine calculates the spatial distributed infiltration probability.
 \subroutine{ListConvolve}{base, kernel, convol, m, n, m1, n1}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{m1,n1}{integer}{}{}
-\inoutentry{base}{integer}{\mn}{}
-\inoutentry{kernel}{integer}{\texttt{m},\texttt{n}}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{m1,n1}{integer}{}{}{}{}
+\inoutentry{base}{integer}{\mn}{}{}{}
+\inoutentry{kernel}{integer}{\texttt{m},\texttt{n}}{}{}{}
 }{
-\inoutentry{convol}{}{\mn}{}
+\inoutentry{convol}{}{\mn}{}{}{}
 }
 
 \subsubsection{Erosion\index{erosion}}
@@ -364,13 +367,13 @@ This subroutine calculates the spatial distributed infiltration probability.
 \subroutine{Erosion}{discharge, topog, newflowdirns, flowResistance, m, n}
 
 \inout{
-\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
-\inoutentry{discharge}{integer}{\mn}{discharge has units of $\unitfrac{mm}{year}$}
-\inoutentry{newflowdirns}{integer}{\mn}{new flow directions}
-\inoutentry{flowResistance}{8-byte real}{\mn}{flow resistance; effective $d_{40}$ grainsize in $\unit{mm}$}
-\inoutentry{topog}{8-byte real}{\mn}{topography}
+\inoutentry{m,n}{integer}{}{}{}{dimensions of the spatial arrays}
+\inoutentry{discharge}{integer}{\mn}{}{}{discharge has units of $\unitfrac{mm}{year}$}
+\inoutentry{newflowdirns}{integer}{\mn}{}{}{new flow directions}
+\inoutentry{flowResistance}{8-byte real}{\mn}{}{}{flow resistance; effective $d_{40}$ grainsize in $\unit{mm}$}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{topography}
 }{
-\inoutentry{topog}{8-byte real}{\mn}{topography}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{topography}
 }
 
 \begin{usessubs}
@@ -382,12 +385,12 @@ This subroutine calculates the spatial distributed infiltration probability.
 \subroutine{Splash}{topog, veg, Dv, Db, m, n}
 
 \inout{
-\inoutentry{m,n}{integer}{}{dimensions of the spatial arrays}
-\inoutentry{veg}{integer}{\mn}{}
-\inoutentry{topog}{8-byte real}{\mn}{topography}
-\inoutentry{Dv,Db}{8-byte real}{}{$\unitfrac{m^{2}}{kyr}$}
+\inoutentry{m,n}{integer}{}{}{}{dimensions of the spatial arrays}
+\inoutentry{veg}{integer}{\mn}{}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{topography}
+\inoutentry{Dv,Db}{8-byte real}{}{}{}{$\unitfrac{m^{2}}{kyr}$}
 }{
-\inoutentry{topog}{8-byte real}{\mn}{topography}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{topography}
 }
 
 \begin{usessubs}
@@ -399,9 +402,9 @@ This subroutine calculates the spatial distributed infiltration probability.
 \subroutine{FindHoles}{newtopog,holes}
 
 \inout{
-\inoutentry{newtopog}{8-byte real}{:,:}{topography}
+\inoutentry{newtopog}{8-byte real}{:,:}{}{}{topography}
 }{
-\inoutentry{holes}{8-byte real}{:,:}{}
+\inoutentry{holes}{8-byte real}{:,:}{}{}{}
 }
 
 \begin{lstlisting}[caption={a program listing could look like this;
@@ -458,18 +461,18 @@ This version cycles through sites and evaporates water from site and
 neighbouring sites if vegetated.
 
 \inout{
-\inoutentry{veg}{integer}{:,:}{}
-\inoutentry{eTActual}{integer}{:,:}{}
-\inoutentry{bareE}{integer}{:,:}{}
-\inoutentry{store}{integer}{:,:}{}
-\inoutentry{tsteps}{integer}{}{}
-\inoutentry{rcx, rcy, kc}{8-byte real}{}{}
-\inoutentry{dx, dy}{8-byte real}{}{}
-\inoutentry{params}{8-byte real}{7}{}
+\inoutentry{veg}{integer}{:,:}{}{}{}
+\inoutentry{eTActual}{integer}{:,:}{}{}{}
+\inoutentry{bareE}{integer}{:,:}{}{}{}
+\inoutentry{store}{integer}{:,:}{}{}{}
+\inoutentry{tsteps}{integer}{}{}{}{}
+\inoutentry{rcx, rcy, kc}{8-byte real}{}{}{}{}
+\inoutentry{dx, dy}{8-byte real}{}{}{}{}
+\inoutentry{params}{8-byte real}{7}{}{}{}
 }{
-\inoutentry{store}{integer}{:,:}{}
-\inoutentry{eTActual}{integer}{:,:}{}
-\inoutentry{bareE}{integer}{:,:}{}
+\inoutentry{store}{integer}{:,:}{}{}{}
+\inoutentry{eTActual}{integer}{:,:}{}{}{}
+\inoutentry{bareE}{integer}{:,:}{}{}{}
 }
 
 \begin{usessubs}
@@ -481,11 +484,11 @@ neighbouring sites if vegetated.
 \subroutine{Neighbours}{order, posij, dom, neighbs}
 
 \inout{
-\inoutentry{order}{integer}{}{}
-\inoutentry{posij}{integer}{2}{}
-\inoutentry{dom}{integer}{2}{}
+\inoutentry{order}{integer}{}{}{}{}
+\inoutentry{posij}{integer}{2}{}{}{}
+\inoutentry{dom}{integer}{2}{}{}{}
 }{
-\inoutentry{neighbs}{integer}{\annote[Nanu]{(order*2+1)**2,2}{as formula?}}{}
+\inoutentry{neighbs}{integer}{\annote[Nanu]{(order*2+1)**2,2}{as formula?}}{}{}{}
 }
 
 \subsubsection{LSDs}
@@ -505,11 +508,11 @@ reflection about LSD1 of LSD2
 \end{description}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{posxy}{integer}{2}{}
-\inoutentry{topog}{8-byte real}{\mn}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{posxy}{integer}{2}{}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{}
 }{
-\inoutentry{lsdList}{integer}{3,2}{}
+\inoutentry{lsdList}{integer}{3,2}{}{}{}
 }
 
 \begin{usessubs}
@@ -522,11 +525,11 @@ reflection about LSD1 of LSD2
 \subroutine{RotateArray}{list, m, n, leftorRight}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{list}{integer}{\mn}{}
-\inoutentry{leftorRight}{integer}{}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{list}{integer}{\mn}{}{}{}
+\inoutentry{leftorRight}{integer}{}{}{}{}
 }{
-\inoutentry{list}{integer}{\mn}{}
+\inoutentry{list}{integer}{\mn}{}{}{}
 }
 
 \subsubsection{Pos1D}
@@ -534,11 +537,11 @@ reflection about LSD1 of LSD2
 \subroutine{Pos1d}{list, m, n, match, rownum}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{list}{integer}{\mn}{}
-\inoutentry{match}{integer}{\texttt{n}}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{list}{integer}{\mn}{}{}{}
+\inoutentry{match}{integer}{\texttt{n}}{}{}{}
 }{
-\inoutentry{rownum}{integer}{\texttt{m}}{}
+\inoutentry{rownum}{integer}{\texttt{m}}{}{}{}
 }
 
 \subsubsection{GD8 fow directions}
@@ -546,10 +549,10 @@ reflection about LSD1 of LSD2
 \subroutine{GD8}{topog, flowdirns, m, n}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{topog}{8-byte real}{\mn}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{}
 }{
-\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+\inoutentry{flowdirns}{integer}{\mn}{}{}{flow directions}
 }
 
 \begin{usessubs}
@@ -569,11 +572,11 @@ Calculates flow directions following the \index{GD8-algorithm}GD8-algorithm
 of \citet{Paik2008a}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{lakes}{integer}{\mn}{}
-\inoutentry{topog}{8-byte real}{\mn}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{lakes}{integer}{\mn}{}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{}
 }{
-\inoutentry{flowdirns}{integer}{\mn}{flow directions}
+\inoutentry{flowdirns}{integer}{\mn}{}{}{flow directions}
 }
 
 \begin{usessubs}
@@ -589,9 +592,9 @@ of \citet{Paik2008a}
 \subroutine{fdirLookup}{dirnxy, idirn}
 
 \inout{
-\inoutentry{dirnxy}{integer}{2}{}
+\inoutentry{dirnxy}{integer}{2}{}{}{}
 }{
-\inoutentry{idirn}{integer}{}{}
+\inoutentry{idirn}{integer}{}{}{}{}
 }
 
 \subsubsection{Array sort}
@@ -602,12 +605,12 @@ This subroutine uses an order $n\cdot\log(n)$ quick sort to sort
 a real (double precision/8-byte) array $x(n)$ into increasing order.
 
 \inout{
-\inoutentry{x(n)}{8-byte real}{}{vector of length \texttt{n} to be sorted}
-\inoutentry{n}{integer}{}{length of the array \texttt{x(n)}}
-\inoutentry{incdec}{integer}{}{if positive the ind is returned so values decreasing order}
-\inoutentry{incdec}{integer}{}{}
+\inoutentry{x(n)}{8-byte real}{}{}{}{vector of length \texttt{n} to be sorted}
+\inoutentry{n}{integer}{}{}{}{length of the array \texttt{x(n)}}
+\inoutentry{incdec}{integer}{}{}{}{if positive the ind is returned so values decreasing order}
+\inoutentry{incdec}{integer}{}{}{}{}
 }{
-\inoutentry{ind(n)}{integer}{}{vector of length $\geqq$ \texttt{n}; sequence of indices $1,\ldots,n$ permuted in the same fashion as x would be: $y(i)=x\left(ind(i)\right)$}
+\inoutentry{ind(n)}{integer}{}{}{}{vector of length $\geqq$ \texttt{n}; sequence of indices $1,\ldots,n$ permuted in the same fashion as x would be: $y(i)=x\left(ind(i)\right)$}
 }
 
 \texttt{ind} is initialized to the ordered sequence of indices $1,\ldots,n$,
@@ -632,12 +635,12 @@ Credit goes to Robert Renka Oak Ridge Natl. Lab.
 \subroutine{endShift}{arr, rownum, mn, n}
 
 \inout{
-\inoutentry{rown}{integer}{}{}
-\inoutentry{n}{integer}{}{}
-\inoutentry{mn}{integer}{}{}
-\inoutentry{arr}{integer}{mn,n}{}
+\inoutentry{rown}{integer}{}{}{}{}
+\inoutentry{n}{integer}{}{}{}{}
+\inoutentry{mn}{integer}{}{}{}{}
+\inoutentry{arr}{integer}{mn,n}{}{}{}
 }{
-\inoutentry{arr}{integer}{mn,n}{}
+\inoutentry{arr}{integer}{mn,n}{}{}{}
 }
 
 \subsubsection{makeOrds}
@@ -645,10 +648,10 @@ Credit goes to Robert Renka Oak Ridge Natl. Lab.
 \subroutine{makeOrds}{topog, ords, m, n}
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{topog}{8-byte real}{\mn}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{topog}{8-byte real}{\mn}{}{}{}
 }{
-\inoutentry{ords}{integer}{size(topog),2}{}
+\inoutentry{ords}{integer}{size(topog),2}{}{}{}
 }
 
 \begin{usessubs}
@@ -657,20 +660,30 @@ Credit goes to Robert Renka Oak Ridge Natl. Lab.
 
 \subsubsection{Vegetation Change}
 
-\subroutine{VegChange}{veg, m, n, vegParams, store, actualET, isEmerge, isGrow}
+\subroutine{VegChange}{veg,m,n,vegmax, storEmerge, etPersist, useStorEmerge, store, \\ actualET,isGrow}
+
+This subroutine implements the simple algorithm to change vegetation/bare soil status and update biomass
 
 \inout{
-\inoutentry{m,n}{integer}{}{}
-\inoutentry{isGrow}{integer}{}{}
-\inoutentry{isEmerge}{integer}{}{}
-\inoutentry{vegParams}{8-byte real}{5}{}
-\inoutentry{veg}{integer}{\mn}{}
-\inoutentry{store}{integer}{\mn}{}
-\inoutentry{actualET}{integer}{\mn}{}
+\inoutentry{m,n}{integer}{}{}{}{}
+\inoutentry{etPersists}{integer}{}{T_c}{L\,T^{-1}}{annual transpiration rate over which plants start to grow (transpiration threshold for carbon assimilation)}
+\inoutentry{vegmax}{ingeger}{}{b_{max}}{}{maximum biomass}
+\inoutentry{isGrow}{integer}{}{}{}{}
+\inoutentry{isEmerge}{integer}{}{}{}{}
+\inoutentry{vegParams}{8-byte real}{5}{}{}{}
+\inoutentry{veg}{integer}{\mn}{}{}{}
+\inoutentry{store}{integer}{\mn}{}{}{}
+\inoutentry{actualET}{integer}{\mn}{T_a}{L\,T^{-1}}{the spatial distribution of actual evapotranspiration}
 }{
-\inoutentry{veg}{integer}{\mn}{}
-\inoutentry{store}{integer}{\mn}{}
-\inoutentry{actualET}{integer}{\mn}{}
+\inoutentry{veg}{integer}{\mn}{}{}{}
+\inoutentry{store}{integer}{\mn}{}{}{}
+\inoutentry{actualET}{integer}{\mn}{}{}{}
 }
+
+Note: there is no variable for $\Delta \tilde{b}$, the normalized vegetation growth delta. It is simply set to \annote[nanu]{$1$.}{1 is not consistend with the following text! And maybe we should make this an input variable. }
+\[
+\Delta \tilde{b} = \frac{\Delta b}{b_{max}}
+\]
+with $\Delta b$ ... annualized avarage growth rate of plants. \citet{gav2012} used $b_{max} = \unit[2]{kg\ m^{-2}}$ and $\Delta \tilde{b} =0.1$ or rather $\Delta b = \unit[0.2]{kg\ m^{-2}\ yr^{-1}}$
 
 \subsection{Customizability}

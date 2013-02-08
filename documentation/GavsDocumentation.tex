@@ -1,6 +1,7 @@
 \documentclass[twoside,english]{article}
 \usepackage{graphicx, color}
 \usepackage{color}%
+\usepackage[authoryear]{natbib}
 
 \include{knitr}
 
@@ -137,7 +138,7 @@ tabsize=4}
 % needs \usepackage{xifthen} in the preamble
 \RequirePackage{xifthen}
 
-\newcommand{\inoutentry}[5][]{% #1 (optional) emphasized index entry? #2 variable name, #3 variable type, #4 dimensions, #5 description
+\newcommand{\inoutentry}[7][]{% #1 (optional) emphasized index entry? #2 variable name, #3 variable type, #4 dimensions, #5 math symbol, #6 unit, #7 description
     \hspace*{0.3cm}&\texttt{#2}%
     \ifthenelse{\equal{#1}{emph}}% use bf to myke an amphasized index entry
         {\index{#2@\texttt{#2}|textbf}}%
@@ -149,19 +150,23 @@ tabsize=4}
         \ifthenelse{\isempty{#4}}%
             {}%
             {{[}#4{]}}%
-        \hspace*{.5em} &  #5 \tabularnewline
+        \hspace*{.5em} &  $ #5 $ &%
+        \ifthenelse{\isempty{#6}}%
+            { }%
+            { $[\unit{#6}]$}%
+        \hspace*{.3em} & #7 \tabularnewline
 }
 
 \newcommand{\inout}[2]{     % #1 input, #2 output
     \setlength{\tabcolsep}{0pt}
     \renewcommand{\arraystretch}{1.2}
-    \begin{tabulary}{\textwidth}{llllL}
-        \multicolumn{2}{l}{\textbf{input}} & & & \\
+    \begin{tabulary}{\textwidth}{llllllL}
+        \multicolumn{2}{l}{\textbf{input}} & & & & & \\
         \ifthenelse{\isempty{#1}}%
             {\hspace*{0.3cm}&no input\\}
             {#1}
         \noalign{\vskip 2ex}
-        \multicolumn{2}{l}{\textbf{output}} & & & \\
+        \multicolumn{2}{l}{\textbf{output}} & & & & & \\
         \ifthenelse{\isempty{#2}}%
             {\hspace*{0.3cm}&no output\\}
             {#2}
@@ -337,6 +342,7 @@ text\}}
 
 \include{Implementation}
 
+
 \clearpage{}
 
 \fancyhead[RE,LO]{}
@@ -371,7 +377,8 @@ text\}}
 
 \renewcommand{\rightmark}{REFERENCES}
 \bibliographystyle{apa}
-\phantomsection\addcontentsline{toc}{section}{\refname}\bibliography{GavansDocumentation}
+\phantomsection\addcontentsline{toc}{section}{\refname}
+\bibliography{literature/GavansDocumentation}
 
 \clearpage{}
 

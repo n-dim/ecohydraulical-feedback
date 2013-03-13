@@ -1,0 +1,34 @@
+title = figure_6_a_0
+	description = parameters from McGrath et al. (2012) Figure 6 (a) with roughness=0
+
+	roughness = 0  !epsilon
+
+	K0 = 0.080 !still needs to be converted in units?
+	Kmax = 1.36 !still needs to be converted in units?
+	kf = 1.0
+	kc = 1.0
+
+title = figure_6_a_05
+	roughness = 0.05
+
+title = figure_6_a_99
+	roughness = 0.99
+
+
+!––––––––––––––––––––––––––––
+
+title = figure_6_b
+
+	description = parameters from McGrath et al. (2012) Figure 6 (b)
+
+	kf = 0.6
+	kc = 0.6
+	Kmax = 0.717
+
+	roughness = 0
+
+title = figure_6_b_05
+	roughness = 0.05
+
+title = figure_6_b_99
+	roughness = 0.99

@@ -1,0 +1,19 @@
+title = figure_5_a_b
+
+description = parameters from McGrath et al. (2012) Figure 5 (a,b)
+
+roughness = 0  !epsilon
+
+K0 = 0.032 !still needs to be converted in units?
+Kmax = 0.95 !still needs to be converted in units?
+kf = 1.0
+kc = 1.0
+
+!––––––––––––––––––––––––––––
+
+title = figure_5_c_d
+
+description = parameters from McGrath et al. (2012) Figure 5 (c,d)
+
+roughness = 0.99  !epsilon
+

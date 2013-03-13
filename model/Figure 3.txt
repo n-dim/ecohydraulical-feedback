@@ -1,0 +1,84 @@
+title = standard_parameters
+description = I'm not sure how these parameters are set
+
+run=F
+
+!climate /landscape parameters:
+np = 100					!number of particles of rain falling
+
+tSteps = 200 		!number of iterations for evap calcs between veg change
+
+nSteps 	= 100 		!total number of "years"
+
+useStorEmerge = T	!flag denotes whether to use random collonisation pc or storage based sEmerge
+vegmax = 9		!maximum biomass
+
+rf = 5 			! meter: maximum length for plant effect on infiltration
+
+Emax = 876 		! 0.5 * (365.0* 24.0)  from mm/hr to mm/year
+
+rc = 5 			!meter: maximum length for plant water uptake
+gamma = 0.5 		!relative reduction of soil evap under canopy
+bav = 0.1  		!scaling factor for Esb calc
+
+!erosion
+kv = 0.1d0 		!10.0
+kb = 0.1d0
+Dv = 0.1d0 		!1.0
+Db = 0.1d0 		!m^2/kyr
+
+!------------------------
+title = Figure_3_250mm
+description = Remake of McGrath et al. (2012) Figure 3
+
+m = 60	!= 300m/dx = 300m/5m
+n = 60	!number of columns
+
+roughness = 0			!epsilon
+
+
+!veg change variables
+etPersist = 200		!200% = 2
+storEmerge = 4.8  !4.8% = 0.048
+
+pa = 250 		!mean annual precip
+ts = 0.013	!duration of time raining in years (e.g.: days raining/days of year)
+
+
+!infiltration kernel parameters:
+K0 = 0.25488			!in mm/hr derived from 7.08 * 10^(-8) m/s 
+Kmax = 	2.3004		!in mm/hr derived from 6.39 * 10^(-7) m/s
+kf = 1.0 		!per meter : rate of decline in plant effect on infiltration
+dx = 5			!spatial dimesions of lattice cells
+
+!evaporation kernel parameters
+kc = 0.6 		!per meter : rate of decline in plant water uptake with distance
+
+topogRoute	= F 	!if true, then use topography to route flows
+simErosion	= F 	!if true, then simulate erosion and update flow pathways
+simEvap			= T		!if true, then simulate evaporation
+simVegEvolve	= T !if true, then simulate evolving vegetation
+RandomInVeg	= T 	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
+useRandomSeed = T !if true, set random seed by clock
+
+!run=F
+	
+!---------------------------
+title = Figure_3_400mmm
+pa = 400 		!mean annual precip
+
+!---------------------------
+title = Figure_3_600mmm
+pa = 600 		!mean annual precip
+
+!---------------------------
+title = Figure_3_800mmm
+pa = 800 		!mean annual precip
+
+!---------------------------
+title = Figure_3_900mmm
+pa = 900 		!mean annual precip
+
+!---------------------------
+title = Figure_3_1200mmm
+pa = 1200 		!mean annual precip

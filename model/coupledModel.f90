@@ -20,7 +20,7 @@ character(40) :: title
 character(200) :: description
 logical :: run 		!run simulation for this parameter set?
 integer :: m, n		!number of rows and colums
-integer :: np		!number of patricles of rain falling
+integer :: np		!number of particles of rain falling
 integer :: nSteps	!total number of "years"
 integer :: etPersist	!evapotranspiration rate over which plants start do grow 
                         !(transpiration threshold for carbon assimilation)

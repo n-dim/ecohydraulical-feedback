@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[buttonsize=1em]{animate}
+\usepackage{color}
+
+\begin{document}
+\SweaveOpts{dev='tikz',concordance=TRUE, fig.show='animate'}
+\title{ecohydraulical model output}
+\maketitle
+
+<<functions>>=
+  load("output.RData")
+attach(x$parameter)
+#detach(x$parameter)
+
+listMax <- function(x){
+  isRealMax = NULL
+  isMax = NULL
+  for(i in 1:length(x)){
+    isMax <- max(x[[i]])
+    if (i == length(x)) break
+    isRealMax <- max(isMax, isRealMax)
+  }
+  return(isRealMax)
+}
+
+listMin <- function(x){
+  isMin=NULL
+  isRealMin=NULL
+  for(i in 1:length(x)){
+    isMin <- min(x[[i]])
+    if (i == length(x)) break
+    isRealMin <- min(isMin, isRealMin)
+  }
+  return(isRealMin)
+}
+
+heatplot <- function(x){
+  par_old <- par()
+  minimum <- listMin(x)
+  maximum <- listMax(x)
+  colorRamp <- rev(heat.colors(100))
+  levels <- seq(minimum, maximum, length.out=100)
+  for(i in 1:10){
+    par(mar = c(3,5,2.5,0.5))
+    image(1:m, 1:n, x[[i]], zlim=c(minimum, maximum), asp=1, main=i, col=colorRamp)
+    box()
+    
+    par(mar = c(3,0.5,2.5,2))
+    image(1, levels, matrix(data=levels, ncol=length(levels),nrow=1), xaxt="n", yaxt="n", col=colorRamp)
+    axis(side=4, las=1)
+    
+    Sys.sleep(0.2)
+  }
+  #par(par_old)
+}
+@
+
+<<fig.width=5, fig.height=4.28, cache=FALSE>>=  
+  layout(matrix(data=c(1,2), nrow=1, ncol=2), widths=c(6,1), heights=c(1,1))
+heatplot(x$rasters$veg)
+
+@
+\end{document}

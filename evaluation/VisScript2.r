@@ -49,7 +49,7 @@ lookupfdir <-function(fdir) {
 fdirPlot <- function(imData,fdirs) {
   dimDat<- dim(imData)
   disCols <- two.colors(n=64, start="lightskyblue1", end="blue4", middle="royalblue2")
-  image(imData,axes=FALSE, col=colsVeg,zlim=c(1,9))
+  image(imData,axes=FALSE, col=colsVeg)
   for (i in 1:dimDat[1]) {
   for (j in 1:dimDat[2]) {
   dxdy <- lookupfdir(fdirs[i,j])
@@ -77,12 +77,6 @@ fdirPlot <- function(imData,fdirs) {
 }
 
 
-colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
-par(oma=c(0,0,0,0))
-par(mar=c(0.1,0.1,0.1,0.1))
-ndx <- c(1,1,1)
-k0 <- (ndx[3]-1)*6+(ndx[2]-1)*6*6+(ndx[1]-1)*6*6*6
-par(mfrow=c(3,3))
 #layout(matrix(c(1:12),4,3,byrow=TRUE),widths=c(1,1,1,1),heights=c(1,1,1,1))
 tsteps <-90
 dimres <-90
@@ -123,10 +117,22 @@ for (k in 1:1) {
   }
   close(strm)
   
+colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
+par(oma=c(0,0,0,0))
+par(mar=c(0.1,0.1,0.1,0.1))
+ndx <- c(1,1,1)
+k0 <- (ndx[3]-1)*6+(ndx[2]-1)*6*6+(ndx[1]-1)*6*6*6
+par(mfrow=c(3,3))
+layout(1)
   for (i in c(1:dimres)) {
-    image(veg[,,i],asp=1,xlim=c(0,1),ylim=c(0,1),zlim=c(1,9),axes=FALSE,col=colsVeg)
-    fdirPlot(discharge[,,i],flowdirns[,,i])
-    image(topog[,,i],asp=1,xlim=c(0,1),ylim=c(0,1),axes=FALSE,col=terrain.colors(64))
+    #vegetation
+    image(Data$rasters$vegetation[[i]],asp=1,zlim=c(1,9),axes=FALSE,col=colsVeg)
+    #bareE
+    image(Data$rasters$bareE[[i]],asp=1,zlim=c(1,9),axes=FALSE,col=colsVeg)
+    #directions
+    fdirPlot(Data$rasters$discharge[[i]], Data$rasters$flowdirections[[i]])
+    #topography
+    image(Data$rasters$topog[[i]],asp=1,axes=FALSE,col=terrain.colors(64))
    }
 }
 

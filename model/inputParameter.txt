@@ -1,8 +1,8 @@
 title = firstParamSet
 description = in this experiment I try to assess some certain parameters relating...
 
-m 	= 			10	!number of rows
-n 	= 			10	!number of columns
+m 	= 			100	!number of rows
+n 	= 			100	!number of columns
 
 !climate /landscape parameters:
 np 	= 			100 		!number of particles of rain falling
@@ -53,9 +53,3 @@ RandomInVeg	= T !if true, then allow vegetation to be randomly distributed initi
 useRandomSeed = F !if true, set random seed by clock
 
 !run=F
-	
-!---------------------------
-title = 02
-m = 8
-n = 8
-!np = 101

@@ -32,7 +32,7 @@ readCSV <- function(file=NA) {
 }
 
 lookupfdir <-function(fdir) {
-   switch(paste(fdir,"",sep=""),
+   switch(as.character(fdir),
        '1' = c(-1,-1),
        '2' = c(-1,0),
        '3' = c(-1,1),
@@ -42,14 +42,29 @@ lookupfdir <-function(fdir) {
        '7' = c(1,-1),
        '8' = c(0,-1),
        '9' = c(0,0),
-           c(-2,-2)
+             c(0,0)
    )
+}
+
+# new flow direction plot function:
+flowdirPlot <- function(Data, t) {
+  attach(Data$parameter)
+  maxwidth <- max(Data$raster$discharge[[t]])
+  for(i in 1:m){
+    for(j in 1:n){
+      direction <- lookupfdir(Data$raster$flowdirections[[t]][i,j])
+      width <- Data$raster$discharge[[t]][i,j]
+      #lines(x=c(i, i-direction[1]), y=c(j, j-direction[2]))
+      arrows(x0=i,y0=j, x1=i-direction[1], y1=j-direction[2], length=0.1, lwd=width/maxwidth*10, lend=1)
+    }
+  }
+  detach(Data$parameter)
 }
 
 fdirPlot <- function(imData,fdirs) {
   dimDat<- dim(imData)
   disCols <- two.colors(n=64, start="lightskyblue1", end="blue4", middle="royalblue2")
-  image(imData,axes=FALSE, col=colsVeg)
+  image(x=1:(Data$parameter$m*Data$parameter$dx), y=1:Data$parameter$n*Data$parameter$dx ,z=imData,col=colsVeg, asp=1)
   for (i in 1:dimDat[1]) {
   for (j in 1:dimDat[2]) {
   dxdy <- lookupfdir(fdirs[i,j])
@@ -117,8 +132,11 @@ for (k in 1:1) {
   }
   close(strm)
   
+#example:
+  Data <- readCSV()
+  
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
-par(oma=c(0,0,0,0))
+par(oma=c(2,2,0.1,0.1))
 par(mar=c(0.1,0.1,0.1,0.1))
 ndx <- c(1,1,1)
 k0 <- (ndx[3]-1)*6+(ndx[2]-1)*6*6+(ndx[1]-1)*6*6*6
@@ -126,13 +144,13 @@ par(mfrow=c(3,3))
 layout(1)
   for (i in c(1:dimres)) {
     #vegetation
-    image(Data$rasters$vegetation[[i]],asp=1,zlim=c(1,9),axes=FALSE,col=colsVeg)
+    image(x=1:Data$parameter$m, y=1:Data$parameter$n ,z=Data$rasters$vegetation[[i]],asp=1,zlim=c(1,9),col=colsVeg)
     #bareE
     image(Data$rasters$bareE[[i]],asp=1,zlim=c(1,9),axes=FALSE,col=colsVeg)
     #directions
     fdirPlot(Data$rasters$discharge[[i]], Data$rasters$flowdirections[[i]])
     #topography
-    image(Data$rasters$topog[[i]],asp=1,axes=FALSE,col=terrain.colors(64))
+    image(x=1:(Data$parameter$m*Data$parameter$dx), y=1:Data$parameter$n*Data$parameter$dx ,z=Data$rasters$topog[[i]],asp=1,col=terrain.colors(64))
    }
 }
 

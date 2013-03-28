@@ -73,7 +73,11 @@ integer :: unitNumber = 11
 logical :: anotherParamSet !are there multiple parameter Sets?
 logical :: Errors =.false. !Errors from input read process
 
-
+INTEGER, DIMENSION(4) :: bcs  !boundary conditions along borders
+LOGICAL :: setBCs !flag for boundary conditions
+   
+  
+   
 write(*,*) 'try to read "inputParameter.txt"'
 open(unitNumber, file='inputParameter.txt', status="old")
 
@@ -81,9 +85,16 @@ DO !loop to read and execute every parameter set
    call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
-		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
+		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
+   !nanu you might want to put this somewhere else
+   setBCs = .FALSE.
+   if (sum(abs(bcs))>0) then
+    setBCs = .TRUE.
+   end if		
     
    if(run) then
+   
+            
       call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
@@ -91,7 +102,8 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
+			kb, Dv, Db,title, bcs, setBCS)
 
     else
       write(*,*) "don't run simulation for this parameter set"
@@ -146,7 +158,7 @@ END SUBROUTINE init_random_seed
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
-	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
+	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
 
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
@@ -166,7 +178,9 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	character(200), intent(out) :: description
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
-
+	INTEGER, DIMENSION(4), INTENT(OUT) :: bcs !code for boundary conditions along borders
+       
+   
    	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(221) :: input 	!whole row in input
@@ -315,6 +329,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
                case("useRandomSeed")
                   read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
+				        case("BCs")
+						read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -373,6 +389,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
       write(123,*) "simEvap        = ",	simEvap
       write(123,*) "simVegEvolve   = ", simVegEvolve
       write(123,*) "RandomInVeg    = ", RandomInVeg
+      write(123,*) "BCs            = ", bcs
       write(123,*) "useRandomSeed  = ", useRandomSeed
       CLOSE(123)
 	end if
@@ -423,7 +440,8 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db, resultsName)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, & 
+	Dv, Db, resultsName, bcs, setBCs)
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!This subroutine does all the calculations after the input parameters have been set
@@ -449,6 +467,18 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
    logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+  
+  
+   INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
+                                        !1st value specifies first column
+                                        !second value specifies 1st row
+                                        !3rd value nth column
+                                        !4th value the mth row
+                                        !-2 denotes an outflow boundary
+                                        !-3 denotes a periodic boundary
+                                        !0 specifies let GD8 set the outflow to be the lowest cell
+   LOGICAL, INTENT(IN) :: setBCs                    !logical flag to test if BCs need specifying  
+  
    !*************************************************************************************
    
    !characters for writing and reading
@@ -519,7 +549,7 @@ write(*,*) 'starting simulation'
 
 CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
 
 CALL openCSVrasterFiles(resultsName)
 
@@ -547,6 +577,13 @@ DO j=1,nSteps
          CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n) !fluvial sediment transport
          CALL Splash(topog,veg, Dv, Db,m,n) !diffusive sediment transport
          CALL GD8(topog,flowdirns, m,n) !recalculate flow directions given the new topography
+         
+         IF (setBCs) THEN
+                IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+                IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+                IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+                IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+        END IF
 
       END IF
    END IF
@@ -606,7 +643,7 @@ END SUBROUTINE SimCODE
 !set initial Conditions
 SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs)
 
    IMPLICIT NONE
 
@@ -635,6 +672,9 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
    REAL*8, INTENT(in) :: kb !Gaussian parameters for diffusive sediment transport for
 
 
+   INTEGER, DIMENSION(4), INTENT(IN) :: bcs  !boundary conditions
+   LOGICAL, INTENT(IN) :: setBCs
+   
    INTEGER :: i,j
    REAL*8 :: rnd !random real
 
@@ -678,6 +718,14 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
 
    CALL GD8(topog,flowdirns, m,n)
 
+   !GSM added next three lines
+   IF (setBCs) THEN
+        IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+        IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+        IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+        IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+   END IF
+   
    IF (topogRoute) THEN
    CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
    END IF
@@ -1599,8 +1647,6 @@ Subroutine GD8(topog,flowdirns, m,n)
    INTEGER, DIMENSION(3,2) :: lsdList
    REAL*8 :: z02, z0, z1, z2, slp1, slp2
    LOGICAL :: test1, test2, test3
-   INTEGER :: isPeriodic  !flag for periodic boundary conditions
-   isPeriodic = 1
    
    mn = m*n
    flowdirns = -2  !default value use for checking is a dirn has been assigned yet
@@ -1855,14 +1901,14 @@ Subroutine GD8(topog,flowdirns, m,n)
   ! boudning cells to have a flow dirn of 
   !-3 i.e. assuming topography slopes downward in the direction of 
   !lower i and j
-  If (isPeriodic.eq.1) THEN
-  DO i=1,m
-    flowdirns(i, 1) = -3
-  END DO
-  DO j=1,n
-    flowdirns(1,j) = -3
-  END DO
-  END IF 
+  !If (isPeriodic.eq.1) THEN
+  !DO i=1,m
+  !  flowdirns(i, 1) = -3
+  !END DO
+  !DO j=1,n
+  !  flowdirns(1,j) = -3
+  !END DO
+  !END IF 
    
 END SUBROUTINE GD8   
 

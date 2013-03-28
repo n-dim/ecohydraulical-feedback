@@ -353,8 +353,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	!if reading process was successful:
 	else 
 		write(*,*) "read input without errors"
-		write(*,*) 'control input parameters in "output/', trim(title), ' - inputParameter.txt"'
-      OPEN(123,file='./output/'//trim(adjustl(title))//' - inputParameter.txt')
+		write(*,*) 'control input parameters in "output/', trim(title), '_inputParameter.txt"'
+      OPEN(123,file='./output/'//trim(adjustl(title))//'_inputParameter.txt')
       write(123,*) 'title          = ', trim(title)
       write(123,*) "description    = ", trim(description)
       write(123,*) "run            = ", run
@@ -2588,17 +2588,17 @@ SUBROUTINE openCSVrasterFiles(resultsName)
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
-   OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
+   OPEN(2,file='./output/'//trim(adjustl(resultsName))//'_SummaryResults.csv')
    write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
 
-   OPEN(13,file='./output/'//trim(adjustl(resultsName))//' - vegetation.csv')
-   OPEN(14,file='./output/'//trim(adjustl(resultsName))//' - flowdirections.csv')
-   OPEN(15,file='./output/'//trim(adjustl(resultsName))//' - store.csv')
-   OPEN(16,file='./output/'//trim(adjustl(resultsName))//' - discharge.csv')
-   OPEN(17,file='./output/'//trim(adjustl(resultsName))//' - eTActual.csv')
-   OPEN(18,file='./output/'//trim(adjustl(resultsName))//' - bareE.csv')
-   OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
-   OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
+   OPEN(13,file='./output/'//trim(adjustl(resultsName))//'_vegetation.csv')
+   OPEN(14,file='./output/'//trim(adjustl(resultsName))//'_flowdirections.csv')
+   OPEN(15,file='./output/'//trim(adjustl(resultsName))//'_store.csv')
+   OPEN(16,file='./output/'//trim(adjustl(resultsName))//'_discharge.csv')
+   OPEN(17,file='./output/'//trim(adjustl(resultsName))//'_eTActual.csv')
+   OPEN(18,file='./output/'//trim(adjustl(resultsName))//'_bareE.csv')
+   OPEN(19,file='./output/'//trim(adjustl(resultsName))//'_topography.csv')
+   OPEN(20,file='./output/'//trim(adjustl(resultsName))//'_flowResistance.csv')
 
 END SUBROUTINE openCSVrasterFiles
 

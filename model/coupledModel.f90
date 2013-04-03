@@ -389,8 +389,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
       write(123,*) "simEvap        = ",	simEvap
       write(123,*) "simVegEvolve   = ", simVegEvolve
       write(123,*) "RandomInVeg    = ", RandomInVeg
-      write(123,*) "BCs            = ", bcs
-      write(123,*) "useRandomSeed  = ", useRandomSeed
+		write(123,*) "useRandomSeed  = ", useRandomSeed
+		write(123,*) "BCs            = ", bcs
 	end if
 
 

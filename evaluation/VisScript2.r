@@ -3,7 +3,7 @@ library(fields)
 
 readCSV <- function(file=NA) {
   if(is.na(file)) file <- file.choose()
-  Temp <- read.table(file, sep="=", colClasses="character", strip.white=T)
+  Temp <- read.table(file, sep="=", colClasses="character", strip.white=T, nrows=35)
   parameter <- as.list(Temp[,2])
   names(parameter) <- Temp[,1]
   formats <- c(rep("character", 2), "logical", rep("numeric", 25), rep("logical", 7))

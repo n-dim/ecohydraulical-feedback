@@ -179,7 +179,7 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
 	INTEGER, DIMENSION(4), INTENT(OUT) :: bcs !code for boundary conditions along borders
-       
+
    
    	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
@@ -391,7 +391,6 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
       write(123,*) "RandomInVeg    = ", RandomInVeg
       write(123,*) "BCs            = ", bcs
       write(123,*) "useRandomSeed  = ", useRandomSeed
-      CLOSE(123)
 	end if
 
 
@@ -541,11 +540,18 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 
    integer :: progress !for the progress bar
    character(4) :: char_n !number of rows as character, used for output formating
-   write(char_n,'(i4)') n 
+
+	real :: CPUstart
+	integer,dimension(8) :: datetime
+
+   write(char_n,'(i4)') n
 
 !**************************************************************************************
 
 write(*,*) 'starting simulation'
+
+call cpu_time(CPUstart)
+call date_and_time(values=datetime)
 
 CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
@@ -636,6 +642,7 @@ DO j=1,nSteps
 END DO
 
 CALL closeCSVrasterFiles()
+CALL closeOtherFiles(datetime, CPUstart)
 	
 END SUBROUTINE SimCODE
 
@@ -2361,6 +2368,29 @@ SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discha
    write(20,'('//char_n//'(e14.6,";"))') infiltKern
 
 END SUBROUTINE writeCSVraster
+
+SUBROUTINE closeOtherFiles(datetime, CPUstart)
+
+	real, intent(in) :: CPUstart
+	integer,dimension(8), intent(in) :: datetime
+	real :: CPUend, CPUtime
+	integer,dimension(8) :: datetime2
+	integer :: duration
+
+	write(123,'(a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)') " start time     = ", datetime(1), &
+		"-",datetime(2),"-",datetime(3)," ",datetime(5),":",datetime(6),":",datetime(7)
+	call date_and_time(values=datetime2)
+	write(123,'(a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)') " end time       = ", datetime2(1), &
+		"-",datetime2(2),"-",datetime2(3)," ",datetime2(5),":",datetime2(6),":",datetime2(7)
+	duration = datetime(3)*24*60*60 + datetime(5) *60*60 + datetime(6)*60 + datetime(7)
+	duration = (datetime2(3)*24*60*60 + datetime2(5) *60*60 + datetime2(6)*60 + datetime2(7)) - duration
+	write(123,*) "duration       = ", duration, "s"
+	call cpu_time(CPUend)
+	CPUtime = CPUend - CPUstart
+	write(123,*) "CPUtime        = ", CPUtime
+	CLOSE(123)
+
+END SUBROUTINE closeOtherFiles
 
 ! to display a progress bare in the console:
 SUBROUTINE progressBar(j, nSteps, progress)

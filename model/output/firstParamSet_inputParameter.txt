@@ -34,3 +34,7 @@
  RandomInVeg    =  T
  BCs            =           -3          -3           0           0
  useRandomSeed  =  F
+ start time     = 2013-04-03 11:49:47
+ end time       = 2013-04-03 11:50:02
+ duration       =           15 s
+ CPUtime        =    15.5205927    

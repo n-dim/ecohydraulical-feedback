@@ -16,14 +16,14 @@ readCSV <- function(file=NA) {
   rasters <- vector("list", length(rasterSets))
   for(i in 1:length(rasterSets)){
     for(j in 1:nSteps){
-        Temp <- as.matrix(read.table(file=paste("../model/output/", title, " - ", rasterSets[i], ".csv", sep=""), sep=";", skip=(1+(j-1)*(m+1)), nrow=m, header=F))
+        Temp <- as.matrix(read.table(file=paste("../model/output/", title, "_", rasterSets[i], ".csv", sep=""), sep=";", skip=(1+(j-1)*(m+1)), nrow=m, header=F))
         colnames(Temp) <- NULL  
         rasters[[i]][[j]] <- Temp[1:n,1:m]
     }
   }
   names(rasters) <- rasterSets
   
-  Summary <- read.table(file=paste("../model/output/", title, " - ", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
+  Summary <- read.table(file=paste("../model/output/", title, "_", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
   
   detach("parameter")
   message(paste('read input from parameterset "', parameter$title, '"', sep=""))
@@ -133,7 +133,7 @@ for (k in 1:1) {
   close(strm)
   
 #example:
-  system.time(Data <- readCSV("../model/output/firstParamSet - inputParameter.txt"))
+  system.time(Data <- readCSV("../model/output/firstParamSet_inputParameter.txt"))
   
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
 par(oma=c(2,2,0.1,0.1))

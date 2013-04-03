@@ -133,7 +133,7 @@ for (k in 1:1) {
   close(strm)
   
 #example:
-  Data <- readCSV()
+  system.time(Data <- readCSV("../model/output/firstParamSet - inputParameter.txt"))
   
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
 par(oma=c(2,2,0.1,0.1))

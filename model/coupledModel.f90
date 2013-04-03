@@ -73,7 +73,11 @@ integer :: unitNumber = 11
 logical :: anotherParamSet !are there multiple parameter Sets?
 logical :: Errors =.false. !Errors from input read process
 
-
+INTEGER, DIMENSION(4) :: bcs  !boundary conditions along borders
+LOGICAL :: setBCs !flag for boundary conditions
+   
+  
+   
 write(*,*) 'try to read "inputParameter.txt"'
 open(unitNumber, file='inputParameter.txt', status="old")
 
@@ -81,9 +85,16 @@ DO !loop to read and execute every parameter set
    call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
-		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg )
+		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
+   !nanu you might want to put this somewhere else
+   setBCs = .FALSE.
+   if (sum(abs(bcs))>0) then
+    setBCs = .TRUE.
+   end if		
     
    if(run) then
+   
+            
       call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
             gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 		
@@ -91,7 +102,8 @@ DO !loop to read and execute every parameter set
 		 
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db,title)
+			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
+			kb, Dv, Db,title, bcs, setBCS)
 
     else
       write(*,*) "don't run simulation for this parameter set"
@@ -146,7 +158,7 @@ END SUBROUTINE init_random_seed
 subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
-	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg)
+	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
 
 	IMPLICIT NONE
 	integer, intent(in) :: inputfile
@@ -166,7 +178,9 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	character(200), intent(out) :: description
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
+	INTEGER, DIMENSION(4), INTENT(OUT) :: bcs !code for boundary conditions along borders
 
+   
    	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(221) :: input 	!whole row in input
@@ -315,6 +329,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
                case("useRandomSeed")
                   read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
+				        case("BCs")
+						read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -337,8 +353,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	!if reading process was successful:
 	else 
 		write(*,*) "read input without errors"
-		write(*,*) 'control input parameters in "output/', trim(title), ' - inputParameter.txt"'
-      OPEN(123,file='./output/'//trim(adjustl(title))//' - inputParameter.txt')
+		write(*,*) 'control input parameters in "output/', trim(title), '_inputParameter.txt"'
+      OPEN(123,file='./output/'//trim(adjustl(title))//'_inputParameter.txt')
       write(123,*) 'title          = ', trim(title)
       write(123,*) "description    = ", trim(description)
       write(123,*) "run            = ", run
@@ -373,8 +389,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
       write(123,*) "simEvap        = ",	simEvap
       write(123,*) "simVegEvolve   = ", simVegEvolve
       write(123,*) "RandomInVeg    = ", RandomInVeg
+      write(123,*) "BCs            = ", bcs
       write(123,*) "useRandomSeed  = ", useRandomSeed
-      CLOSE(123)
 	end if
 
 
@@ -423,7 +439,8 @@ end subroutine deriveInputParameters
 !#####################################################################################
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
-	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, Dv, Db, resultsName)
+	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, & 
+	Dv, Db, resultsName, bcs, setBCs)
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!This subroutine does all the calculations after the input parameters have been set
@@ -449,6 +466,18 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
    logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+  
+  
+   INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
+                                        !1st value specifies first column
+                                        !second value specifies 1st row
+                                        !3rd value nth column
+                                        !4th value the mth row
+                                        !-2 denotes an outflow boundary
+                                        !-3 denotes a periodic boundary
+                                        !0 specifies let GD8 set the outflow to be the lowest cell
+   LOGICAL, INTENT(IN) :: setBCs                    !logical flag to test if BCs need specifying  
+  
    !*************************************************************************************
    
    !characters for writing and reading
@@ -511,15 +540,22 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 
    integer :: progress !for the progress bar
    character(4) :: char_n !number of rows as character, used for output formating
-   write(char_n,'(i4)') n 
+
+	real :: CPUstart
+	integer,dimension(8) :: datetime
+
+   write(char_n,'(i4)') n
 
 !**************************************************************************************
 
 write(*,*) 'starting simulation'
 
+call cpu_time(CPUstart)
+call date_and_time(values=datetime)
+
 CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
 
 CALL openCSVrasterFiles(resultsName)
 
@@ -547,6 +583,13 @@ DO j=1,nSteps
          CALL Erosion(discharge,topog,flowdirns,veg,flowResistance1,m,n) !fluvial sediment transport
          CALL Splash(topog,veg, Dv, Db,m,n) !diffusive sediment transport
          CALL GD8(topog,flowdirns, m,n) !recalculate flow directions given the new topography
+         
+         IF (setBCs) THEN
+                IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+                IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+                IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+                IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+        END IF
 
       END IF
    END IF
@@ -599,6 +642,7 @@ DO j=1,nSteps
 END DO
 
 CALL closeCSVrasterFiles()
+CALL closeOtherFiles(datetime, CPUstart)
 	
 END SUBROUTINE SimCODE
 
@@ -606,7 +650,7 @@ END SUBROUTINE SimCODE
 !set initial Conditions
 SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb)
+   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs)
 
    IMPLICIT NONE
 
@@ -635,6 +679,9 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
    REAL*8, INTENT(in) :: kb !Gaussian parameters for diffusive sediment transport for
 
 
+   INTEGER, DIMENSION(4), INTENT(IN) :: bcs  !boundary conditions
+   LOGICAL, INTENT(IN) :: setBCs
+   
    INTEGER :: i,j
    REAL*8 :: rnd !random real
 
@@ -678,6 +725,14 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
 
    CALL GD8(topog,flowdirns, m,n)
 
+   !GSM added next three lines
+   IF (setBCs) THEN
+        IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+        IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+        IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+        IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+   END IF
+   
    IF (topogRoute) THEN
    CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
    END IF
@@ -1599,8 +1654,6 @@ Subroutine GD8(topog,flowdirns, m,n)
    INTEGER, DIMENSION(3,2) :: lsdList
    REAL*8 :: z02, z0, z1, z2, slp1, slp2
    LOGICAL :: test1, test2, test3
-   INTEGER :: isPeriodic  !flag for periodic boundary conditions
-   isPeriodic = 1
    
    mn = m*n
    flowdirns = -2  !default value use for checking is a dirn has been assigned yet
@@ -1855,313 +1908,16 @@ Subroutine GD8(topog,flowdirns, m,n)
   ! boudning cells to have a flow dirn of 
   !-3 i.e. assuming topography slopes downward in the direction of 
   !lower i and j
-  If (isPeriodic.eq.1) THEN
-  DO i=1,m
-    flowdirns(i, 1) = -3
-  END DO
-  DO j=1,n
-    flowdirns(1,j) = -3
-  END DO
-  END IF 
+  !If (isPeriodic.eq.1) THEN
+  !DO i=1,m
+  !  flowdirns(i, 1) = -3
+  !END DO
+  !DO j=1,n
+  !  flowdirns(1,j) = -3
+  !END DO
+  !END IF 
    
 END SUBROUTINE GD8   
-
-
-
-Subroutine NewGD8(topog,lakes,flowdirns, m,n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!Ignore this
-!This was an attempt at a faster algorithm but it does not work, yet
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-   IMPLICIT NONE
-   
-   INTEGER,INTENT(IN) :: m,n
-   INTEGER, DIMENSION(m,n), INTENT(IN) :: lakes
-   REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
-   INTEGER, DIMENSION(m,n), INTENT(out) :: flowdirns
-   
-   REAL*8 :: zdefault, z0, z1, z2, slp1, slp2
-   INTEGER, DIMENSION(m,n) :: isAssigned
-   INTEGER :: mn, num2Assign, order, i,j,k, idirn
-   LOGICAL :: isAss, isOutflow, reinit, test1, test2, test3
-   INTEGER, DIMENSION(SIZE(topog),2) :: ords
-   INTEGER, DIMENSION(SIZE(topog)) :: rownum
-   
-   INTEGER, DIMENSION(2) :: startcell, targetcell
-   INTEGER, DIMENSION(2) :: LSD1, secondary1, otherAnglePosition1 
-   INTEGER, DIMENSION(2) :: LSD2, secondary2, otherAnglePosition2 
-   INTEGER, DIMENSION(2) :: upstreamcell, upflowdirn, upsecondary
-   INTEGER, DIMENSION(2) ::  dirn11, dirn21, dirn12, dirn22
-   INTEGER, DIMENSION(9,2) :: neighbs
-   INTEGER, DIMENSION(3,2) :: lsdList
-    
-   flowdirns = -2
-   WHERE (lakes>0)
-     isAssigned =1
-     flowdirns = -1
-   ELSEWHERE
-     isAssigned =0
-   END WHERE
-   
-   mn = m*n
-   
-   zdefault = 0.d0
-   order = 1
-   CALL makeOrds(topog,ords, m,n)  !orders 2D positions of topography
-   
-   startcell=minloc(topog)
-   PRINT *,"minloc",startcell
-   flowdirns(startcell(1),startcell(2))=-1  !make lowest point an outflow point
-   CALL Pos1d(ords,mn,2,startcell,rownum)
-   IF (rownum(1).ne.0) THEN
-     CALL endShift(ords,rownum(1),mn,2)
-     ords(mn,:)=(/0,0/)
-   END IF
-   isAssigned(startcell(1),startcell(2))=1
-   
-   isAss=.TRUE.   !dummy assignment to begin loop
-   isOutflow=.TRUE.   !dummy assignment to begin loop
-   reinit = .TRUE.
-   startcell=(/1,1/)  !dummy assignment to begin loop
-   startcell = ords(1,:)
-   10 num2AssignGT0 : DO WHILE(startcell(1).ne.0)
-    
-    toReinit : IF(isAss.OR.isOutflow) THEN
-       !This bit reinitialises all variables if beginning a new flow pathway
-        IF (reinit) THEN
-         startcell = ords(1,:)
-       END IF
-       PRINT *,"4: startcell", startcell
-       IF (startcell(1).ne.0) THEN
-         CALL Pos1d(ords,mn,2,startcell,rownum)
-         IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-         END IF
-              
-        CALL LSDs(1, startcell, topog,m,n,lsdList)
-        LSD1 = lsdList(1,:)
-        secondary1 = lsdList(2,:)
-        otherAnglePosition1 = lsdList(3,:)
-        PRINT *, "5: LSD1, secondary1, otherAnglePosition1/", LSD1, "/",secondary1, "/",otherAnglePosition1
-        CALL fdirLookup(startcell-LSD1, idirn)
-        flowdirns(startcell(1), startcell(2)) = idirn
-        isAssigned(startcell(1),startcell(2))=1
-        upstreamcell = startcell
-        upflowdirn = startcell - LSD1
-        upsecondary = secondary1
-        targetcell = LSD1
-         PRINT *,"6: targetcell", targetcell
-         
-        CALL Pos1d(ords,mn,2,targetcell,rownum)
-        IF (rownum(1).ne.0) THEN
-          CALL endShift(ords,rownum(1),mn,2)
-          ords(mn,:)=(/0,0/)
-        END IF
-                
-        PRINT *,"7: isAssigned(targetcell(1),targetcell(2)).eq.1",isAssigned(targetcell(1),targetcell(2)).eq.1
-        ifassigned1 : IF (isAssigned(targetcell(1),targetcell(2)).eq.1) THEN
-            isAss=.TRUE.
-            isOutflow=.FALSE.
-            reinit = .TRUE.
-            !change so this so that if all neighbours uphill and or boundary cells then isOutflow=.TRUE.
-            CALL Neighbours(1,targetcell, (/m,n/),neighbs)
-            DO i=1,9
-              If (i.ne.5) THEN
-                IF (neighbs(i,1).ne.-99) THEN
-                  isOutflow = (isOutflow.and.(topog(neighbs(i,1),neighbs(i,2))>topog(targetcell(1),targetcell(2))))
-                END IF
-              END IF
-            END DO
-            
-             PRINT *,"8: isOutflow",isOutflow
-             
-            IF (isOutflow) THEN
-              isAssigned(targetcell(1),targetcell(2))=1
-              CALL Pos1d(ords,mn,2,targetcell,rownum)
-              IF (rownum(1).ne.0) THEN
-                CALL endShift(ords,rownum(1), mn,2)
-                ords(mn,:)=(/0,0/)
-              END IF
-              reinit = .TRUE.
-            END IF
-             PRINT *,"9: reinit",reinit
-          ELSE !if isAssigned
-            isAssigned(targetcell(1),targetcell(2))=1
-            isAss=.FALSE.  !set condition to move program into fdirAss  do while loop
-            isOutflow=.FALSE.
-            reinit = .FALSE.
-          END IF  ifassigned1
-          PRINT *,  "10: isAss, isOutflow, reinit", isAss, isOutflow, reinit
-      ELSE !if startcell(1).ne.0
-        RETURN
-      END IF
-    ELSE  ! toReinit
-      
-      PRINT *,  "11: isAss, isOutflow, reinit",  isAss, isOutflow, reinit
-      PRINT *, "12: (.NOT. isAss) .AND. (.NOT. isOutflow) .AND. (.NOT. reinit)", &
-                    (.NOT. isAss) .AND. (.NOT. isOutflow) .AND. (.NOT. reinit)
-      Do WHILE ( (.NOT. isAss) .AND. (.NOT. isOutflow) .AND. (.NOT. reinit)) 
-        
-        DO i=1,m
-          PRINT *,"12:0: flowdirns-",flowdirns(i,:)
-        END DO
-        PRINT *,"13.0: startcell, targetcell",startcell,targetcell
-        CALL LSDs(1, targetcell, topog,m,n,lsdList)
-        PRINT *,"13.1 lsdList", lsdList
-        LSD2 = lsdList(1,:)
-        secondary2 = lsdList(2,:)
-        otherAnglePosition2 = lsdList(3,:)  
-        PRINT *, "13: LSD2, secondary2, otherAnglePosition2,targetcell/", LSD2, "/",secondary2, "/",otherAnglePosition2,"/" &
-           ,targetcell
-        boundarycheck : IF (LSD2(1).eq.-99) THEN
-          flowdirns(targetcell(1), targetcell(2)) = -1
-          isAssigned(targetcell(1),targetcell(2))=1
-          CALL Pos1d(ords,mn,2,targetcell,rownum)
-          IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-          END IF
-          reinit = .TRUE.
-          isOutFlow = .TRUE.
-          Print *, "Gone to 10, 1"
-          GOTO 10
-        EnD IF boundarycheck
-        
-        
-        !get local elevations
-        z0 = topog(LSD2(1), LSD2(2))
-        If(secondary2(1) .ne.-99) THEN 
-         z1 = topog(secondary2(1), secondary2(2))
-        ELSE
-         z1 = zdefault
-        END IF
-        If(otherAnglePosition2(1).ne.-99) THEN
-          z2 = topog(otherAnglePosition2(1),otherAnglePosition2(2))
-        ELSE
-          z2 = zdefault
-        END IF
-         PRINT *, "14: z0, z1, z2",z0, z1, z2 
-         PRINT *, "15: (z1 > z0).AND.(z2 > z0)",(z1 > z0).AND.(z2 > z0) 
-        !valley check
-         valleyCheck : If((z1 > z0).AND.(z2 > z0)) THEN
-         PRINT *, "Valley"
-         !it is a valley so assign flow dirn to LSD2 and reset startcell
-          CALL fdirLookup(targetcell-LSD2, idirn)
-          flowdirns(targetcell(1), targetcell(2)) = idirn
-          isAssigned(targetcell(1),targetcell(2))=1
-          CALL Pos1d(ords,mn,2,targetcell,rownum)
-          IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-          END IF
-          startcell = LSD2
-           PRINT *, "16: startcell", startcell
-          isAss = .TRUE.  !dummy call to reinitialise
-          PRINT *, "17: isAss", isAss 
-          !programming comment: need to make sure if this condition 
-          !met then next evaluation passed to end of this do while loop
-          ELSE !if valleyCheck
-          PRINT *,"Not a valley"
-          !begin three tests for flow dirn adjustment
-          
-            dirn11 = upstreamcell - targetcell
-            dirn21 = targetcell - LSD2
-            dirn12 = upstreamcell - upsecondary
-            dirn22 = targetcell - secondary2
-            
-            slp1 = (topog(startcell(1), startcell(2)) - & 
-                    topog(LSD2(1), LSD2(2)))/Sqrt(DBLE(((startcell(1) - & 
-                   LSD2(1))**2 + (startcell(2) - LSD2(2))**2)))
-            slp2 = (topog(startcell(1), startcell(2)) - & 
-                    topog(secondary2(1), secondary2(2)))/&
-                    Sqrt(DBLE(((startcell(1) - secondary2(1))**2 + (startcell(2) - & 
-                 secondary2(2))**2)))
-                 
-            test1 = ((dirn11(1) .eq. dirn21(1)).AND.(dirn11(2) .eq. dirn21(2)))
-            test2 = ((dirn12(1) .eq. dirn22(1)).AND.(dirn12(2) .eq. dirn22(2)))
-            test3 = (slp1 < slp2)
-            PRINT *, "18: test1,test2,test3", test1,test2,test3
-            PRINT *,"*****************************************"
-            test123 : IF ((test1.and.test2).and.test3) THEN
-            
-              If(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2))) THEN
-                CALL fdirLookup(targetcell-secondary2, idirn)
-                flowdirns(targetcell(1), targetcell(2)) = idirn
-                isAssigned(targetcell(1),targetcell(2))=1
-                PRINT *,"-----------------------------------------------------"
-              ELSE
-                CALL fdirLookup(targetcell-LSD2, idirn)
-                flowdirns(targetcell(1), targetcell(2)) = idirn
-                isAssigned(targetcell(1),targetcell(2))=1
-                PRINT *,"+++++++++++++++++++++++++++++++++++++++++"
-              END IF
-              !clean up ords
-              CALL Pos1d(ords,mn,2,targetcell,rownum)
-              IF (rownum(1).ne.0) THEN
-                CALL endShift(ords,rownum(1),mn,2)
-                ords(mn,:)=(/0,0/)
-              END IF
-              upstreamcell = targetcell
-              upflowdirn = targetcell - secondary2
-              upsecondary = secondary2
-              targetcell = secondary2
-              PRINT *, "19:  startcell, targetcell",  startcell, targetcell
-            ELSE !test123
-              CALL fdirLookup(targetcell-LSD2, idirn)
-              flowdirns(targetcell(1), targetcell(2)) = idirn
-              isAssigned(targetcell(1),targetcell(2))=1
-              CALL Pos1d(ords,mn,2,targetcell,rownum)
-              IF (rownum(1).ne.0) THEN
-                CALL endShift(ords,rownum(1), mn,2)
-                ords(mn,:)=(/0,0/)
-              END IF
-              upstreamcell = targetcell
-              upflowdirn = targetcell - LSD2
-              upsecondary = secondary2
-              targetcell = LSD2
-              PRINT *, "20:  startcell, targetcell",  startcell, targetcell
-          END IF test123 !((test1.AND.test2).AND.test3)
-          END IF valleyCheck
-          
-          PRINT *, "21:  (isAssigned(targetcell(1),targetcell(2)).eq.1) ",  (isAssigned(targetcell(1),targetcell(2)).eq.1) 
-          ifassigned2 : IF (isAssigned(targetcell(1),targetcell(2)).eq.1) THEN
-            isAss=.TRUE.
-            isOutflow=.TRUE.
-            reinit = .FALSE.
-            !change so this so that if all neighbours uphill and or boundary cells then isOutflow=.TRUE.
-            CALL Neighbours(1,targetcell, (/m,n/),neighbs)
-            DO i=1,9
-              If (i.ne.5) THEN
-                IF (neighbs(i,1).ne.-99) THEN
-                  isOutflow = (isOutflow.and.(topog(neighbs(i,1),neighbs(i,2))>topog(targetcell(1),targetcell(2))))
-                END IF
-              END IF
-            END DO
-            PRINT *, "21.0: isOutflow",isOutflow
-            IF (isOutflow) THEN
-              isAssigned(targetcell(1),targetcell(2))=1
-              CALL Pos1d(ords,mn,2,targetcell,rownum)
-              IF (rownum(1).ne.0) THEN
-                CALL endShift(ords,rownum(1), mn,2)
-                ords(mn,:)=(/0,0/)
-              END IF
-              reinit = .TRUE.
-            END IF
-          ELSE !if isAssigned
-            isAssigned(targetcell(1),targetcell(2))=1
-            isAss=.FALSE.  !set condition to move program into fdirAss  do while loop
-            isOutflow=.FALSE.
-            reinit = .FALSE.
-          END IF ifassigned2 !isAssigned
-          PRINT *, "22:  isAss, isOutflow, reinit",isAss, isOutflow, reinit
-      END DO
-    END IF toReinit
-    PRINT *, "23:  isAss, isOutflow, reinit",isAss, isOutflow, reinit
-   END DO num2AssignGT0
-    
-END SUBROUTINE NewGD8
-
 
 
 SUBROUTINE fdirLookup(dirnxy, idirn)
@@ -2542,17 +2298,17 @@ SUBROUTINE openCSVrasterFiles(resultsName)
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
-   OPEN(2,file='./output/'//trim(adjustl(resultsName))//' - SummaryResults.csv')
+   OPEN(2,file='./output/'//trim(adjustl(resultsName))//'_SummaryResults.csv')
    write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
 
-   OPEN(13,file='./output/'//trim(adjustl(resultsName))//' - vegetation.csv')
-   OPEN(14,file='./output/'//trim(adjustl(resultsName))//' - flowdirections.csv')
-   OPEN(15,file='./output/'//trim(adjustl(resultsName))//' - store.csv')
-   OPEN(16,file='./output/'//trim(adjustl(resultsName))//' - discharge.csv')
-   OPEN(17,file='./output/'//trim(adjustl(resultsName))//' - eTActual.csv')
-   OPEN(18,file='./output/'//trim(adjustl(resultsName))//' - bareE.csv')
-   OPEN(19,file='./output/'//trim(adjustl(resultsName))//' - topography.csv')
-   OPEN(20,file='./output/'//trim(adjustl(resultsName))//' - flowResistance.csv')
+   OPEN(13,file='./output/'//trim(adjustl(resultsName))//'_vegetation.csv')
+   OPEN(14,file='./output/'//trim(adjustl(resultsName))//'_flowdirections.csv')
+   OPEN(15,file='./output/'//trim(adjustl(resultsName))//'_store.csv')
+   OPEN(16,file='./output/'//trim(adjustl(resultsName))//'_discharge.csv')
+   OPEN(17,file='./output/'//trim(adjustl(resultsName))//'_eTActual.csv')
+   OPEN(18,file='./output/'//trim(adjustl(resultsName))//'_bareE.csv')
+   OPEN(19,file='./output/'//trim(adjustl(resultsName))//'_topography.csv')
+   OPEN(20,file='./output/'//trim(adjustl(resultsName))//'_flowResistance.csv')
 
 END SUBROUTINE openCSVrasterFiles
 
@@ -2612,6 +2368,29 @@ SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discha
    write(20,'('//char_n//'(e14.6,";"))') infiltKern
 
 END SUBROUTINE writeCSVraster
+
+SUBROUTINE closeOtherFiles(datetime, CPUstart)
+
+	real, intent(in) :: CPUstart
+	integer,dimension(8), intent(in) :: datetime
+	real :: CPUend, CPUtime
+	integer,dimension(8) :: datetime2
+	integer :: duration
+
+	write(123,'(a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)') " start time     = ", datetime(1), &
+		"-",datetime(2),"-",datetime(3)," ",datetime(5),":",datetime(6),":",datetime(7)
+	call date_and_time(values=datetime2)
+	write(123,'(a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)') " end time       = ", datetime2(1), &
+		"-",datetime2(2),"-",datetime2(3)," ",datetime2(5),":",datetime2(6),":",datetime2(7)
+	duration = datetime(3)*24*60*60 + datetime(5) *60*60 + datetime(6)*60 + datetime(7)
+	duration = (datetime2(3)*24*60*60 + datetime2(5) *60*60 + datetime2(6)*60 + datetime2(7)) - duration
+	write(123,*) "duration       = ", duration, "s"
+	call cpu_time(CPUend)
+	CPUtime = CPUend - CPUstart
+	write(123,*) "CPUtime        = ", CPUtime
+	CLOSE(123)
+
+END SUBROUTINE closeOtherFiles
 
 ! to display a progress bare in the console:
 SUBROUTINE progressBar(j, nSteps, progress)

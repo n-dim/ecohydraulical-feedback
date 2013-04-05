@@ -143,8 +143,6 @@ write(*,*) 'end of execution'
 
 
 
-
-
 CONTAINS
 
 SUBROUTINE init_random_seed()

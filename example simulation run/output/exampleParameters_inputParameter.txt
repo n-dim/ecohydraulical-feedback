@@ -1,5 +1,5 @@
- title          = firstParamSet
- description    = in this experiment I try to assess some certain parameters relating...
+ title          = exampleParameters
+ description    = this is an example parameter set
  run            =  T
  m              =           10
  n              =           10

@@ -3,6 +3,8 @@ PROGRAM Sensitivity
 
 IMPLICIT NONE
 
+INTEGER :: inputArgs ! command line input arguments
+CHARACTER(LEN=100) :: inputFileName, outputFolder ! holders for command line arguments
 REAL,PARAMETER  :: pi = 3.14159
 INTEGER :: infOrder, vegOrder !grid scale for facilitation and competition calcs 
 INTEGER :: i, j !diversly used index variables for loops etc.
@@ -76,13 +78,25 @@ logical :: Errors =.false. !Errors from input read process
 INTEGER, DIMENSION(4) :: bcs  !boundary conditions along borders
 LOGICAL :: setBCs !flag for boundary conditions
    
-  
-   
-write(*,*) 'try to read "inputParameter.txt"'
-open(unitNumber, file='inputParameter.txt', status="old")
+!Read and process input arguments from the command line
+inputArgs = IARGC()
+IF ((inputArgs < 1).OR.(inputArgs > 2)) THEN
+	write(*,*) "usage Linux:  ./a.out /path/to/input/file /path/to/output/folder/"
+	write(*,*) "usage Windows: ./a.exe /path/to/input/file /path/to/output/folder/"
+	stop
+ELSE
+	CALL GETARG(1,inputFileName)
+	CALL GETARG(2,outputFolder)
+	if ( outputFolder(LEN_TRIM(outputFolder):LEN_TRIM(outputFolder)) /= "/" ) then !prevent to forget the trailing "/"
+		outputFolder = trim(outputFolder)//"/"
+	endif
+ENDIF
+
+write(*,*) 'try to read ', inputFileName
+open(unitNumber, file=trim(adjustl(inputFileName)), status="old")
 
 DO !loop to read and execute every parameter set
-   call readInput (unitNumber, Errors, title, description, anotherParamSet, run, &
+   call readInput (unitNumber, Errors, title, outputFolder, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
 		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
@@ -118,7 +132,9 @@ close(unitNumber)
 
 write(*,*) "-----------------------------"
 if(Errors)	write(*,*) 'Errors occured reading the input file, hence no simulation was run'
-write(*,*) 'end of execution\n'
+write(*,*) 'end of execution'
+
+
 
 
 
@@ -155,12 +171,13 @@ SUBROUTINE init_random_seed()
     DEALLOCATE(clock)
 END SUBROUTINE init_random_seed
 
-subroutine readInput (inputfile, Errors, title, description, anotherParamSet, run, &
+subroutine readInput (inputfile, Errors, title, outputFolder, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
 	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
 
 	IMPLICIT NONE
+	character(LEN=100), intent(in) :: outputFolder
 	integer, intent(in) :: inputfile
 
    	integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
@@ -353,8 +370,8 @@ subroutine readInput (inputfile, Errors, title, description, anotherParamSet, ru
 	!if reading process was successful:
 	else 
 		write(*,*) "read input without errors"
-		write(*,*) 'control input parameters in "output/', trim(title), '_inputParameter.txt"'
-      OPEN(123,file='./output/'//trim(adjustl(title))//'_inputParameter.txt')
+		write(*,*) 'control input parameters in ',trim(adjustl(outputFolder)), trim(title), '_inputParameter.txt"'
+      OPEN(123,file=trim(adjustl(outputFolder))//trim(adjustl(title))//'_inputParameter.txt')
       write(123,*) 'title          = ', trim(title)
       write(123,*) "description    = ", trim(description)
       write(123,*) "run            = ", run
@@ -551,7 +568,7 @@ CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
    flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
 
-CALL openCSVrasterFiles(resultsName)
+CALL openCSVrasterFiles(resultsName, outputFolder)
 
 !***********************************************************************************
 !Timestep iterations
@@ -2284,24 +2301,25 @@ SUBROUTINE VegChange(veg,m,n,vegmax, storEmerge, etPersist, useStorEmerge, store
 END SUBROUTINE VegChange
 
 !open (or create) files for writing the output as .csv files
-SUBROUTINE openCSVrasterFiles(resultsName)
+SUBROUTINE openCSVrasterFiles(resultsName, outputFolder)
 
    IMPLICIT NONE
 
+	character(LEN=100), intent(in) :: outputFolder
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
-   OPEN(2,file='./output/'//trim(adjustl(resultsName))//'_SummaryResults.csv')
+   OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
    write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
 
-   OPEN(13,file='./output/'//trim(adjustl(resultsName))//'_vegetation.csv')
-   OPEN(14,file='./output/'//trim(adjustl(resultsName))//'_flowdirections.csv')
-   OPEN(15,file='./output/'//trim(adjustl(resultsName))//'_store.csv')
-   OPEN(16,file='./output/'//trim(adjustl(resultsName))//'_discharge.csv')
-   OPEN(17,file='./output/'//trim(adjustl(resultsName))//'_eTActual.csv')
-   OPEN(18,file='./output/'//trim(adjustl(resultsName))//'_bareE.csv')
-   OPEN(19,file='./output/'//trim(adjustl(resultsName))//'_topography.csv')
-   OPEN(20,file='./output/'//trim(adjustl(resultsName))//'_flowResistance.csv')
+   OPEN(13,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_vegetation.csv')
+   OPEN(14,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowdirections.csv')
+   OPEN(15,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_store.csv')
+   OPEN(16,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_discharge.csv')
+   OPEN(17,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_eTActual.csv')
+   OPEN(18,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_bareE.csv')
+   OPEN(19,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_topography.csv')
+   OPEN(20,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowResistance.csv')
 
 END SUBROUTINE openCSVrasterFiles
 

@@ -1,8 +1,8 @@
- title          = 02
+ title          = secondParameterSet
  description    = 
- run            =  T
- m              =            8
- n              =            8
+ run            =  F
+ m              =          100
+ n              =          100
  np             =          100
  nSteps         =          100
  etPersist      =          200

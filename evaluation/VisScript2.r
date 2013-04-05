@@ -2,9 +2,12 @@ library(fields)
 #library(rgl)
 
 readCSV <- function(file=NA) {
+  # Choose File with input parameters to read in first
   if(is.na(file)) file <- file.choose()
-  Temp <- read.table(file, sep="=", colClasses="character", strip.white=T)
+  Temp <- read.table(file, sep="=", colClasses="character", strip.white=T, nrows=35)
+  # reform as list
   parameter <- as.list(Temp[,2])
+  # give list elements the right names
   names(parameter) <- Temp[,1]
   formats <- c(rep("character", 2), "logical", rep("numeric", 25), rep("logical", 7))
   for(i in 1:length(parameter)){
@@ -12,18 +15,25 @@ readCSV <- function(file=NA) {
   }
 
   attach(parameter)
+  
+  # prepare raster read in
   rasterSets <- c("bareE", "discharge", "eTActual", "flowdirections", "flowResistance", "store", "topography", "vegetation")
   rasters <- vector("list", length(rasterSets))
+  # read in rasters
   for(i in 1:length(rasterSets)){
+        file <- file(paste("../model/output/", title, "_", rasterSets[i], ".csv", sep=""), open="rt")
     for(j in 1:nSteps){
-        Temp <- as.matrix(read.table(file=paste("../model/output/", title, " - ", rasterSets[i], ".csv", sep=""), sep=";", skip=(1+(j-1)*(m+1)), nrow=m, header=F))
+        Temp <- as.matrix(read.table(file=file, sep=";", skip=1, nrow=m, header=F))
         colnames(Temp) <- NULL  
         rasters[[i]][[j]] <- Temp[1:n,1:m]
     }
+    close(file)
   }
+  # rename it
   names(rasters) <- rasterSets
   
-  Summary <- read.table(file=paste("../model/output/", title, " - ", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
+  # read summary file
+  Summary <- read.table(file=paste("../model/output/", title, "_", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
   
   detach("parameter")
   message(paste('read input from parameterset "', parameter$title, '"', sep=""))
@@ -133,7 +143,7 @@ for (k in 1:1) {
   close(strm)
   
 #example:
-  Data <- readCSV()
+  system.time(Data <- readCSV("../model/output/firstParamSet_inputParameter.txt"))
   
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")
 par(oma=c(2,2,0.1,0.1))

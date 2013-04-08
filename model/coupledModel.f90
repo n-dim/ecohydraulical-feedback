@@ -2391,7 +2391,7 @@ SUBROUTINE closeOtherFiles(datetime, CPUstart)
 	integer,dimension(8), intent(in) :: datetime
 	real :: CPUend, CPUtime
 	integer,dimension(8) :: datetime2
-	integer :: duration
+	real :: duration
 
 	write(123,'(a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)') " start time     = ", datetime(1), &
 		"-",datetime(2),"-",datetime(3)," ",datetime(5),":",datetime(6),":",datetime(7)
@@ -2400,7 +2400,7 @@ SUBROUTINE closeOtherFiles(datetime, CPUstart)
 		"-",datetime2(2),"-",datetime2(3)," ",datetime2(5),":",datetime2(6),":",datetime2(7)
 	duration = datetime(3)*24*60*60 + datetime(5) *60*60 + datetime(6)*60 + datetime(7)
 	duration = (datetime2(3)*24*60*60 + datetime2(5) *60*60 + datetime2(6)*60 + datetime2(7)) - duration
-	write(123,*) "duration       = ", duration, "s"
+	write(123,'(a,f14.1,a,f14.3,a,f14.6,a)') "duration       = ", duration, "s = ", duration/60, "m = ", duration/60/60, "h"
 	call cpu_time(CPUend)
 	CPUtime = CPUend - CPUstart
 	write(123,*) "CPUtime        = ", CPUtime

@@ -75,6 +75,8 @@ integer :: unitNumber = 11
 logical :: anotherParamSet !are there multiple parameter Sets?
 logical :: Errors =.false. !Errors from input read process
 
+character(LEN=6) :: outputFormat !csv or binary
+
 INTEGER, DIMENSION(4) :: bcs  !boundary conditions along borders
 LOGICAL :: setBCs !flag for boundary conditions
    
@@ -99,7 +101,7 @@ DO !loop to read and execute every parameter set
    call readInput (unitNumber, Errors, title, outputFolder, description, anotherParamSet, run, &
 		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
-		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
+		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
    !nanu you might want to put this somewhere else
    setBCs = .FALSE.
    if (sum(abs(bcs))>0) then
@@ -117,7 +119,7 @@ DO !loop to read and execute every parameter set
 		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
 			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
-			kb, Dv, Db,title, bcs, setBCS)
+			kb, Dv, Db,title, outputFormat, bcs, setBCS)
 
     else
       write(*,*) "don't run simulation for this parameter set"
@@ -172,7 +174,7 @@ END SUBROUTINE init_random_seed
 subroutine readInput (inputfile, Errors, title, outputFolder, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
-	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs)
+	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
 
 	IMPLICIT NONE
 	character(LEN=100), intent(in) :: outputFolder
@@ -195,6 +197,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	logical, intent(out) :: Errors
 	INTEGER, DIMENSION(4), INTENT(OUT) :: bcs !code for boundary conditions along borders
 
+	character(LEN=6), INTENT(OUT) :: outputFormat !csv or binary
+
+       
    
    	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
@@ -344,8 +349,10 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
                case("useRandomSeed")
                   read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
-				        case("BCs")
+					case("BCs")
 						read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
+					case("outputFormat")
+						read(inputValChar, *, IOSTAT=IOStatus) outputFormat
 						
 					!if nothing of the above applies, an error message is shown
 					case default
@@ -405,7 +412,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
       write(123,*) "simVegEvolve   = ", simVegEvolve
       write(123,*) "RandomInVeg    = ", RandomInVeg
 		write(123,*) "useRandomSeed  = ", useRandomSeed
-		write(123,*) "BCs            = ", bcs
+      write(123,*) "BCs            = ", bcs
+		write(123,*) "outputFormat   = ", outputFormat
 	end if
 
 
@@ -455,7 +463,7 @@ end subroutine deriveInputParameters
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
 	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, & 
-	Dv, Db, resultsName, bcs, setBCs)
+	Dv, Db, resultsName, outputFormat, bcs, setBCs)
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!This subroutine does all the calculations after the input parameters have been set
@@ -553,6 +561,8 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    !mask = used by GD8 to solve for global flow routing
    INTEGER, DIMENSION(m,n,9) :: mask
 
+	character(LEN=6) :: outputFormat !csv or binary
+
    integer :: progress !for the progress bar
    character(4) :: char_n !number of rows as character, used for output formating
 
@@ -572,7 +582,11 @@ CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
    eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
    flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
 
-CALL openCSVrasterFiles(resultsName, outputFolder)
+If (outputFormat == "csv") THEN
+	CALL openCSVrasterFiles(resultsName, outputFolder)
+ELSE IF (outputFormat == "binary") THEN
+	CALL openBinaryFiles(resultsName, outputFolder)
+ENDIF
 
 !***********************************************************************************
 !Timestep iterations
@@ -625,9 +639,14 @@ DO j=1,nSteps
 
    END IF
 
-   !write output
-   CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, &
-      store, discharge, outflow, flowdirns, topog, infiltKern)
+!write output
+If (outputFormat == "csv") THEN
+	CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, &
+		store, discharge, outflow, flowdirns, topog, infiltKern)
+ELSE IF (outputFormat == "binary") THEN
+	CALL writeBinRaster(m,n, i, j, char_n, veg, ETActual, bareE, &
+		store, discharge, outflow, flowdirns, topog, infiltKern)
+ENDIF
 
    !simulate vegetation evolve
 	IF (simEvap.and.simVegEvolve) THEN 
@@ -656,7 +675,7 @@ DO j=1,nSteps
 	
 END DO
 
-CALL closeCSVrasterFiles()
+CALL closeFiles()
 CALL closeOtherFiles(datetime, CPUstart)
 	
 END SUBROUTINE SimCODE
@@ -2328,7 +2347,31 @@ SUBROUTINE openCSVrasterFiles(resultsName, outputFolder)
 
 END SUBROUTINE openCSVrasterFiles
 
-SUBROUTINE closeCSVrasterFiles()
+SUBROUTINE openBinaryFiles(resultsName, outputFolder)
+
+	IMPLICIT NONE
+	
+	character(LEN=100), intent(in) :: outputFolder
+	CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+
+	OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
+	write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
+
+	OPEN(13,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_vegetation.bin', form='UNFORMATTED')
+	OPEN(14,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowdirections.bin',form='UNFORMATTED')
+	OPEN(15,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_store.bin',form='UNFORMATTED')
+	OPEN(16,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_discharge.bin',form='UNFORMATTED')
+	OPEN(17,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_eTActual.bin',form='UNFORMATTED')
+	OPEN(18,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_bareE.bin',form='UNFORMATTED')
+	OPEN(19,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_topography.bin',form='UNFORMATTED')
+	OPEN(20,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowResistance.bin',form='UNFORMATTED')
+
+END SUBROUTINE openBinaryFiles
+
+
+
+
+SUBROUTINE closeFiles()
 
    !close files
    CLOSE(2)
@@ -2341,7 +2384,7 @@ SUBROUTINE closeCSVrasterFiles()
    CLOSE(19)
    CLOSE(20)
 
-END SUBROUTINE closeCSVrasterFiles
+END SUBROUTINE closeFiles
 
 
 !write output as multiple .csv files (one for every parameter) containing rasters for each timestep
@@ -2384,6 +2427,37 @@ SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discha
    write(20,'('//char_n//'(e14.6,";"))') infiltKern
 
 END SUBROUTINE writeCSVraster
+
+SUBROUTINE writeBinRaster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
+
+IMPLICIT NONE
+
+INTEGER, INTENT(in) :: m,n, outflow, i,j
+character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
+INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
+REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
+
+WRITE(2,*) j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+sum(bareE), sum(store), sum(discharge), outflow
+
+!write csv-files
+write(13) veg
+
+write(14) flowdirns
+
+write(15) store
+
+write(16) discharge
+
+write(17) eTActual
+
+write(18) bareE
+
+write(19) topog
+
+write(20) infiltKern
+
+END SUBROUTINE writeBinRaster
 
 SUBROUTINE closeOtherFiles(datetime, CPUstart)
 

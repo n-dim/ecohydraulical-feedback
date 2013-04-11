@@ -52,6 +52,7 @@ simVegEvolve= T !if true, then simulate evolving vegetation
 RandomInVeg	= T !if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
 BCs             =  -3  -3  0  0  !top, left, bottom and right boundaries codes; -3 should mean periodic, a -2 means a generic outflow cell, a -1 is reserved for the Gd8's general lowest cell
 useRandomSeed = F !if true, set random seed by clock
+outputFormat = csv
 
 !run=F
 	

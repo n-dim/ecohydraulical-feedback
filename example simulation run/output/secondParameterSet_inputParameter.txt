@@ -34,3 +34,4 @@
  RandomInVeg    =  T
  useRandomSeed  =  F
  BCs            =           -3          -3           0           0
+ outputFormat   = csv   

@@ -1,0 +1,84 @@
+title = 01
+description = in this experiment I try to assess some certain parameters relating...
+
+m 	= 			64	!number of rows
+n 	= 			64	!number of columns
+
+!climate /landscape parameters:
+np 	= 			63 	!number of particles of rain falling
+roughness = 	                0.0000001
+
+nSteps 	= 		200 		!total number of "years"
+
+!veg change variables
+etPersist = 	200			!evapotranspiration rate over which plants start do grow
+storEmerge =	120			!storage based emerge of new plants
+useStorEmerge = T			!flag denotes whether to use random collonisation pc or storage based sEmerge
+vegmax = 		9		!maximum biomass
+
+
+tSteps= 		200 		!number of iterations for evap calcs between veg change
+
+pa = 			250 		!mean annual precip mm
+ts =	 		0.0128767       !duration of time raining in years (e.g.: days raining/days of year)
+
+
+!infiltration kernel parameters:
+K0 =  			0.2546103	!intrinsic hydraulic conductivity of the soil in the absence of plants in mm/hr 
+Kmax = 			2.0461027 	!potential maximum hydraulic conductivity in mm/hr
+kf = 			1.0 		!per meter : rate of decline in plant effect on infiltration
+rf = 			5  		! meter: maximum length for plant effect on infiltration
+dx = 			1		!spatial dimesions of lattice cells
+
+
+Emax = 			876 		! 0.5 * (365.0* 24.0)  from mm/hr to mm/year
+
+!evaporation kernel parameters
+kc = 			0.6 		!per meter : rate of decline in plant water uptake with distance
+rc = 			5 		!meter: maximum length for plant water uptake
+gamma = 		0.5 		!relative reduction of soil evap under canopy
+bav = 			0.1  		!scaling factor for Esb calc
+
+!erosion 
+kv = 0.1d0 !10.0
+kb = 0.1d0
+Dv = 0.1d0 !1.0
+Db = 0.1d0 !m^2/kyr
+
+topogRoute	= T !if true, then use topography to route flows
+simErosion	= F !if true, then simulate erosion and update flow pathways
+simEvap		= T !if true, then simulate evaporation
+simVegEvolve    = T !if true, then simulate evolving vegetation
+RandomInVeg	= T !if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
+BCs             =  0  0  0  0  !top, left, bottom and right boundaries codes
+useRandomSeed   = T !if true, set random seed by clock
+outputFormat 	= csv
+
+!run=F
+	
+!---------------------------
+title = 02
+np = 100
+pa = 400
+!pc = -1
+
+!---------------------------
+title = 03
+np = 150
+pa = 600
+
+!---------------------------
+title = 04
+np = 200
+pa = 800
+
+!---------------------------
+title = 05
+np = 250
+pa = 1000
+
+!---------------------------
+title = 06
+np = 300
+pa = 1200
+

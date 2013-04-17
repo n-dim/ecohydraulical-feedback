@@ -4,7 +4,7 @@ PROGRAM Sensitivity
 IMPLICIT NONE
 
 INTEGER :: inputArgs ! command line input arguments
-CHARACTER(LEN=100) :: inputFileName, outputFolder ! holders for command line arguments
+CHARACTER(LEN=400) :: inputFileName, outputFolder ! holders for command line arguments
 REAL,PARAMETER  :: pi = 3.14159
 INTEGER :: infOrder, vegOrder !grid scale for facilitation and competition calcs 
 INTEGER :: i, j !diversly used index variables for loops etc.
@@ -177,7 +177,7 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
 
 	IMPLICIT NONE
-	character(LEN=100), intent(in) :: outputFolder
+	character(LEN=400), intent(in) :: outputFolder
 	integer, intent(in) :: inputfile
 
    	integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
@@ -2329,7 +2329,7 @@ SUBROUTINE openCSVrasterFiles(resultsName, outputFolder)
 
    IMPLICIT NONE
 
-	character(LEN=100), intent(in) :: outputFolder
+	character(LEN=400), intent(in) :: outputFolder
    CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
@@ -2351,7 +2351,7 @@ SUBROUTINE openBinaryFiles(resultsName, outputFolder)
 
 	IMPLICIT NONE
 	
-	character(LEN=100), intent(in) :: outputFolder
+	character(LEN=400), intent(in) :: outputFolder
 	CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 	OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')

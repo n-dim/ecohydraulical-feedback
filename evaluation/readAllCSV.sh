@@ -5,15 +5,11 @@
 #load cmd arguments:
 args <- commandArgs(TRUE)
 
-#set working directory to find files to source
-if(!is.na(args[2])) {
-  path=args[2]
-  setwd(path)
-}
 source("readAllCSV.r")
 
 library("methods")
 
+#set working directory to find files to work on
 readAllCSV(args[1])
 
 message("conversion done")

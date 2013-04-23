@@ -5,7 +5,8 @@ CSVtoRData <- function(file) {  #choose ..._inputParameter.txt as input File
   Data <- readCSV(file)
   outFileName <- Data$parameter$title
   assign(outFileName, Data)
-  rm(Data)
-  save(list=outFileName, file=paste(outFileName, ".RData", sep=""))
+  save(list=outFileName, file=paste(outFileName, "_grids.RData", sep=""))
+  #save(list=c(parameter=Data$parameter), file=paste(outFileName), sep="", "_inputParameter.RData")
+  
   #dump(ls(Data), file=paste(outFileName, ".RData", sep=""))
 }

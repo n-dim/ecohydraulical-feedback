@@ -3,12 +3,11 @@
 
 if [ "$1" == "" ]; then
     echo "usage" 
-    echo "BatchRun <inputParameterFile> <outputFolder>"
+    echo "./BatchRun.sh <inputParameterFile> <outputFolder>"
 else
 
-  path=$(pwd)/$(dirname $BASH_SOURCE)          # path of this file
-  gfortran $path/../model/coupledModel.f90 &&  # compilation
-  #./a.out "$1" "$2" &&                         # simulation run
-  $path/readAllCSV.sh "$2" "$path"             # convert to .RData
+  gfortran ../model/ecohydModel.f90 -o ../model/ecohydModel.out &&    # compilation
+  ../model/ecohydModel.out "$1" "$2" &&                               # simulation run
+  ./readAllCSV.sh "$2"                                                # convert to .RData
 
 fi

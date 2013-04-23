@@ -1,5 +1,5 @@
 plotVegetationGrid <- function(data, time=1:data$parameter$nSteps){
-  library(fields)
+  require(fields)
   attach(data$parameter)
   
   colsVeg <- c("white", two.colors(n=10, start="yellow", end="green4", middle="green"))

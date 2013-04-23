@@ -1,0 +1,26 @@
+\documentclass{article}
+
+\usepackage{animate}
+
+\begin{document}
+
+<<loading, echo=F>>=
+opts_chunk$set(dev='pdf', fig.width=6, fig.height=6, cache=F)
+
+source("../../plotVegetationGrid.r")
+
+load(datei)
+@
+
+\pagebreak{}
+
+<<vegetation, fig.show='animate', message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader'>>=
+# to show only every second timestep put this in the chunk options:
+# aniopts='every=2'
+
+plotVegetationGrid(Test)
+@
+
+
+
+\end{document}

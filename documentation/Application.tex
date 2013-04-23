@@ -1,23 +1,55 @@
 \section{Application }
 
-\subsection{Build from source}
-
-\subsubsection{Unix Systems}
-
-
-To use the gfortran compiler execute the following in terminal:
-
-\texttt{gfortran coupledModel.f90}
-
-On Unix systems an \texttt{.out} file is generated. To execute this, type the following into the terminal:
-
-\texttt{./a.out}
-
-
 \subsection{Installation}
 
 
 \subsubsection{System requirements}
+
+The program is platform independent. For compilation you need the gfortran (GNU Fortran) compiler. Read how to install on \href{http://gcc.gnu.org/fortran/}{www.gcc.gnu.org/fortran/}. Other Fortran compilers might work, but are not tested.
+
+Output is in \texttt{.csv} (comma seperated values) format. So you will be able to read it into any statistical Software like Microsoft Excel or LibreOffice. For this reason you might not need anything of the following.
+
+To use the miscellaneous scripts provided in the folder \texttt{./evaluation/}, you need the statistical software environment "R" that can be obtained from \href{http://www.r-project.org/}{www.r-project.org}. See section \ref{sec:R} on how to use these scripts.
+
+We also recommend the graphical user interface to R called "RStudio" that can be obtained from \\ \href{http://www.rstudio.com/ide/}{www.rstudio.com/ide/}
+
+There are some shell scripts to automate compilation, simulation run and execution of R-scripts. These can be used only on Unix-Systems. See section \ref{sec:batchrun}.
+
+There are some scripts, that generate automated reports as \texttt{.pdf} or \texttt{.tex} on the data the simulation produces. These require a running LaTeX system. Have a look into section \ref{knitr} on how to use these. You might not need these scripts, if you don't want to use LaTeX to write your papers. Graphics can also be exported from the R system.
+
+\subsubsection{Program files}
+
+In the main folder we have following folders, containing:
+
+\begin{tabulary}{\textwidth}{lL}
+
+\texttt{./model/} & the model code;\\
+\texttt{./evaluation/} & evaluation scripts for the output;\\
+\texttt{./documentation/} & the documentation files;\\
+\texttt{./example simulation run/} & example input Parameters and example output, calculated from this input;\\ 
+
+\end{tabulary}
+
+Note, that in the following we will always describe file and folder names relative from the main folder (\texttt{/ecohydraulical-feedback/}). So we assume that in the console you first go into this folder with this command:
+
+\texttt{cd /path/to/ecohydraulical-feedback/}
+
+replacing the path with the correct path to the \texttt{/ecohydraulical-feedback/} folder.
+
+\subsubsection{Build from source \label{sec:build}}
+
+To use the gfortran compiler execute the following in terminal (also called Shell, Bash, command line, console):
+
+\texttt{gfortran ./model/ecohydModel.f90}
+
+On Unix systems the file \texttt{a.out} will be generated, on Windows the file is called \texttt{a.exe}. 
+
+If you want to give the executable a more reasonable name and put it in a specific folder, change the command to something similar to this:
+
+\texttt{gfortran -o /path/myexecutable.out ecohydModel.f90}
+
+
+
 
 
 \subsection{Application prerequisites}
@@ -28,20 +60,104 @@ On Unix systems an \texttt{.out} file is generated. To execute this, type the fo
 
 \subsection{Parameterization}
 
+All input parameters are set in a text file, that you choose as input at runtime. Have a look at the file \texttt{./example simulation run/exampleParameters.txt} to get an idea of which parameters can be set. Best way to feed in your parameters is to copy and modify this file. There also are some files with parameters that refer to the figures used by \citet{gav2012} in the same folder.
 
-\subsection{Simulation}
+The input file must contain parameters in the form \texttt{name = value}. You can make comments after an \texttt{!} in the same line as the parameter or in an own line. Empty lines are also ignored.
+
+The \texttt{title} parameter you set in the input file will be the prefix of your output files (cf. section \ref{sec:output}). Note that existing output gets overwritten without warning if you run a parameter set with the same title.
+
+If you wish to make a cascade of simulation runs you can do this with one input file. Just put another line defining another \texttt{title} parameter in the input file. Following you can define the parameters you want to be different to the first run. You don't have to repeat parameters that shall be the same as in the previous parameter set.
+
+Maybe you want to check whether all data gets read in correctly. In this case you can set the parameter \texttt{run = F}. In this case you can execute the input parameter set and the program will try to read the input, but doesn't start simulation run. If something isn't correct in the input file, you will get an error message describing which parameter couldn't be read. Maybe you want to do this before you start a cascade of simulation runs.
 
 
-\subsection{Output}
+\subsection{Simulation run \label{sec:simulation}}
+
+After you have compiled an executable following section \ref{sec:build}, you can execute the simulation.
+
+Run simulation from command line with the following syntax:
+
+\texttt{./a.out <inputFile.txt> <outputFolder>}
+
+or on Windows:
+
+\texttt{./a.exe <inputFile.txt> <outputFolder>}
+
+Replace \texttt{<inputFile.txt>} with the absolute path to the file containing your input parameters. There is an example file that you could modify in  \texttt{./example simulation run/exampleParameters.txt}. Replace \texttt{<outputFolder>} with the path to the folder where you want your output files. As with the input file only use absolute paths.
+
+If you chose a different name for the compiled executable like described in section \ref{sec:build}, you have to replace \texttt{./a.out} with your chosen file path and name. For example \texttt{/path/myexecutable.out}.
+
+
+
+
+\subsubsection{Batch run \label{sec:batchrun}}
+
+The script \texttt{./evaluation/BatchRun.sh} can be used to automate Fortran compilation, execution of simulation, conversion to \texttt{.RData} and additional evaluation scripts in R. Feel free to modify the script to your needs. The batch script has to be run from within the \texttt{./evaluation/} folder, so first:
+
+\texttt{cd ./evaluation/}
+
+into the evaluation folder and then execute:
+
+\texttt{./BatchRun.sh <inputFile.txt> <outputFolder>}
+
+The executable, generated by this script is called \texttt{ecohydModel.out} respectable \texttt{ecohydModel.exe} on Windows and can be found in the \texttt{./model/} folder.
+
+\subsection{Output \label{sec:output}}
+
+The output is in \texttt{.csv} format. That means "comma separated values" and is basically a text file with numbers, separated by ";". You can read it into Microsoft Excel or similar programs.
+
+There is one output file for every grid, that gets generated. You find them in the output folder you defined in the command line (cf. section \ref{sec:simulation}). Files are formatted as followed:
+
+\texttt{<title>\_<grid-name>.csv}
+
+Where \texttt{<title>} is the parameter set title you defined in the input file and \texttt{<grid-name>} the name of the grid (for example \texttt{vegetation}, \texttt{discharge} etc.). Additional there is a file
+
+\texttt{<title>\_SummaryResults.csv}
+
+which contains some calculated summary values. Lastly there is 
+
+\texttt{<title>\_inputParameter.txt}
+
+which contains all the input Parameters that were used to generate the output files of the \texttt{<title>} simulation run.
+
+\subsubsection{Binary output}
+There is also a possibility to generate binary output of the grid data. For this you have to change the parameter \texttt{outputFormat = csv} to \texttt{outputFormat 	= binary} in the Parameter input File.
+
+The binary output is formatted as followed:
+
+\begin{enumerate}
+
+\item first 4 bytes are an index integer describing how many bytes follow
+\item the following binarys are the data of the first time step and are formated either in 4 or 8 byte blocks, depending on whether the data is 4-byte integer or 8-byte float (\texttt{real*8} in Fortran syntax). For integer values the preceding index number is for example $10000\cdot4=40000$ for a $100\times100$ grid. For float numbers this would be $10000\cdot8=80000$.
+\item the index number gets repeated after every time step
+\end{enumerate}
+
+The next timestep starts again with an index number, so its:
+\texttt{index; data; index; index; data; index; ...} There are no line breaks in the file.
+
+For an example on how to read this data into R see the file \texttt{./evaluation/read-binary-files.r}.
 
 
 \subsection{Appraise and visualize results}
 
 
-\subsubsection{in R }
+\subsubsection{\label{sec:R}in R }
+
+We recommend to evaluate the data in R. There are several scripts in the folder \texttt{./evaluation/}:
+
+\begin{tabulary}{\textwidth}{lL}
+\texttt{readCSV.r} & reads the \texttt{.csv} output into R \\
+\texttt{CSVtoRData.r} & reads \texttt{.csv} output and saves as \texttt{.RData} file; uses \texttt{readCSV.r} \\
+\texttt{readAllCSV.r} & reads all \texttt{.csv} files in the provided folder and converts them to \texttt{.RData}; uses \texttt{CSVtoRData.r} \\
+\texttt{readAllCSV.sh} & Shell script that executes \texttt{readAllCSV.r} \\
+\texttt{BatchRun.sh} & Shell script that runs compilation, executes the simulation and converts to \texttt{.RData}; makes use of \texttt{readAllCSV.sh} \\
+\texttt{read-binary-files.r} & reads binary output; not fully implemented yet, because there was no noticable speed enhancement \\
 
 
-\subsubsection{in R and \protect\LaTeX{} (knitr-method)}
+\end{tabulary}
+
+
+\subsubsection{in R and \protect\LaTeX{} (knitr-method) \label{knitr}}
 
 \url{http://yihui.name/knitr/}
 

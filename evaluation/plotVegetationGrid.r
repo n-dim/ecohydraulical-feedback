@@ -1,15 +1,15 @@
 plotVegetationGrid <- function(data, time=1:data$parameter$nSteps){
   require(fields)
-  attach(data$parameter)
-  
-  colsVeg <- c("white", two.colors(n=10, start="yellow", end="green4", middle="green"))
-  
-  for (i in time){
-    image.plot(1:n, 1:m, data$rasters$vegetation[[i]], asp=n/m, col=colsVeg, nlevel=10, 
-               main=paste0('simulation run "', title, '", timestep ', i), zlim=c(0,10))
+  with(data$parameter, {
     
-  }
-  detach(data$parameter)
+    colsVeg <- c("white", two.colors(n=10, start="yellow", end="green4", middle="green"))
+    
+    for (i in time){
+      image.plot(1:n, 1:m, data$rasters$vegetation[[i]], asp=n/m, col=colsVeg, nlevel=10, 
+                 main=paste0('simulation run "', title, '", timestep ', i), zlim=c(0,10))
+      
+    }
+  })
   
 }
 

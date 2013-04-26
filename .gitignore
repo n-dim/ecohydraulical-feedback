@@ -5,20 +5,18 @@
 
 model/a.out
 
-documentation/GavsDocumentation.aux
-
-documentation/GavsDocumentation.dvi
+*.aux
+*.log
+*synctex.gz
+*.dvi
 
 documentation/GavsDocumentation.out
 
 model/test.f90
-model/coupledModel.f90.orig
+*.orig
 /model/ecohydModel.out
-/documentation/Application.tex.bak
-/documentation/GavansDocumentation.bib~
-/documentation/GavsDocumentation.blg
-/documentation/GavsDocumentation.tex.bak
-/documentation/Implementation.tex.bak
-/documentation/knitr.tex.bak
+*.tex.bak
+*~
+*.blg
 /documentation/#GavansDocumentation.bib
-/evaluation/knitr/overview/overview.pdf
+/evaluation/knitr/overview/figure

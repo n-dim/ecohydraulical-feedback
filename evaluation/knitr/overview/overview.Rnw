@@ -6,19 +6,28 @@
 
 <<loading, echo=F>>=
 opts_chunk$set(dev='pdf', fig.width=6, fig.height=6, cache=F)
+library(xtable)
 
 source("../../plotVegetationGrid.r")
 
-load(datei)
+dataEnv <- new.env()
+load('../../../../roughness variation/roughness 0.01_grids.RData', envir=dataEnv)
+
+datasets <- ls(envir=dataEnv)
 @
 
 \pagebreak{}
 
-<<vegetation, fig.show='animate', message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader'>>=
-# to show only every second timestep put this in the chunk options:
-# aniopts='every=2'
+<<results='asis', echo=F>>=
+print(xtable(t(as.data.frame(get(datasets, envir=dataEnv)$parameter)), caption=paste0('Parameters of parameter set "', get(datasets, envir=dataEnv)$parameter$title, '"')), include.colnames=FALSE, caption.placement="top")
+@
 
-plotVegetationGrid(Test)
+<<vegetation, fig.show='animate', aniopts='poster=last, controls,loop' , message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader'>>=
+# to show only every second timestep put this in the chunk options:
+# aniopts='every=2, controls,loop'
+for(i in datasets){
+  plotVegetationGrid(get(i, envir=dataEnv))
+}
 @
 
 

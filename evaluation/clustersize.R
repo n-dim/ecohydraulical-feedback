@@ -1,5 +1,5 @@
 
-getClusters <- function(grid, threshold){
+getClusters <- function(grid){
   # for the function m and n need to be derived inside the function
   clusters <- data.frame(cluster=numeric(), row=numeric(), startcol=numeric(), endcol=numeric(), size=numeric())
   cc <- 0 #cluster count
@@ -10,7 +10,7 @@ getClusters <- function(grid, threshold){
     first=T
     for(i in 1:n){
       
-      if(grid[j,i]>threshold){ 
+      if(grid[j,i]==1){ 
         if(first==T){
           cc=cc+1
           clusters[cc,]$cluster <- cc
@@ -46,7 +46,48 @@ getClusters <- function(grid, threshold){
   return(clusters)
 }
 
+getClusterSizes <- function(clusters){
+  return(aggregate(size ~ cluster, data=clusters, FUN="sum"))
+} 
 
+clusterSizeProgression <- function(data){
+  with(c(data$rasters, data$parameter), {
+   
+   clusters <- list(NULL)
+   clusterSizes <- list(NULL)
+   clusterSizesStat <- as.data.frame(t(rep(0,6)))
+   names(clusterSizesStat) <- names(summary(0))
+   for (i in 1:nSteps){
+     clusters[[i]] <- getClusters(vegetation[[i]])
+     clusterSizes[[i]] <- getClusterSizes(clusters[[i]]) 
+     clusterSizesStat[i,] <- summary(clusterSizes[[i]]$size)
+   }
+   plot(clusterSizesStat$Mean, type="l", ylab="cluster size [cells]", xlab="time [y]", main=paste("simulation run", title))
+  })
+}
+
+clusterSizeProgression(data)
+
+grid <- Test$rasters$vegetation[[200]]>0
+
+image(grid)
+
+clusters <- getClusters(grid)
+
+clusterSizes <- getClusterSizes(clusters) 
+  
+
+summary(clusterSizes$size)
+
+with(Test$parameter,
+
+  boxplot(clusterSizesStat, main=paste("simulation run", title))
+
+)
+plotVegetationGrid(Test, time=200)
+
+
+##############################################
 
 library(fields)
 colsVeg <- two.colors(n=9, start="yellow", end="green4", middle="green")

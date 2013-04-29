@@ -18,8 +18,8 @@ INTEGER :: IOStatus !variable to hold read errors
 
 
 !input parameters:
-character(40) :: title
-character(200) :: description
+character(200) :: title
+character(400) :: description
 logical :: run 		!run simulation for this parameter set?
 integer :: m, n		!number of rows and colums
 integer :: np		!number of patricles of rain falling
@@ -191,8 +191,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 
 	
 	logical, intent(out) :: run !run simulation for this parameter set?
-	character(40), intent(out) :: title
-	character(200), intent(out) :: description
+	character(200), intent(out) :: title
+	character(400), intent(out) :: description
 	logical, intent(out) :: anotherParamSet !are there multiple parameter Sets?
 	logical, intent(out) :: Errors
 	INTEGER, DIMENSION(4), INTENT(OUT) :: bcs !code for boundary conditions along borders
@@ -203,9 +203,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
    
    	integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
-	character(221) :: input 	!whole row in input
+	character(420) :: input 	!whole row in input
 	character(20) :: inputParName !parameter Name 
-	character(200) :: inputValChar !value of the above parameter
+	character(400) :: inputValChar !value of the above parameter
 	integer :: inputVal !input Value used in input read
 	integer :: ioStatus
 	integer :: i
@@ -488,7 +488,7 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
    logical, intent(in) :: simEvap		!if true, then simulate evaporation
    logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
    logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
-   CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+   CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
   
   
    INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
@@ -2330,7 +2330,7 @@ SUBROUTINE openCSVrasterFiles(resultsName, outputFolder)
    IMPLICIT NONE
 
 	character(LEN=400), intent(in) :: outputFolder
-   CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+   CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
    OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
@@ -2352,7 +2352,7 @@ SUBROUTINE openBinaryFiles(resultsName, outputFolder)
 	IMPLICIT NONE
 	
 	character(LEN=400), intent(in) :: outputFolder
-	CHARACTER(LEN=21), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+	CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 	OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
 	write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'

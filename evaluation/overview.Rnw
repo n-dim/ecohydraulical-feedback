@@ -1,4 +1,6 @@
-\documentclass{article}
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 
 \usepackage{animate}
 
@@ -6,12 +8,10 @@
 
 <<loading, echo=F>>=
 opts_chunk$set(dev='pdf', fig.width=6, fig.height=6, cache=F)
-library(xtable)
 
-source("../../plotVegetationGrid.r")
 
 dataEnv <- new.env()
-load('../../../../roughness variation/roughness 0.01_grids.RData', envir=dataEnv)
+load(file.path('..', file), envir=dataEnv)
 
 datasets <- ls(envir=dataEnv)
 @

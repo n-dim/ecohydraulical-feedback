@@ -1,14 +1,31 @@
 generateOverview <- function(path){
-  grDevices::pdf.options(useDingbats = FALSE); 
+  library(xtable)
+  
+  source("plotVegetationGrid.r")
+  grDevices::pdf.options(useDingbats = FALSE);  
   require(knitr)
+  opts_chunk$set(fig.path='figure/')
+  opts_knit$set(progress = F, verbose = F)
+  
+  files <- dir(path, pattern='_grids.RData')
+  
   oldwd <- getwd()
-  setwd('./knitr/overview/')
-  file <- knit2pdf('./overview.Rnw', encoding='UTF-8')
-  setwd(oldwd)
-  file.copy(file.path('./knitr/overview/', file), path)
-  file.copy(file.path('./knitr/overview/figure'), recursive=T, path)
+  
+  for(file in files){
+    name <- strsplit(file, "_")[[1]][1]
+    name <- sub("\\.", "_", name)
+    name <- sub(" ", "_", name)
+    
+    out.folder <- file.path(path, paste0(name, '_overview'))
+    dir.create(out.folder, recursive=T)
+
+    out.name <-  paste0(name, '.Rnw')
+    file.copy('overview.Rnw', file.path(out.folder,out.name), overwrite=T)
+    try({
+      setwd(out.folder)
+      knit2pdf(out.name, encoding='UTF-8')
+    })
+    setwd(oldwd)
+    
+  }
 }
-
-
-filename <- 'overview.tex'
-generateOverview(paste0('../../TestOutput/'))

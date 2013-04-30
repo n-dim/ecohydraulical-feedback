@@ -152,10 +152,41 @@ We recommend to evaluate the data in R. There are several scripts in the folder 
 \texttt{readAllCSV.sh} & Shell script that executes \texttt{readAllCSV.r} \\
 \texttt{BatchRun.sh} & Shell script that runs compilation, executes the simulation and converts to \texttt{.RData}; makes use of \texttt{readAllCSV.sh} \\
 \texttt{read-binary-files.r} & reads binary output; not fully implemented yet, because there was no noticable speed enhancement \\
+\texttt{coverRatio.r} & function to calculate a cover ratio diagram (developing cover ratio over time) \\
 
 
 \end{tabulary}
 
+\paragraph{cover ratio}
+
+The R-script \texttt{./evaluation/coverRatio.r} prints the vegetation cover ratio as:
+\[
+\frac{cells_{filled}}{cells_{total}}
+\]
+This is calculated for every time step and printed as a line plot, so that the development over time can be observed.
+
+To avoid that edge effects at the system boundary  produce inconsistent oscillations in the graph, the line $1$ and column $1$ get truncated, before the ratio is derived (cf. figure \ref{fig:edge_effects}). So $cells_{filled}$ is defined as the filled cells in:
+
+\texttt{vegetation[[i]][2:m,2:n]}
+
+Where \texttt{[[i]]} refers to time step $i$ and \texttt{[2:m,2:n]} to rows $2...m$ and colums $2...n$.
+
+The total cells are:
+
+\[
+cells_{total}=(n-1)\cdot(m-1)
+\]
+
+\begin{figure}
+\begin{center}
+
+\subfigure[Oscillating cells in row $1$ and column $1$]{\includegraphics[bb=0bp 60bp 720bp 660bp,clip,scale=.5]{figures/edge_effects1.pdf}}
+\subfigure[Truncated first row and colmn]{\includegraphics[bb=0bp 60bp 720bp 660bp,clip,scale=.5]{figures/edge_effects2.pdf}}
+
+
+\end{center}
+\caption{\label{fig:edge_effects} Edge effects on the vegetation grid}
+\end{figure}
 
 \subsubsection{in R and \protect\LaTeX{} (knitr-method) \label{knitr}}
 

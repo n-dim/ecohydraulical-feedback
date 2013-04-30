@@ -5,9 +5,9 @@ coverRatio <- function(data){
   with(c(data$parameter, data$rasters), {
   
     coverRatio <- NULL
-    mn = n*m
+    mn = (n-1)*(m-1)
     for (i in 1:nSteps){
-       coverRatio[i] <- length(which(vegetation[[i]]>0))/mn
+       coverRatio[i] <- length(which(vegetation[[i]][2:m,2:n]>0))/mn
     }
     
     marold <- par()$mar
@@ -26,7 +26,7 @@ coverRatio <- function(data){
     
     for(j in 1:9){
       for (i in 1:nSteps){
-        Temp[i] <- length(which(vegetation[[i]]==j))/mn
+        Temp[i] <- length(which(vegetation[[i]][2:m,2:n]==j))/mn
       }
       coverRatio1[[j+1]] <- Temp + coverRatio1[[j]]
       plot <- c( coverRatio1[[j+1]] , rev(coverRatio1[[j]]) )

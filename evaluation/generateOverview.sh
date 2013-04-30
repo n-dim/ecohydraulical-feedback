@@ -6,6 +6,8 @@
 args <- commandArgs(TRUE)
 
 source("generateOverview.r")
+source("coverRatio.r")
+#source("clustersize.R")
 
 generateOverview(args[1])
 

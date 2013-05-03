@@ -34,6 +34,6 @@ coverRatio <- function(data){
     }
     legend(par()$usr[2]*1.01, mean(par()$usr[3:4]), fill=colsVeg, legend=paste("veg dens", 1:9), xpd=T, yjust=0.5)
     par(mar=marold)
-  })
   return(median_cover_ratio=Median)
+  })
 }

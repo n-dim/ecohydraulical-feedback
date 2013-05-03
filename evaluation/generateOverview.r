@@ -2,6 +2,8 @@ generateOverview <- function(path){
   library(xtable)
   
   source("plotVegetationGrid.r")
+  source("clustersize.R")
+  source("coverRatio.r")
   grDevices::pdf.options(useDingbats = FALSE);  
   require(knitr)
   opts_chunk$set(fig.path='figure/')
@@ -26,6 +28,6 @@ generateOverview <- function(path){
       knit2pdf(out.name, encoding='UTF-8')
     })
     setwd(oldwd)
-    
+
   }
 }

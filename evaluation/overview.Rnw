@@ -37,7 +37,7 @@ MedianCoverRatio <- coverRatio(data)
 coverRatio(data)
 @
 
-<<clusterSizes, fig.height=4, fig.cap="Mean cluster size over time", echo=F>>=
+<<clusterSizes, fig.height=4, fig.cap="Mean cluster size over time", echo=F, results='hide'>>=
 clusterSizeProgression(data)
 @
 

@@ -6,18 +6,27 @@ data <- list(n=10, m=10, p=4, l=c(3,4,5), t=rep(c(6,7), each=3))
 
 data <- list(a=c(1,4,5), b=c(2,3,20), c=c(10,11,12))
 
-loop <- function(data, simName){
+loop <- function(data, simName, Envir, Counter){
   for(i in 1:length(data[[1]])){
       assign(names(data[1]), data[[1]][i], envir=Envir)
       #print(paste(names(data[1]),"=", data[[1]][i]))
       if(!length(data)<=1){
-        loop(tail(data, -1), simName)
+        loop(tail(data, -1), simName, Envir, Counter)
       }else{
           objects <- ls(pos=Envir)
-        
-          write(paste("\n!----", simName, "- No.", get("simRunNo", Counter), "\n"), file=file, append=T)
+          
+          if(Counter$simRunNo %% Counter$threadSplit == 1){
+           
+              Counter$simFile <- paste0(Counter$file, "_No", Counter$simRunNo, "ff.txt")
+              write("", file=Counter$simFile)
+
+          }
+          
+          write(paste("\n!----", simName, "- No.", get("simRunNo", Counter), "\n"), file=Counter$simFile, append=T)
+          
+          
           for(obj in objects){
-            write(paste(obj, "=", get(obj,pos=Envir)), file=file, append=T)
+            write(paste(obj, "=", get(obj,pos=Envir)), file=Counter$simFile, append=T)
           }
           local( simRunNo <- simRunNo + 1, Counter)
       }
@@ -25,23 +34,28 @@ loop <- function(data, simName){
   
 }
 
-write.EcoHyd.Input <- function(data, folder= "/media/Data/eco-hyd", simName= "Testrun"){
+write.EcoHyd.Input <- function(data, folder= "/media/Data/eco-hyd", simName= "Testrun", threads=1){
+  # threads defines the number of parallel computations
+  
   if(any(duplicated(names(data)))){
     stop("duplicated entries in input")
   }else{
     
     Envir <- new.env()
     Counter <- new.env()
-    assign("simRunNo", 1, envir=Counter)
+    Counter$simRunNo <- 1
   
     simFolder <- file.path(folder,paste0("simRun_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S_"), simName))
     dir.create(simFolder)
-    file <- file.path(simFolder,paste0(simName, ".txt"))
+    Counter$file <- file.path(simFolder,paste0(simName))
     
-    
-    write("!--- input variation ---", file=file)
-    
-    loop(data, simName)
+    combinations <- 1
+    for(i in 1:length(data)){
+      combinations <- combinations * length(data[[i]])
+    }
+    Counter$threadSplit <- round(combinations/threads)
+       
+    loop(data, simName, Envir, Counter)
     
     rm(Envir)
     rm(Counter)
@@ -49,8 +63,11 @@ write.EcoHyd.Input <- function(data, folder= "/media/Data/eco-hyd", simName= "Te
   
 }
 
-write.EcoHyd.Input(data)
+write.EcoHyd.Input(data, threads=3)
 
+
+
+#----------------------------------------------------------
 
 n=10
 m=10

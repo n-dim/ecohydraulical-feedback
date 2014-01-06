@@ -1,5 +1,6 @@
 #extract wave speed and wave length from image time series
 
+require(fields)
 
 waveSpeed <- function(x,y){ 
   #convert to time series 
@@ -22,13 +23,10 @@ nts <- 400
 dx <- 5
 dt <- 1
 
-flist = list.files(,pattern="*.out")
-nf <- length(flist)
-wavelength <- c()
-wavespeed <- c()
 allveg <-  array(dat,dim=c(nm,nm,nf))
 
-for (k in 1:nf){
+
+# Read File
   
   ############load data
   strm <-file(paste(paste('TStepResults',k,sep=""),'_1.out',sep=""),open = "r")
@@ -44,15 +42,27 @@ for (k in 1:nf){
   close(strm)  
   allveg[,,k] <- veg[,,nts]
   
+# new input read:
+
+  load("/home/nanu/simRuns/periodic Boundaries/periodicBC_grids.RData")
+  data <- periodicBC
+  attach(data$rasters)
+  attach(data$parameter)
+  veg        <-    array(data=NA,dim=c(m,n,nSteps),dimnames=c("x","y","t"))
+  for(i in 1:nSteps){
+    veg[,,i] <- vegetation[[i]]
+  }
   
-  ############calc wave speeds and wave lengths
+############calc wave speeds and wave lengths
+  wavelength <- c()
+  wavespeed <- c()
   spd <- c()
   wlnth <- c()
-  pos <- cbind(1:nm,1:nm)
-  for (i in 2:nts) {
+  pos <- cbind(1:m,1:n)
+  for (i in 2:nSteps) {
     x <- c()
     y <- c()
-    for (j in 1:nm){
+    for (j in 1:n){
       x <- c(x,veg[pos[j,1],pos[j,2],i-1])
       y <- c(y,veg[pos[j,1],pos[j,2],i])
     }
@@ -65,12 +75,15 @@ for (k in 1:nf){
   wavespeed <- cbind(wavespeed,spd)
   wavelength <- cbind(wavelength,wlnth)
   
-}
+
 
 ###extract means of each
 
-sp.mn <- apply(wavespeed[floor(2*nts/3):(nts-1),],MARGIN=2,mean,na.rm=TRUE)
-wl.mn <- apply(wavelength[floor(2*nts/3):(nts-1),],MARGIN=2,mean,na.rm=TRUE)
+sp.mn <- apply(wavespeed[floor(2*nSteps/3):(nSteps-1),],MARGIN=2,mean,na.rm=TRUE)  # for mean wave length uses only 2/3 of the simulation timeline
+sp.mn <- mean(wavespeed[floor(2*nSteps/3):(nSteps-1),])
+wl.mn <- apply(wavelength[floor(2*nSteps/3):(nSteps-1),],MARGIN=2,mean,na.rm=TRUE)
+wl.mn <- mean(wavelength[floor(2*nSteps/3):(nSteps-1),])
+
 sp.mn.mat <- matrix(sp.mn,nrow=8,byrow=TRUE)
 wl.mn.mat <- matrix(wl.mn,nrow=8,byrow=TRUE)
 
@@ -158,3 +171,63 @@ contour(x = kc, y = kf, sp.mn.mat2,
 axis(side=1,lwd=2)
 axis(side=2,lwd=2)
 dev.off()   
+
+
+# new wavelength metod:
+
+load("~/simRuns/periodic Boundaries/nonperiodicBC_grids.RData")
+attach(nonperiodicBC$rasters)
+attach(nonperiodicBC$parameter)
+
+library(doMC) # for multicore calculations
+registerDoMC(detectCores()) 
+
+t=nSteps
+getWaveLength <- function(grid, dx=1){
+  x_spec <- foreach(x=1:nrow(grid), .combine=c) %dopar% {
+    per <- spec.pgram(grid[x,], plot=F)
+    dominant_frequency <- 1/per$freq[which.max(per$spec)]
+  }
+  
+  wavelength_x <- median(x_spec)
+  
+  y_spec <- foreach(y=1:ncol(grid), .combine=c) %dopar% {
+    per <- spec.pgram(grid[,y], plot=F)
+    dominant_frequency <- 1/per$freq[which.max(per$spec)]
+  }
+  
+  wavelength_y <- median(y_spec)
+  
+  wavelength <- wavelength_x * wavelength_y /sqrt(wavelength_x^2 + wavelength_y^2)
+  wavelength * dx
+}
+
+wavelengthProgression <- function(data, time=NA){
+  with(c(data$rasters, data$parameter),{
+    if(is.na(time)) time=1:nSteps
+    dx * foreach(t=time, .combine=c) %dopar% getWaveLength(vegetation[[t]])
+  })   
+}
+
+wavelengthProgression(nonperiodicBC)
+plot(wavelengthProgression(nonperiodicBC), type="l", ylab="wavelength [m]", xlab="time [y]")
+
+
+# Experiments:
+
+x <- rep(c(1,0,0,0,0,0), 10)
+data <- matrix(rep(x, length(x)), ncol=length(x))
+image(data)
+getWaveLength(data)
+
+data <- matrix(rep(x, length(x)-1), ncol=length(x))
+image(data)
+getWaveLength(data)
+
+data <- matrix(rep(x, length(x)-2), ncol=length(x))
+image(data)
+getWaveLength(data)
+
+#.-------------------
+periodogram(vegetation[[200]][,60]) -> per
+1/per$freq[which.max(per$spec)]

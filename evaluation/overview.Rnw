@@ -22,7 +22,7 @@ data <- get(ls(envir=dataEnv), envir=dataEnv)
 print(xtable(t(as.data.frame(data$parameter)), caption=paste0('Parameters of parameter set "', data$parameter$title, '"')), include.colnames=FALSE, caption.placement="top")
 @
 
-<<vegetation, fig.show='animate', aniopts='poster=last, controls,loop' , message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader'>>=
+<<vegetation, fig.show='animate', aniopts='poster=last, controls,loop' , message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader', dev="png", dpi=250>>=
 # to show only every second timestep put this in the chunk options:
 # aniopts='every=2, controls,loop'
   plotVegetationGrid(data)

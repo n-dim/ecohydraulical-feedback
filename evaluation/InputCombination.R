@@ -88,28 +88,3 @@ parlist$roughness <- 10^c(-1:1)
 
 write.EcoHyd.Input(parlist, threads=3)
 
-
-
-
-#----------------------------------------------------------
-
-n=10
-m=10
-p=4
-for(l in c(3,4,5)){
-  
-}
-
-
-write.ecoHydInput <- function(data, file){
-  
-  for(i in 1:nrow(data)){
-    write.table(t(data[i,]), file, sep=" = ", quote=F, append=(!i==1), col.names=F)
-    write("\n!--------------------------------\n", file=file, append=T)
-  }
-  
-}
-
-write.ecoHydInput(data, file)
-
-#read.table(file=file, sep="=", header=F)

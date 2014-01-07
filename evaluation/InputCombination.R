@@ -1,11 +1,5 @@
 ## ---- write.ecoHydInput ----
 
-# example:
-file <- "/media/Data/eco-hyd/sim2014-01-06"
-data <- list(n=10, m=10, p=4, l=c(3,4,5), t=rep(c(6,7), each=3))
-
-data <- list(a=c(1,4,5), b=c(2,3,20), c=c(10,11,12))
-
 loop <- function(data, Envir, Counter){
   if(Counter$threadSplit==1) Counter$threadSplit = 10000000
   
@@ -62,29 +56,7 @@ write.EcoHyd.Input <- function(data, folder= "/media/Data/eco-hyd", simName= "Te
     
     rm(Envir)
     rm(Counter)
+    return(simFolder)
   } 
   
 }
-
-
-#---- read parameters from file ----
-pars <- read.table("/media/Data/eco-hyd/exampleParameters.txt", sep="=", comment.char="!", fill=T, allowEscapes=T, encoding="UTF-8", strip.white=T, as.is=T)
-
-parlist <- t(pars[,2])
-colnames(parlist) <- pars[,1]
-parlist <- as.list(parlist[1,])
-as.numeric(parlist,)
-nums <- which(!is.na(as.numeric(parlist)))
-parlist[nums] <- as.numeric(parlist[nums])
-
-parlist$title <- NULL
-
-#---- change parameters ----
-
-parlist$roughness <- 10^c(-1:1)
-
-
-#---- write parameter cascade ----
-
-write.EcoHyd.Input(parlist, threads=3)
-

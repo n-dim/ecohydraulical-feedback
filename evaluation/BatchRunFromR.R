@@ -1,5 +1,11 @@
 source("InputCombination.R")
 
+library(foreach)
+#install.packages("doParallel")
+library(doParallel)
+registerDoParallel(12)
+
+
 #---- read parameters from file ----
 pars <- read.table("/media/Data/eco-hyd/exampleParameters.txt", sep="=", comment.char="!", fill=T, allowEscapes=T, encoding="UTF-8", strip.white=T, as.is=T)
 
@@ -17,15 +23,27 @@ load(file="../example simulation run/exampleParameters.RData")
 
 #---- change parameters ----
 
-parlist$roughness <- 10^c(-1:1)
+parlist$m <- parlist$n <- 70
+parlist$roughness <- 10^c(-10:13)
 
 
 #---- write parameter cascade ----
 
-folder <- write.EcoHyd.Input(parlist, threads=3)
+folder <- write.EcoHyd.Input(parlist, threads=12)
 
-#---- start simulation ----
+#---- run simulation ----
 
-for(file in list.files(folder)){
-  system(paste("../model/ecohydModel.out", file.path(folder,file),  folder))
+system.time({
+foreach(file = list.files(file.path(folder, "input")), .combine=) %dopar% {
+  system(paste("../model/ecohydModel.out", file.path(folder, "input",file),  folder) )
 }
+})
+
+
+source("CSVtoRData.r")
+system.time({
+  foreach(file= list.files(folder, pattern="*_inputParameter.txt"), .combine=) %dopar% {
+    CSVtoRData(file.path(folder, file))
+  }
+  
+})

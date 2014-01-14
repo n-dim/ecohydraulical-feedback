@@ -11,38 +11,39 @@ readCSV <- function(file=NA) {
     parameter[i] <- as(parameter[i], formats[i])
   }
   
-  attach(parameter)
   
-  #only read rasters if simulation was run
-  if(run == T){ 
-    # prepare raster read in
-    rasterSets <- c("bareE", "discharge", "eTActual", "flowdirections", "flowResistance", "store", "topography", "vegetation")
-    rasters <- vector("list", length(rasterSets))
-    # read in rasters
-    for(i in 1:length(rasterSets)){
-      connection <- file(paste(dirname(file),"/", title, "_", rasterSets[i], ".csv", sep=""), open="rt")
-      for(j in 1:nSteps){
-        Temp <- as.matrix(read.table(file=connection, sep=";", skip=1, nrow=m, header=F))
-        colnames(Temp) <- NULL  
-        rasters[[i]][[j]] <- Temp[1:n,1:m]
+  
+    #only read rasters if simulation was run
+    if(parameter$run == T){ 
+      
+    with(parameter,{
+      # prepare raster read in
+      rasterSets <- c("bareE", "discharge", "eTActual", "flowdirections", "flowResistance", "store", "topography", "vegetation")
+      rasters <- vector("list", length(rasterSets))
+      # read in rasters
+      for(i in 1:length(rasterSets)){
+        connection <- file(paste(dirname(file),"/", title, "_", rasterSets[i], ".csv", sep=""), open="rt")
+        for(j in 1:nSteps){
+          Temp <- as.matrix(read.table(file=connection, sep=";", skip=1, nrow=m, header=F))
+          colnames(Temp) <- NULL  
+          rasters[[i]][[j]] <- Temp[1:n,1:m]
+        }
+        close(connection)
       }
-      close(connection)
-    }
-    # rename it
-    names(rasters) <- rasterSets
+      # rename it
+      names(rasters) <- rasterSets
+      
+      # read summary file
+      Summary <- read.table(file=paste(dirname(file),"/", title, "_", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
     
-    # read summary file
-    Summary <- read.table(file=paste(dirname(file),"/", title, "_", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
-    
-    message('read input from parameterset "', parameter$title, '"')
-    detach('parameter')
+      message('read input from parameterset "', parameter$title, '"')
+
     return(list(parameter=parameter, Summary=Summary, rasters=rasters))
-  
-  }else{
-    message('no data to read for parameterset "', parameter$title, '" (no simulation run)')
-    detach("parameter")
-    return(list(parameter=parameter))
-  }
-  
+    })
+    }else{
+      message('no data to read for parameterset "', parameter$title, '" (no simulation run)')
+      return(list(parameter=parameter))
+    }
+
   
 }

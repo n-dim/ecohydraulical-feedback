@@ -1,11 +1,4 @@
-# for parallel computing:
-cores <- 12
-library(foreach)
-library(doParallel)
-registerDoParallel(cores)
-source("coverRatio.r")
-source("readCSV.r")
-
+source("simBatchRun.R")
 
 #---- load parameters ----
 load(file="../example simulation run/exampleParameters.RData")
@@ -13,63 +6,33 @@ load(file="../example simulation run/exampleParameters.RData")
 #---- change parameters ----
 
 parlist$description <- NULL
-parlist$m <- parlist$n <- 10
-parlist$pa <- seq(200, 800, by=20)
-parlist$roughness <- c(0)
-#parlist$Emax <- 876
-parlist$Emax <- seq(300, 2000, length.out=10)
+parlist$m <- parlist$n <- 64
+parlist$pa <- seq(200, 1200, by=20)
+#parlist$pa <- 600
+parlist$roughness <- 0.0000001
+parlist$Emax <- 876
+#parlist$Emax <- seq(200, 2000, by=100)
 #parlist$roughness <- 0
 #parlist$nSteps <- 100
+parlist$BCs <- "-3\t-3\t0\t0"
+parlist$simErosion <- "F"
+parlist$np <- 150
+parlist$nSteps <- 100
+parlist$K0 <- 0.2546103
+parlist$Kmax <- 2.0461027
+parlist$kf <- 1.0
+parlist$kc <- 0.6
+parlist$useRandomSeed = "T"
 
 #---- calculate parameter space----
 
 Dimnames <- parlist
 Dims <- mapply(length, Dimnames)
 totalDims <- prod(Dims)
-
 parameterSpace <- array(1:prod(Dims), dim=Dims, Dimnames)
-#dimnames(parameterSpace)
 
-#---- create simulation folder ----
-
-folder <- "/media/Data/eco-hyd/"
-simFolder <- file.path(folder, paste0("simRun_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S")))
-dir.create(simFolder)
-
-#---- run simulations ----
-simSpace <- foreach(simNo=1:length(parameterSpace)) %dopar% {
-  # create folder
-  simNoFolder <- file.path(simFolder, simNo)
-  dir.create(simNoFolder)
-  file <- file.path(simNoFolder, paste0("input-sim_",simNo,".txt"))
-  
-  # write input file
-  pos <- which(parameterSpace==simNo, arr.ind=T)
-  parameterSet <- mapply(`[`, dimnames(parameterSpace), pos)
-  write(paste("title =",simNo), file=file)
-  for(i in 1:length(parameterSet)){
-    write(paste(names(parameterSet[i]), "=", parameterSet[i]), file=file, append=T)
-  }
-  
-  # run simulation
-  system(paste("../model/ecohydModel.out", file,  simNoFolder, ">", paste0(simNoFolder, "/", simNo, "_log.txt")))
-  
-  # read into R format
-  Data <-  readCSV(file.path(simNoFolder, paste0(simNo, "_inputParameter.txt")))
-  
-  Data$postp$coverRatio <- coverRatio(Data)
-  
-  Data$postp$coverRatioMedian <- median(Data$postp$coverRatio)
-  
-  # save Data
-  outFileName <- paste0("sim", simNo)
-  assign(outFileName, Data)
-  save(list=outFileName, file=file.path(simNoFolder,paste(simNo, "_grids.RData", sep="")))  
-  
-  cat("finished simulation no", simNo, "of", length(parameterSpace), file=file.path(simFolder,"proceeding.txt"), fill=T)
-  
-  Data
-}
+#---- run Simulation ----
+simSpace <- simBatchRun(parameterSpace, folder="/media/Data/eco-hyd/")
 
 #names(simSpace) <- paste0("sim", 1:length(parameterSpace))
 #str(simSpace, max.level=1)
@@ -109,22 +72,33 @@ for(i in selectedSims){
 }
 result
 
+library("fields")
 if(is.vector(result)){
-  plot(names(result), result)
+  plot(names(result), result, type="l")
 }
 if(is.matrix(result)){
-  image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, las=1, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], legend.lab="median vegetation cover ratio", col=rev(heat.colors(100)), sub=paste(1:10, collapse="")  )
+  image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, las=1, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], legend.lab="median vegetation cover ratio", col=rev(heat.colors(100)), sub="", graphics.reset=T)
+
+  # other parameters in figure label:
+  pos <- which(parameterSpace==selectedSims[1], arr.ind=T)
+  annotation <- mapply(`[`, dimnames(parameterSpace), pos)
+  for(i in 1:2){
+    annotation[which(names(annotation)==names(dimnames(selectedSims))[i])] <- paste0(c("x","y")[i], "-axis")
+  }
+  paste(names((annotation)), "=", annotation, collapse=", ")
+  
 }
 if(length(dim(selectedSims))==3){
   dim(selectedSims)[3]
 }
 
-pos <- which(parameterSpace==selectedSims[1], arr.ind=T)
-annotation <- mapply(`[`, dimnames(parameterSpace), pos)
-annotation[which(names(annotation)=="Emax")] <- "x-axis"
-paste(names((annotation)), "=", annotation, collapse="; ")
+
+for(i in 1:Dimnames$nSteps[1]){
+  image.plot(simSpace[[extract(parameterSpace, pa="1200", Emax=1,  drop=T)]]$rasters$vegetation[[i]], col=gray(8:0/8), breaks=0:9-0.5)
+  invisible(readline(i))
+}
 
 
-
-cat(rep(1, length(parameterSpace)))
+points <- identify(names(result), result, labels=names(result))
+points(names(result)[points], result[points])
 

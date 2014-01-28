@@ -309,10 +309,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 						read(inputValChar, *, IOSTAT=IOStatus) ts
 					case("K0")
 						read(inputValChar, *, IOSTAT=IOStatus) K0 
-						K0 = K0 * (365.d0* 24.d0)  !from mm/hr to mm/year  
 					case("Kmax")
 						read(inputValChar, *, IOSTAT=IOStatus) Kmax 
-						Kmax = Kmax * (365.d0* 24.d0)  !from mm/hr to mm/year  
 					case("kf")
 						read(inputValChar, *, IOSTAT=IOStatus) kf
 					case("rf")
@@ -416,6 +414,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 		write(123,*) "outputFormat   = ", outputFormat
 	end if
 
+  !convert K0 and Kmax
+  	K0 = K0 * (365.d0* 24.d0)  !from mm/hr to mm/year  
+	Kmax = Kmax * (365.d0* 24.d0)  !from mm/hr to mm/year  
 
 return
 end subroutine readInput

@@ -1,6 +1,6 @@
 source("readCSV.r")
 
-CSVtoRData <- function(file) {  #choose ..._inputParameter.txt as input File
+CSVtoRData <- function(file=NA) {  #choose ..._inputParameter.txt as input File
   if(is.na(file)) file <- file.choose()
   folder <- dirname(file)
   Data <- readCSV(file)

@@ -36,7 +36,7 @@ readCSV <- function(file=NA) {
       # read summary file
       Summary <- read.table(file=paste(dirname(file),"/", title, "_", "SummaryResults.csv", sep=""), sep=";", header=T)[,-8] #last column (#8) is empty
     
-      message('read input from parameterset "', parameter$title, '"')
+      #message('read input from parameterset "', parameter$title, '"')
 
     return(list(parameter=parameter, Summary=Summary, rasters=rasters))
     })

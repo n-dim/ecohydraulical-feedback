@@ -1,4 +1,9 @@
+library("fields")
+library(R.utils)
 source("simBatchRun.R")
+library("foreach")
+
+folder <- "/media/Data/eco-hyd/" #simulation output folder
 
 #---- load parameters ----
 load(file="../example simulation run/exampleParameters.RData")
@@ -6,8 +11,8 @@ load(file="../example simulation run/exampleParameters.RData")
 #---- change parameters ----
 
 parlist$description <- NULL
-parlist$m <- parlist$n <- 64
-parlist$pa <- seq(200, 1200, by=20)
+parlist$m <- parlist$n <- 20
+parlist$pa <- seq(200, 1100, by=50)
 #parlist$pa <- 600
 parlist$roughness <- 0.0000001
 parlist$Emax <- 876
@@ -18,11 +23,16 @@ parlist$BCs <- "-3\t-3\t0\t0"
 parlist$simErosion <- "F"
 parlist$np <- 150
 parlist$nSteps <- 100
-parlist$K0 <- 0.2546103
+parlist$K0 <- 0.2546103 + seq(0.1, 0.5, by=0.1)
 parlist$Kmax <- 2.0461027
 parlist$kf <- 1.0
 parlist$kc <- 0.6
 parlist$useRandomSeed = "T"
+
+
+#parlist$m <- parlist$n <- 100
+#parlist$pa <- seq(200, 1200, by=20)
+#parlist$Kmax <- 2.0461027 + seq(0.1, 2, by=0.1)
 
 #---- calculate parameter space----
 
@@ -31,52 +41,52 @@ Dims <- mapply(length, Dimnames)
 totalDims <- prod(Dims)
 parameterSpace <- array(1:prod(Dims), dim=Dims, Dimnames)
 
+#---- create simulation folder ----
+simFolder <- file.path(folder, paste0("simRun_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S")))
+dir.create(simFolder)
+
+
+#---- create input files ----
+simSpace <- foreach(simNo=1:length(parameterSpace)) %do% {
+  file <- file.path(simFolder, paste0("input-sim_",simNo,".txt"))
+  
+  # write input file
+  pos <- which(parameterSpace==simNo, arr.ind=T)
+  parameterSet <- mapply(`[`, dimnames(parameterSpace), pos)
+  write(paste("title =",simNo), file=file)
+  for(i in 1:length(parameterSet)){
+    write(paste(names(parameterSet[i]), "=", parameterSet[i]), file=file, append=T)
+  }
+}
+
 #---- run Simulation ----
-simSpace <- simBatchRun(parameterSpace, folder="/media/Data/eco-hyd/")
-
-#names(simSpace) <- paste0("sim", 1:length(parameterSpace))
-#str(simSpace, max.level=1)
-
-#simSpace$sim20$parameter$title
-
-#---- display simulation results ----
-
-# simNo=2
-# pos <- which(parameterSpace==simNo, arr.ind=T)
-# pos<- as.list(pos)
-# 
-# variation <- which(names(Dimnames)=="pa")
-# pos[[variation]] <- 1:length(Dimnames$pa)
-# 
-# length(parameterSpace)
-# 
-# pos <- list(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-# parameterSpace[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1:3 , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-# mapply(`[`, parameterSpace, pos)
-# cat(pos)
-# 
-# dimnames(parameterSpace)["pa"]
-
-library(R.utils)
-#slice.index(parameterSpace, 11)
+system(paste("./parallelBatchRun.sh", simFolder), wait=F)
 
 
+#---- explore parameter space ----
 print(selectedSims <- extract(parameterSpace, run="T",  drop=T))
 
-
-#eval(parse(text=paste0("sim", selectedSims)))$parameter$pa
-
 result <- selectedSims
+
 for(i in selectedSims){
-  result[[i]] <- simSpace[[i]]$postp$coverRatioMedian
+  result[[i]] <- NA
+  suppressWarnings(error <- tryCatch(load( paste0(simFolder, "/", i, "/", i, "_postprocessing.RData")), error=function(e) NULL, silent=T))
+  if(!is.null(error)){
+    result[[i]] <- postprocessing$coverRatioMedian
+    rm(postprocessing)  
+  }
 }
 result
 
-library("fields")
-if(is.vector(result)){
+#--- display results ---
+
+# display in line diagram (if 2d)
+if(is.vector(result) & any(!is.na(result))){
   plot(names(result), result, type="l")
 }
-if(is.matrix(result)){
+
+# display in shaded picture (if 3d)
+if(is.matrix(result) & any(!is.na(result))){
   image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, las=1, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], legend.lab="median vegetation cover ratio", col=rev(heat.colors(100)), sub="", graphics.reset=T)
 
   # other parameters in figure label:

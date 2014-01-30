@@ -7,7 +7,10 @@ library("fields")
 
 postprocessing <- function(folder=NA) { 
   if(is.na(folder)) stop("please give a folder")
-  file <- list.files(folder, "_inputParameter.txt", full.names=T)[1] 
+  file <- list.files(folder, "_inputParameter.txt", full.names=T)
+  if(length(file)>1) message("only the first output file is processed")
+  if(length(file)==0) stop("no file to postprocess")
+  file <- file[1]
   if(is.na(file)) stop("no file found to read")
   Data <- readCSV(file)
   outFileName <- Data$parameter$title

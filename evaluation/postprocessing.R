@@ -18,9 +18,15 @@ postprocessing <- function(folder=NA) {
   # postprocessing:
   postprocessing <- NULL
   postprocessing$coverRatio <- coverRatio(Data)
-  
   postprocessing$coverRatioMedian <- median(postprocessing$coverRatio)
   
+  postprocessing$medianTotalET <- median(Data$Summary$totalET)  
+  postprocessing$medianVegDensity <- median(Data$Summary$vegDensity)
+  postprocessing$medianTotalBE <- median(Data$Summary$totalBE)
+  postprocessing$medianTotalStore <- median(Data$Summary$totalStore)
+  postprocessing$medianTotalDischarge <- median(Data$Summary$totalDischarge)
+  postprocessing$medianTotalOutflow <- median(Data$Summary$totalOutflow)
+    
   # save data:
   parameter <- Data$parameter
   save(parameter, file=file.path(folder, paste0(outFileName, "_parameter.RData")))  

@@ -215,6 +215,7 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	integer, save :: parameterSet !number of parameter set
 	character(9) :: parameterSetChar 
 	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
+	real*8 :: Kincrease !if no Kmax is set, this is used to calculate Kmax = K0 + Kincrease
 	
 	!initiation of some variables:
 	run = .true.  !as default every parameter set gets run in the simulation
@@ -222,6 +223,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
     	countTitle = 0 
 	title = ""
 	description = ""
+	np= 0 !if there is no np in the input data, np is calculated as pa/4
+	Kmax = 0 !if there is no Kmax in the input data, Kincrease is used
+	Kincrease = 0 !if there is no Kincrease in the input data, Kmax has to be set
 	
 	
 	write(*,*) "-----------------------------"
@@ -311,6 +315,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 						read(inputValChar, *, IOSTAT=IOStatus) K0 
 					case("Kmax")
 						read(inputValChar, *, IOSTAT=IOStatus) Kmax 
+					case("Kincrease")
+						read(inputValChar, *, IOSTAT=IOStatus) Kincrease
 					case("kf")
 						read(inputValChar, *, IOSTAT=IOStatus) kf
 					case("rf")
@@ -369,6 +375,11 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
   	!calculate np if set 0
 	if(np==0) then
 		np=pa/4 
+	end if
+
+	!calculate Kmax as K0 + Kincrease
+	if(Kmax==0) then
+		Kmax=K0 + Kincrease
 	end if
 	
 	

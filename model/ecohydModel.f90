@@ -365,6 +365,11 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 			!end if
 		end if
 	end do !loop reading process
+
+  	!calculate np if set 0
+	if(np==0) then
+		np=pa/4 
+	end if
 	
 	
 	!if reading process had error messages:			

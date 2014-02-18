@@ -22,7 +22,7 @@ postprocessing <- function(folder=NA) {
   
   postprocessing$medianTotalET <- median(Data$Summary$totalET)  
   postprocessing$medianVegDensity <- median(Data$Summary$vegDensity)
-  postprocessing$medianTotalBE <- median(Data$Summary$totalBE)
+  postprocessing$medianTotalBareEvap <- median(Data$Summary$totalBE)
   postprocessing$medianTotalStore <- median(Data$Summary$totalStore)
   postprocessing$medianTotalDischarge <- median(Data$Summary$totalDischarge)
   postprocessing$medianTotalOutflow <- median(Data$Summary$totalOutflow)

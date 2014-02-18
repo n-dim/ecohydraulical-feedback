@@ -43,7 +43,7 @@ calcParameterSpace <- function (parlist) {
 }
 
 createInputFiles <- function (parameterSpace, simFolder) {
-  simSpace <- foreach(simNo=1:length(parameterSpace)) %do% {
+  for(simNo in 1:length(parameterSpace)) {
     file <- file.path(simFolder, paste0("input-sim_",simNo,".txt"))
     
     # write input file
@@ -51,9 +51,23 @@ createInputFiles <- function (parameterSpace, simFolder) {
     parameterSet <- mapply(`[`, dimnames(parameterSpace), pos)
     write(paste("title =",simNo), file=file)
     for(i in 1:length(parameterSet)){
-      write(paste(names(parameterSet[i]), "=", parameterSet[i]), file=file, append=T)
+      par <- recalcParameter(i, parameterSet)
+      write(paste(par$name, "=", par$value), file=file, append=T)
     }
   }
+}
+
+recalcParameter <- function(index, parameterSet){
+  # for input parameters that are not intended in the ecohyd model this function does a transformation
+  parname <- names(parameterSet[index])
+  parvalue <- parameterSet[index]
+  with(as.list(parameterSet), {
+    switch(parname,
+         Kincrease = {parname <- "Kmax"; parvalue <- as.numeric(K0) + as.numeric(parvalue)},
+         KincFrac = {parname <- "Kmax"; parvalue <- as.numeric(K0) * as.numeric(parvalue)}
+    )
+    return(list(name=parname, value=parvalue))
+  })
 }
 
 replaceWithResult <- function(simName, simFolder){

@@ -11,8 +11,9 @@ load(file="../example simulation run/exampleParameters.RData")
 #---- change parameters ----
 
 parlist$description <- NULL
-parlist$m <- parlist$n <- 20
-parlist$pa <- seq(200, 1100, by=50)
+parlist$m <- parlist$n <- 100
+#parlist$pa <- seq(200, 1100, by=50)
+parlist$pa <- c(400,600, 800,1200)
 #parlist$pa <- 600
 parlist$roughness <- 0.0000001
 parlist$Emax <- 876
@@ -21,10 +22,16 @@ parlist$Emax <- 876
 #parlist$nSteps <- 100
 parlist$BCs <- "-3\t-3\t0\t0"
 parlist$simErosion <- "F"
-parlist$np <- 150
+#parlist$np <- 150
+parlist$np <- 0 # np is then calculated as pa/4
 parlist$nSteps <- 100
-parlist$K0 <- 0.2546103 + seq(0.1, 0.5, by=0.1)
-parlist$Kmax <- 2.0461027
+#parlist$K0 <- 0.2546103 + seq(0.0, 10, by=1)
+parlist$K0  <- c(0.005, 0.05, 0.5, 1, 2)
+#parlist$Kmax <- 2.0461027
+#parlist$Kmax <- seq(0.5, 6, by=0.5)
+parlist$Kmax <- 0 # to calc Kmax as K0 + Kincrease
+#parlist$Kincrease <- seq(0.1, 2, by=0.2)
+parlist$Kincrease <- c(1, 2, 3, 4)
 parlist$kf <- 1.0
 parlist$kc <- 0.6
 parlist$useRandomSeed = "T"
@@ -51,23 +58,49 @@ system(paste("cd", simFolder, "&&", "parallelBatchRun.sh", simFolder), wait=F)
 
 
 #---- explore parameter space ----
-par(mfrow=c(3,1), mar=c(4.5,4,0.1,1.1))
+par(mfrow=c(1,1), mar=c(4,4,3,1))
 
-viewParameterSpace(parameterSpace, simFolder, "coverRatioMedian")
-viewParameterSpace(parameterSpace, simFolder, "medianTotalET")
-viewParameterSpace(parameterSpace, simFolder, "medianTotalDischarge")
-viewParameterSpace(parameterSpace, simFolder, "medianTotalStore")
-viewParameterSpace(parameterSpace, simFolder, "medianVegDensity")
-viewParameterSpace(parameterSpace, simFolder, "medianTotalBE")
-#viewParameterSpace(parameterSpace, simFolder, "medianTotalOutflow")
+#   "coverRatioMedian"
+#   "medianTotalET"
+#   "medianTotalDischarge"
+#   "medianTotalStore"
+#   "medianVegDensity"
+#   "medianVegDensity"
+#   "medianTotalBareEvap"
+#   "medianTotalOutflow"
 
+selectiveParameter <- list(Kincrease=2)
+outputParameter <- "medianVegDensity"
+sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=F)
+plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
+
+
+#------------------
 viewParameterSpace(OldParameterSpace, "/media/Data/eco-hyd//simRun_2014-02-14_14-58-08", "coverRatioMedian")
 
 #--- function definitions ----
+plotGridMatrix <- function (sims, title) {
+  parold <- par(no.readonly = T)
+  par(mar= rep(0.5,4), oma=c(4,4,3,0))
+  rows <- nrow(sims)
+  cols <- ncol(sims)
+  layout(t(matrix(1:(rows*cols), nrow=rows))[rows:1,])
+  for(i in 1:(rows*cols)){
+    sim = sims[i]
+    image(replaceWithResult(sim, simFolder)$vegetation[[100]], col=gray(9:0/9), breaks=0:10, axes=F, asp=1, main=sim, cex.main=0.7)
+    box()
+    
+    if(any(i==1:rows)) mtext(rownames(sims)[i], 1, line=1)
+    if(i%%rows==1) mtext(colnames(sims)[(i-1+cols)/cols], 2, line=1)
+    #invisible(readline("Enter"))
+  }
+  mtext(names(dimnames(sims))[1], 1, outer=T, 2)
+  mtext(names(dimnames(sims))[2], 2, outer=T, 2)
+  mtext(title, 3, outer=T, 1)
+  par(parold)
+}
 
 calcParameterSpace <- function (parlist) {
-  #---- calculate parameter space----
-  
   Dimnames <- parlist
   Dims <- mapply(length, Dimnames)
   totalDims <- prod(Dims)
@@ -90,20 +123,31 @@ createInputFiles <- function (parameterSpace, simFolder) {
   }
 }
 
+replaceWithResult <- function(simName, simFolder){
+  # part can also be "parameter" or "postprocessing"
+  grids <- NA
+  suppressWarnings(error <- tryCatch(load( paste0(simFolder, "/", simName, "/", simName, "_grids.RData")), error=function(e) NULL, silent=T))
+  return(grids)
+}
 
-viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T)){
+
+
+viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T), plot=T){
   
   print(selectedSims <- extract(parameterSpace, indices=selectiveParameter,  drop=T))
-  
+  if(!plot) return(selectedSims)
   # replace simulation number by outputParameter
   result <- selectedSims
-  for(i in selectedSims){
+  for(i in 1:length(selectedSims)){
     result[[i]] <- NA
-    suppressWarnings(error <- tryCatch(load( paste0(simFolder, "/", i, "/", i, "_postprocessing.RData")), error=function(e) NULL, silent=T))
+    suppressWarnings(error <- tryCatch(load( paste0(simFolder, "/", selectedSims[i], "/", selectedSims[i], "_postprocessing.RData")), error=function(e) NULL, silent=T))
     if(!is.null(error)){
       result[[i]] <- unlist(postprocessing[outputParameter])
       rm(postprocessing)  
     }
+  }
+  if(all(is.na(result))){
+    stop("no results yet", call.=F)
   }
   print(result)
   
@@ -116,7 +160,12 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   
   # display in shaded picture (if 3d)
   if(is.matrix(result) & any(!is.na(result))){
-    image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], legend.lab=outputParameter, col=rev(heat.colors(100)), sub="", graphics.reset=T)
+    image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], main=outputParameter, col=rev(heat.colors(100)), sub="", graphics.reset=F)
+    
+    # write simulation numbers into grid
+   
+      text(as.numeric(rep(rownames(selectedSims), ncol(selectedSims))), as.numeric(rep(colnames(selectedSims), each=nrow(selectedSims))), selectedSims, cex=.8)
+
     
     # other parameters in figure label:
     pos <- which(parameterSpace==selectedSims[1], arr.ind=T)
@@ -130,6 +179,7 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   if(length(dim(selectedSims))==3){
     dim(selectedSims)[3]
   }
+  invisible(return(selectedSims))
 }
 
 

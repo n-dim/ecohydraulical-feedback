@@ -79,7 +79,7 @@ replaceWithResult <- function(simName, simFolder){
 
 
 
-viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T), plot=T){
+viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T), plot=T, applyFunction="invisible"){
   
   print(selectedSims <- extract(parameterSpace, indices=selectiveParameter,  drop=T))
   if(!plot) return(selectedSims)
@@ -89,7 +89,7 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
     result[[i]] <- NA
     suppressWarnings(error <- tryCatch(load( paste0(simFolder, "/", selectedSims[i], "/", selectedSims[i], "_postprocessing.RData")), error=function(e) NULL, silent=T))
     if(!is.null(error)){
-      result[[i]] <- unlist(postprocessing[outputParameter])
+      result[[i]] <- apply(as.matrix(unlist(postprocessing[outputParameter], use.names=F)), 2, FUN=applyFunction)
       rm(postprocessing)  
     }
   }

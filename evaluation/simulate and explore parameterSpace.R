@@ -87,26 +87,27 @@ system(paste("cd", simFolder, "&&", "parallelBatchRun.sh", simFolder), wait=F)
 #---- explore parameter space ----
 par(mfrow=c(1,1), mar=c(4,4,3,1), oma=rep(0,4))
 
-outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian")
+outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength2", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
 
-selectiveParameter <- list(KincFrac= -2)
+selectiveParameter <- list( K0=-1:-4)
 outputParameter <- "medianVegDensity"
-sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=F)
+outputParameter <- "wavelength2"
+sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=T, applyFunction="median")
 
 #--- print grid matrix ---
 asp= nrow(sims)/ncol(sims)
-CairoPDF(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, ".pdf"), height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
+library(Cairo)
+pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
 
 plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
 
 dev.off()
 
 #--- print other parameters ----
-library(Cairo)
-pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "2.pdf"), onefile=T)
+pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot.pdf"), onefile=T)
 
 for(i in outputParameters){
-  viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T)
+  viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median")
 }
 
 dev.off()

@@ -1,5 +1,10 @@
 ##---- analyseSpectrum ----
-#depends on source("../SpektroAnalyse/entropy.R")
+
+source("pattern recognition/centFFT.R")
+source("pattern recognition/angular spectrum.R")
+source("pattern recognition/radial spectrum.R")
+source("pattern recognition/entropy.R")
+
 analyseSpectrum <- function (image, plotImage=T, plotSpectrum=T, plotRadial=T, plotAngular=T, thresholdFrac=0.03) {
   
   if(plotImage){

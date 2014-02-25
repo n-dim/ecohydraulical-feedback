@@ -36,11 +36,11 @@ extractWaveLength <- function (bild, plot=F, plotSpec=F) {
   collength <- Im(MaxPos) # y-position of maximum power position
   
   phaseshift <- Arg(fft_centered[max]) %% (2*pi)
-  cat("phaseshift:" ,  phaseshift)
+  #cat("phaseshift:" ,  phaseshift)
   
   orientation <- Arg(MaxPos) %% (2*pi)
   wavelength <- rows/Mod(MaxPos)
-  cat(" wavelength= ", wavelength, "\n")
+  #cat(" wavelength= ", wavelength, "\n")
   
   pointer <- complex(modulus=wavelength, argument=orientation)
   origin <- complex(modulus=rows/2-phaseshift*wavelength/(2*pi), argument=orientation) 

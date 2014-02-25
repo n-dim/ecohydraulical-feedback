@@ -1,0 +1,36 @@
+\documentclass{article}
+
+\usepackage{animate}
+
+\begin{document}
+
+<<loading, echo=F>>=
+opts_knit$set(progress = F, verbose = F)
+opts_chunk$set(dev='pdf', fig.width=6, fig.height=6, cache=F)
+
+source("../../plotVegetationGrid.r")
+
+dataEnv <- new.env()
+load('../../../../roughness variation/roughness 0.01_grids.RData', envir=dataEnv)
+
+inlineChunk <- function(x){
+  cat(knit(text=knit_expand(text=x)))
+}
+@
+
+\pagebreak{}
+
+<<results='asis'>>=
+for(i in ls(envir=dataEnv)){
+  inlineChunk("<<fig.show='animate', message=F, fig.keep='high', echo=F, fig.cap='Spatial distribution of vegetation. Note: animation runs only in original Adobe Reader'>>=\n
+# to show only every second timestep put this in the chunk options:\n
+# aniopts='every=2'\n
+  test <- plotVegetationGrid(get(i, envir=dataEnv), 1:3)\n
+@")
+}
+@
+
+
+
+
+\end{document}

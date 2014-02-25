@@ -1,5 +1,8 @@
 generateOverview <- function(path){
   library(xtable)
+  library(foreach)
+  library(iterators)
+  library(parallel)
   
   source("plotVegetationGrid.r")
   source("clustersize.R")

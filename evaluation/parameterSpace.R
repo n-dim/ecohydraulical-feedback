@@ -21,14 +21,14 @@ plotGridMatrix <- function (sims, title) {
       image(result$vegetation[[100]], col=gray(9:0/9), breaks=0:10, axes=F, asp=1)
     } 
     #title(main=sims, cex.main=0.8)
-    #box()
+    box()
     if(any(i==1:rows)) mtext(rownames(sims)[i], 1, line=1)
     if(i%%(rows)==1) mtext(colnames(sims)[(i+rows-1)/(rows)], 2, line=1)
     #invisible(readline("Enter"))
   }
   mtext(names(dimnames(sims))[1], 1, outer=T, 2)
   mtext(names(dimnames(sims))[2], 2, outer=T, 2)
-  mtext(title, 3, outer=T, 1)
+  mtext(paste(title, collapse=", "), 3, outer=T, 1)
   })
   par(parold)
 }

@@ -8,7 +8,7 @@ load(file="../example simulation run/exampleParameters.RData")
 #---- change parameters ----
 
 parlist$description <- NULL
-parlist$m <- parlist$n <- 100
+parlist$m <- parlist$n <- 60
 #parlist$pa <- seq(200, 1100, by=50)
 parlist$pa <- c(400,600, 800,1200)
 #parlist$pa <- 600
@@ -23,22 +23,50 @@ parlist$simErosion <- "F"
 parlist$np <- 0 # np is then calculated as pa/4
 parlist$nSteps <- 100
 #parlist$K0 <- 0.2546103 + seq(0.0, 10, by=1)
-parlist$K0  <- c(0.005, 0.05, 0.5, 1, 2)
+#parlist$K0  <- c(0.005, 0.05, 0.5, 1, 2)
+parlist$K0 <- seq(0.5, 1, by=0.2)
 #parlist$Kmax <- 2.0461027
 #parlist$Kmax <- seq(0.5, 6, by=0.5)
-parlist$Kmax <- 0 # to calc Kmax as K0 + Kincrease or Kmax * KincFrac
+parlist$Kmax <- NULL # to calc Kmax as K0 + Kincrease or Kmax * KincFrac
 #parlist$Kincrease <- seq(0.1, 2, by=0.2)
-parlist$Kincrease <- 0
+parlist$Kincrease <- NULL
 #parlist$Kincrease <- c(1, 2, 3, 4)
-parlist$KincFrac <- 1 + 2^c(-2,-1,0,1,2)
+#parlist$KincFrac <- 1 + 2^c(-2,-1,0,1,2)
+parlist$KincFrac <- 1 + 2^c(2,3,4)
 parlist$kf <- 1.0
 parlist$kc <- 0.6
 parlist$useRandomSeed = "T"
-
-
 #parlist$m <- parlist$n <- 100
 #parlist$pa <- seq(200, 1200, by=20)
 #parlist$Kmax <- 2.0461027 + seq(0.1, 2, by=0.1)
+
+#--- run no 5----
+parlist$KincFrac <- seq(5,15, 2)
+parlist$K0 <- 0.5
+
+#--- run no 6 ---
+parlist$pa <- c(400,600, 800)
+parlist$KincFrac <- c(4,9,15,16,17) 
+
+#--- run no 7 ---
+parlist$pa <- 600
+parlist$KincFrac <- c(2,3,4,9,15,16,17,18) 
+parlist$K0 <- c(0.025, 0.5)
+
+#--- run no 8 ---
+parlist$pa <- 600
+parlist$KincFrac <- c(2,3,4,9,15,16,17,18) 
+parlist$K0 <- seq(0.06, 0.5, by=0.04)
+
+#--- run no 9pre ---
+parlist$KincFrac <- c(4,4.5,5,6,9) 
+parlist$K0 <- 0.26
+
+#--- run no 9 ---
+parlist$KincFrac <- c(4,5,6,9,15,16,17,18,19,20) 
+parlist$K0 <- seq(0.02, 0.5, by=0.04)
+
+
 
 #---- create parameter space ----
 parameterSpace <- calcParameterSpace(parlist)
@@ -57,36 +85,29 @@ system(paste("cd", simFolder, "&&", "parallelBatchRun.sh", simFolder), wait=F)
 
 
 #---- explore parameter space ----
-par(mfrow=c(1,1), mar=c(4,4,3,1))
+par(mfrow=c(1,1), mar=c(4,4,3,1), oma=rep(0,4))
 
-#   "coverRatioMedian"
-#   "medianTotalET"
-#   "medianTotalDischarge"
-#   "medianTotalStore"
-#   "medianVegDensity"
-#   "medianVegDensity"
-#   "medianTotalBareEvap"
-#   "medianTotalOutflow"
+outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian")
 
-selectiveParameter <- list(pa="600")
+selectiveParameter <- list(KincFrac= -2)
 outputParameter <- "medianVegDensity"
 sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=F)
+
+#--- print grid matrix ---
+asp= nrow(sims)/ncol(sims)
+CairoPDF(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, ".pdf"), height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
+
 plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
 
+dev.off()
 
-#------------------
-viewParameterSpace(OldParameterSpace, "/media/Data/eco-hyd//simRun_2014-02-14_14-58-08", "coverRatioMedian")
+#--- print other parameters ----
+library(Cairo)
+pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "2.pdf"), onefile=T)
 
-
-########################################
-
-
-for(i in 1:Dimnames$nSteps[1]){
-  image.plot(simSpace[[extract(parameterSpace, pa="1200", Emax=1,  drop=T)]]$rasters$vegetation[[i]], col=gray(8:0/8), breaks=0:9-0.5)
-  invisible(readline(i))
+for(i in outputParameters){
+  viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T)
 }
 
-
-points <- identify(names(result), result, labels=names(result))
-points(names(result)[points], result[points])
+dev.off()
 

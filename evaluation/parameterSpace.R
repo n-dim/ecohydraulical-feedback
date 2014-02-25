@@ -6,24 +6,24 @@ library("foreach")
 plotGridMatrix <- function (sims, title) {
   parold <- par(no.readonly = T)
   try({
-  par(mar= rep(0.5,4), oma=c(4,4,3,0))
+  par(mar= c(0,0,0,0), oma=c(4,4,3,0))
+  sims <- as.matrix(sims)
   rows <- nrow(sims)
   cols <- ncol(sims)
   layout(t(matrix(1:(rows*cols), nrow=rows))[cols:1,])
   for(i in 1:(rows*cols)){
     sim = sims[i]
     result <- replaceWithResult(sim, simFolder)
-    if(is.na(result[1])){
-      plot(0,0, type="n", axes=F)
+    if(all(is.na(result))){
+      plot(0,0, type="n", axes=F, asp=1)
       text(0,0, "NA")
-      box()
     }else{
-      image(result$vegetation[[100]], col=gray(9:0/9), breaks=0:10, axes=F, asp=1, main=sim, cex.main=0.7)
-      box()
+      image(result$vegetation[[100]], col=gray(9:0/9), breaks=0:10, axes=F, asp=1)
     } 
-    
+    #title(main=sims, cex.main=0.8)
+    #box()
     if(any(i==1:rows)) mtext(rownames(sims)[i], 1, line=1)
-    if(i%%rows==1) mtext(colnames(sims)[(i-1+cols)/cols], 2, line=1)
+    if(i%%(rows)==1) mtext(colnames(sims)[(i+rows-1)/(rows)], 2, line=1)
     #invisible(readline("Enter"))
   }
   mtext(names(dimnames(sims))[1], 1, outer=T, 2)

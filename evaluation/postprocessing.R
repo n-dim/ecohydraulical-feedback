@@ -5,9 +5,9 @@ library("fields")
   })
 
 
-postprocessing <- function(folder=NA) { 
-  if(is.na(folder)) stop("please give a folder")
-  file <- list.files(folder, "_inputParameter.txt", full.names=T)
+postprocessing <- function(outputFolder=NA) { 
+  if(is.na(outputFolder)) stop("please give a folder")
+  file <- list.files(outputFolder, "_inputParameter.txt", full.names=T)
   if(length(file)>1) message("only the first output file is processed")
   if(length(file)==0) stop("no file to postprocess")
   file <- file[1]
@@ -26,13 +26,28 @@ postprocessing <- function(folder=NA) {
   postprocessing$medianTotalStore <- median(Data$Summary$totalStore)
   postprocessing$medianTotalDischarge <- median(Data$Summary$totalDischarge)
   postprocessing$medianTotalOutflow <- median(Data$Summary$totalOutflow)
+  
+  # wavelength and orientation:
+  source("pattern recognition/analyseSpectrum.R")
+  source("pattern recognition/extract wavelength.R")
+  Spectrum <- list(NULL)
+  for (t in 1: Data$parameter$nSteps){
+    Spectrum <- analyseSpectrum(image=Data$rasters$vegetation[[t]], F, F, F, F)
+    postprocessing$wavenumber[t] <- Spectrum$radial$mids[which.max(Spectrum$radial$power)]
+    postprocessing$orientation[t] <- Spectrum$angular$mids[which.max(Spectrum$angular$power)]
+    postprocessing$radialEntropy[t] <- Spectrum$entropy_radial
+    postprocessing$angularEntropy[t] <- Spectrum$entropy_angular
+    postprocessing$Entropy2D[t] <- Spectrum$entropy_2D
+    postprocessing$wavelength2[t] <- extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F) $ wavelength
     
+  }
+  
   # save data:
   parameter <- Data$parameter
-  save(parameter, file=file.path(folder, paste0(outFileName, "_parameter.RData")))  
+  save(parameter, file=file.path(outputFolder, paste0(outFileName, "_parameter.RData")))  
   grids <- Data$rasters
-  save(grids, file=file.path(folder, paste0(outFileName, "_grids.RData")))        
-  save(postprocessing, file=file.path(folder, paste0(outFileName, "_postprocessing.RData")))
-  #save(list=outFileName, file=file.path(folder,paste(outFileName, "_grids.RData", sep="")))  
+  save(grids, file=file.path(outputFolder, paste0(outFileName, "_grids.RData")))        
+  save(postprocessing, file=file.path(outputFolder, paste0(outFileName, "_postprocessing.RData")))
+  #save(list=outFileName, file=file.path(outputFolder,paste(outFileName, "_grids.RData", sep="")))  
 }
 

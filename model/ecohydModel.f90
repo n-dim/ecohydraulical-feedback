@@ -226,6 +226,7 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	np= 0 !if there is no np in the input data, np is calculated as pa/4
 	Kmax = 0 !if there is no Kmax in the input data, Kincrease is used
 	Kincrease = 0 !if there is no Kincrease in the input data, Kmax has to be set
+	n = 0
 	
 	
 	write(*,*) "-----------------------------"
@@ -380,6 +381,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	!calculate Kmax as K0 + Kincrease
 	if(Kmax==0) then
 		Kmax=K0 + Kincrease
+	end if
+	if(n==0) then
+		n=m
 	end if
 	
 	

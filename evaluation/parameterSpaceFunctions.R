@@ -79,7 +79,7 @@ replaceWithResult <- function(simName, simFolder){
 
 
 
-viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T), plot=T, applyFunction="invisible"){
+viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selectiveParameter=list(run=T), plot=T, applyFunction="invisible", randomAverage=T){
   
   print(selectedSims <- extract(parameterSpace, indices=selectiveParameter,  drop=T))
   if(!plot) return(selectedSims)
@@ -96,6 +96,17 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   if(all(is.na(result))){
     stop("no results yet", call.=F)
   }
+
+  # make an average if parameterSpace uses random seed variation
+  if(randomAverage){
+    av <- which(names(dimnames(result))=="useRandomSeed")
+    if(length(av)!=0){
+      dims <- 1:length(dim(result))
+      result <- apply(result, dims[-av], function(x) mean(x, na.rm=T))    
+    }
+    
+  }
+  
   print(result)
   
   #--- display results ---

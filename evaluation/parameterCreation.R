@@ -75,6 +75,26 @@ parlist$nSteps <- 200
 
 #--- check repeatability ----
 
-parlist$K0 <- 0.14
+parlist$K0 <- c(0.14, 0.2)
 parlist$KincFrac <- 9
-parlist$useRandomSeed <- rep(F, 48)
+parlist$useRandomSeed <- rep(T, 6)
+
+#--- repeatability larger ----
+
+parlist$nSteps <- 100
+parlist$KincFrac <- c(5, 9, 20)
+parlist$K0 <- c(0.06, 0.3, 0.5)
+parlist$useRandomSeed <- rep(T, 10)
+
+#---- repeatability with scale ----
+
+parlist$nSteps <- 100
+parlist$KincFrac <- 9
+parlist$K0 <- 0.3
+parlist$useRandomSeed <- rep(T,10)
+parlist$n <- NULL
+parlist$m <- c(10, 20, 40, 80, 160, 320)
+
+################################################
+parameterSpace <- calcParameterSpace(parlist)
+

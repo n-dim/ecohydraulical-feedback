@@ -1,4 +1,4 @@
-source("parameterSpace.R")
+source("parameterSpaceFunctions.R")
 
 folder <- "/media/Data/eco-hyd/" #simulation output folder
 

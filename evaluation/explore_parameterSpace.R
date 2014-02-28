@@ -1,3 +1,4 @@
+source("parameterSpaceFunctions.R")
 source("simulate_ParameterSpace.R")
 
 #---- explore parameter space ----

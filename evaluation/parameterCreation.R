@@ -1,6 +1,9 @@
 #---- load parameters ----
 load(file="../example simulation run/exampleParameters.RData")
 
+#---- source functions ----
+source("parameterSpaceFunctions.R")
+
 #---- change parameters ----
 
 parlist$description <- NULL

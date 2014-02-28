@@ -66,7 +66,19 @@ parlist$K0 <- 0.26
 parlist$KincFrac <- c(4,5,6,9,15,16,17,18,19,20) 
 parlist$K0 <- seq(0.02, 0.5, by=0.04)
 
+#--- run with higher m,n for better wavelength detection ----
 
+parlist$m  <- parlist$n  <- 120
+
+#--- run with higher nSteps ----
+
+parlist$nSteps <- 200
+
+#--- check repeatability ----
+
+parlist$K0 <- 0.14
+parlist$KincFrac <- 9
+parlist$useRandomSeed <- rep(F, 48)
 
 #---- create parameter space ----
 parameterSpace <- calcParameterSpace(parlist)
@@ -89,14 +101,13 @@ par(mfrow=c(1,1), mar=c(4,4,3,1), oma=rep(0,4))
 
 outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength2", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
 
-selectiveParameter <- list( K0=-1:-4)
+selectiveParameter <- list( run=T)
 outputParameter <- "medianVegDensity"
 outputParameter <- "wavelength2"
 sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=T, applyFunction="median")
 
 #--- print grid matrix ---
 asp= nrow(sims)/ncol(sims)
-library(Cairo)
 pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
 
 plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))

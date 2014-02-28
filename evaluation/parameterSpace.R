@@ -107,11 +107,15 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   
   # display in shaded picture (if 3d)
   if(is.matrix(result) & any(!is.na(result))){
-    image.plot(as.numeric(rownames(result)), as.numeric(colnames(result)), result, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], main=outputParameter, col=rev(heat.colors(100)), sub="", graphics.reset=F)
+    x <- suppressWarnings(as.numeric(rownames(result)))
+    if(any(is.na(x))) x <- 1:length(x)
+    y <- suppressWarnings(as.numeric(colnames(result)))
+    if(any(is.na(y))) y <- 1:length(y)
+    image.plot(x, y, result, xlab=names(dimnames(result))[1], ylab=names(dimnames(result))[2], main=outputParameter, col=rev(heat.colors(100)), sub="", graphics.reset=F)
     
     # write simulation numbers into grid
    
-      text(as.numeric(rep(rownames(selectedSims), ncol(selectedSims))), as.numeric(rep(colnames(selectedSims), each=nrow(selectedSims))), selectedSims, cex=.8)
+      text(as.numeric(rep(x, ncol(selectedSims))), as.numeric(rep(y, each=nrow(selectedSims))), selectedSims, cex=.8)
 
     
     # other parameters in figure label:

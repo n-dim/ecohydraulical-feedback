@@ -1,15 +1,17 @@
 source("parameterSpaceFunctions.R")
 source("simulate_ParameterSpace.R")
 
+system(paste("nautilus", simFolder))
+
 #---- explore parameter space ----
 par(mfrow=c(1,1), mar=c(4,4,3,1), oma=rep(0,4))
 
 outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength2", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
 
-selectiveParameter <- list( run=T)
+selectiveParameter <- list(run=T)
 outputParameter <- "medianVegDensity"
 outputParameter <- "wavelength2"
-sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=T, applyFunction="median")
+sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=F)
 
 #--- print grid matrix ---
 asp= nrow(sims)/ncol(sims)
@@ -23,7 +25,7 @@ dev.off()
 pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot.pdf"), onefile=T)
 
 for(i in outputParameters){
-  viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median")
+  viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=F)
 }
 
 dev.off()

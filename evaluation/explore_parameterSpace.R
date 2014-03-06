@@ -6,11 +6,14 @@ system(paste("nautilus", simFolder))
 #---- explore parameter space ----
 par(mfrow=c(1,1), mar=c(4,4,3,1), oma=rep(0,4))
 
-outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength2", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
+outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength", "wavelength2", "phaseshift", "wavespeed", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
 
 selectiveParameter <- list(run=T)
 outputParameter <- "medianVegDensity"
 outputParameter <- "wavelength2"
+outputParameter <- "wavenumber"
+outputParameter <- "wavelength"
+outputParameter <- "wavespeed"
 sims <- viewParameterSpace(parameterSpace, simFolder, outputParameter=outputParameter, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=F)
 
 #--- print grid matrix ---

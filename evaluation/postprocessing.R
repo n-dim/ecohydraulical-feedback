@@ -38,9 +38,13 @@ postprocessing <- function(outputFolder=NA) {
     postprocessing$radialEntropy[t] <- Spectrum$entropy_radial
     postprocessing$angularEntropy[t] <- Spectrum$entropy_angular
     postprocessing$Entropy2D[t] <- Spectrum$entropy_2D
-    postprocessing$wavelength2[t] <- extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F) $ wavelength
     
+    Temp <-  extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F, smoothing=1.5) 
+    postprocessing$wavelength2[t] <- Temp $ wavelength
+    postprocessing$phaseshift[t] <- Temp $ phaseshift
+    rm(Temp)
   }
+  postprocessing$wavespeed <- c(NA, diff(postprocessing$phaseshift))
   
   # save data:
   parameter <- Data$parameter

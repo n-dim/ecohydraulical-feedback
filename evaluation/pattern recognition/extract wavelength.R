@@ -1,7 +1,11 @@
 ##---- extractWaveLength ----
-extractWaveLength <- function (bild, plot=F, plotSpec=F) {
+extractWaveLength <- function (bild, plot=F, plotSpec=F, smoothing=0) {
   
-  library(fields)
+  suppressPackageStartupMessages({
+    library(fields)
+    library("spatstat")  
+  })
+  
     
   Freq <- fft(bild)
   Freq[1] <- 0
@@ -16,7 +20,13 @@ extractWaveLength <- function (bild, plot=F, plotSpec=F) {
   fft_centered <- Freq[rowindex%%rows +1, colindex%%cols +1]
   colnames(fft_centered) <- colindex
   rownames(fft_centered) <- rowindex
-
+  
+  if(smoothing!=0){
+    mod_fft_centered <- as.matrix(blur(as.im(Mod(fft_centered)), smoothing))
+  }else{
+    mod_fft_centered <- Mod(fft_centered)
+  }
+  
   # index matrix (using complex numbers) to calculate positions inside the 2d-plane:
   indexMatrix <- matrix(complex(
     real = matrix(rep(colindex, rows), nrow=rows, byrow=F), 
@@ -24,13 +34,13 @@ extractWaveLength <- function (bild, plot=F, plotSpec=F) {
   ), nrow=rows)
   
   # show 3d plot:
-  if(plotSpec) {library(rgl); persp3d(rowindex/rows,colindex/rows,Mod(fft_centered), col="gray")}
+  if(plotSpec) {library(rgl); persp3d(rowindex/rows,colindex/rows,mod_fft_centered, col="gray")}
 
 
-  #persp(rowindex/rows,colindex/rows,Mod(fft_centered), col="gray", border="gray")
+  #persp(rowindex/rows,colindex/rows,mod_fft_centered, col="gray", border="gray")
   
   # get the maximum power peak:
-  max <- which.max(Mod(fft_centered)) # maximum power value
+  max <- which.max(mod_fft_centered) # maximum power value
   MaxPos <- indexMatrix[max] # position of maximum power value
   rowlength <- Re(MaxPos) # x-position of maximum power position
   collength <- Im(MaxPos) # y-position of maximum power position
@@ -67,9 +77,9 @@ extractWaveLength <- function (bild, plot=F, plotSpec=F) {
         }      
       } 
     }
-    image(rowindex, colindex, Mod(fft_centered), asp=1, col=gray(100:0/100), xlab="p", ylab="q")
+    image(rowindex, colindex, mod_fft_centered, asp=1, col=gray(100:0/100), xlab="p", ylab="q")
     mtext("Spectrogram", side=3, line=0)
-    #if(plot) drape.plot(rowindex/rows,colindex/rows,Mod(fft_centered), border=NA, ticktype="detailed", d=2, r=1, phi=30, cex.axis=0.6, cex.lab=0.6, zlab="Amplitude", theta=0, shade=0.1)
+    #if(plot) drape.plot(rowindex/rows,colindex/rows,mod_fft_centered, border=NA, ticktype="detailed", d=2, r=1, phi=30, cex.axis=0.6, cex.lab=0.6, zlab="Amplitude", theta=0, shade=0.1)
   }
   return(list(wavelength=wavelength, orientation=orientation, phaseshift=phaseshift))
 }

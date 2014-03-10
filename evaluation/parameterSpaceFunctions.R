@@ -113,7 +113,9 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   
   # display in line diagram (if 2d)
   if(is.vector(result) & any(!is.na(result))){
-    plot(names(result), result, type="l", main=paste0(names(selectiveParameter), " = ", selectiveParameter), ylab=outputParameter)
+    x <- suppressWarnings(as.numeric(names(result)))
+    if(any(is.na(x))) x <- 1:length(x)
+    plot(x, result, type="l", main=paste0(names(selectiveParameter), " = ", selectiveParameter), ylab=outputParameter)
   }
   
   # display in shaded picture (if 3d)

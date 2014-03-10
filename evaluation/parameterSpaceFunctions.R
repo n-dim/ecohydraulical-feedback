@@ -146,7 +146,7 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   invisible(return(selectedSims))
 }
 
-printPDFs <- function () {
+printPDFs <- function (withRandomAverage=F) {
   #--- print grid matrix ---
   asp= nrow(sims)/ncol(sims)
   pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
@@ -167,4 +167,15 @@ printPDFs <- function () {
     }
   })
   dev.off()
+  
+  #--- print with random average ---
+  if(withRandomAverage){
+    pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot_randomaverage.pdf"), onefile=T)
+    try({
+      for(i in outputParameters){
+        viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=T)
+      }
+    })
+    dev.off()  
+  }
 }

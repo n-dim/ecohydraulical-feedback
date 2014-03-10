@@ -32,17 +32,20 @@ postprocessing <- function(outputFolder=NA) {
   source("pattern recognition/extract wavelength.R")
   Spectrum <- list(NULL)
   for (t in 1: Data$parameter$nSteps){
-    Spectrum <- analyseSpectrum(image=Data$rasters$vegetation[[t]], F, F, F, F)
+    grid <- Data$rasters$vegetation[[t]]
+    #grid <- grid[rep(1:nrow(grid), each=1), rep(1:ncol(grid), each=1) ]
+    Spectrum <- analyseSpectrum(image=grid, F, F, F, F)
     postprocessing$wavenumber[t] <- Spectrum$radial$mids[which.max(Spectrum$radial$power)]
+    postprocessing$wavelength[t] <- nrow(grid)/Spectrum$radial$mids[which.max(Spectrum$radial$power)]
     postprocessing$orientation[t] <- Spectrum$angular$mids[which.max(Spectrum$angular$power)]
     postprocessing$radialEntropy[t] <- Spectrum$entropy_radial
     postprocessing$angularEntropy[t] <- Spectrum$entropy_angular
     postprocessing$Entropy2D[t] <- Spectrum$entropy_2D
-    
     Temp <-  extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F, smoothing=1.5) 
     postprocessing$wavelength2[t] <- Temp $ wavelength
     postprocessing$phaseshift[t] <- Temp $ phaseshift
     rm(Temp)
+    rm(grid)
   }
   postprocessing$wavespeed <- c(NA, diff(postprocessing$phaseshift))
   

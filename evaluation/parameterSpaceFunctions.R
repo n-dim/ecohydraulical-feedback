@@ -145,3 +145,26 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   }
   invisible(return(selectedSims))
 }
+
+printPDFs <- function () {
+  #--- print grid matrix ---
+  asp= nrow(sims)/ncol(sims)
+  pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
+  try({
+    plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
+  })
+  dev.off()
+  
+  
+  #--- print other parameters ----
+  
+  outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength", "wavelength2", "phaseshift", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
+  # "wavespeed",
+  pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot.pdf"), onefile=T)
+  try({
+    for(i in outputParameters){
+      viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=F)
+    }
+  })
+  dev.off()
+}

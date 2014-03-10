@@ -14,18 +14,19 @@ postprocessing <- function(outputFolder=NA) {
   if(is.na(file)) stop("no file found to read")
   Data <- readCSV(file)
   outFileName <- Data$parameter$title
+  mn <- Data$parameter$m*Data$parameter$n
   
   # postprocessing:
   postprocessing <- NULL
   postprocessing$coverRatio <- coverRatio(Data)
   postprocessing$coverRatioMedian <- median(postprocessing$coverRatio)
   
-  postprocessing$medianTotalET <- median(Data$Summary$totalET)  
+  postprocessing$medianTotalET <- median(Data$Summary$totalET)/mn  
   postprocessing$medianVegDensity <- median(Data$Summary$vegDensity)
-  postprocessing$medianTotalBareEvap <- median(Data$Summary$totalBE)
-  postprocessing$medianTotalStore <- median(Data$Summary$totalStore)
-  postprocessing$medianTotalDischarge <- median(Data$Summary$totalDischarge)
-  postprocessing$medianTotalOutflow <- median(Data$Summary$totalOutflow)
+  postprocessing$medianTotalBareEvap <- median(Data$Summary$totalBE)/mn
+  postprocessing$medianTotalStore <- median(Data$Summary$totalStore)/mn
+  postprocessing$medianTotalDischarge <- median(Data$Summary$totalDischarge)/mn
+  postprocessing$medianTotalOutflow <- median(Data$Summary$totalOutflow)/mn
   
   # wavelength and orientation:
   source("pattern recognition/analyseSpectrum.R")

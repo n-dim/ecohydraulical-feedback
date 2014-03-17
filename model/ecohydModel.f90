@@ -915,7 +915,7 @@ INTEGER, DIMENSION(m,n), INTENT(IN) :: precip
 INTEGER, DIMENSION(m,n),INTENT(INOUT) :: store,newflowdirns
 INTEGER, DIMENSION(m,n),INTENT(OUT) :: discharge
 
-INTEGER, DIMENSION(m,n) :: tempPrecip, tempSurfaceStore
+INTEGER, DIMENSION(m,n) :: tempSurfaceStore
 INTEGER, DIMENSION(mn,2) :: randOrder
 LOGICAL :: isRoute
 INTEGER :: x, y, dx, dy, i, j, k, nIter
@@ -934,7 +934,6 @@ donumParticles : DO i=1,nIter  !loop over nIter rainfall particles
   dodomain : DO j=1,mn  !loop though positions in matrix
     x = randOrder(j,1)
     y = randOrder(j,2)
-    tempPrecip(x, y) = tempPrecip(x, y) - 1
     isRoute = .TRUE.
 
  dowhileisRoute :  DO WHILE(isRoute)

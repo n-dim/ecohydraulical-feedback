@@ -98,34 +98,34 @@ write(*,*) 'try to read ', inputFileName
 open(unitNumber, file=trim(adjustl(inputFileName)), status="old")
 
 DO !loop to read and execute every parameter set
-   call readInput (unitNumber, Errors, title, outputFolder, description, anotherParamSet, run, &
-		m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
-		dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
-		topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
-   !nanu you might want to put this somewhere else
-   setBCs = .FALSE.
-   if (sum(abs(bcs))>0) then
+  call readInput (unitNumber, Errors, title, outputFolder, description, anotherParamSet, run, &
+    m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
+    dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
+    topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
+  !nanu you might want to put this somewhere else
+  setBCs = .FALSE.
+  if (sum(abs(bcs))>0) then
     setBCs = .TRUE.
-   end if		
-    
-   if(run) then
-   
-            
-      call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
-            gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
-		
-      if(useRandomSeed) CALL init_random_seed()
-		 
-		CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
-			np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
-			rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
-			kb, Dv, Db,title, outputFormat, bcs, setBCS)
+  end if		
 
-    else
-      write(*,*) "don't run simulation for this parameter set"
-    end if
-        
-    if(.not.anotherParamSet) exit
+  if(run) then
+
+          
+    call deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
+      gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
+
+    if(useRandomSeed) CALL init_random_seed()
+   
+  CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
+  	np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
+  	rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
+  	kb, Dv, Db,title, outputFormat, bcs, setBCS)
+
+  else
+    write(*,*) "don't run simulation for this parameter set"
+  end if
+      
+  if(.not.anotherParamSet) exit
 
 
 END DO  !end of loop through parameter file
@@ -156,19 +156,19 @@ SUBROUTINE init_random_seed()
 !In condition: None
 !Out condition: The seed is set to the clock value in millisecods at the time of calling
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    INTEGER :: l, j
-    INTEGER, DIMENSION(:), ALLOCATABLE :: clock
-    write(*,*) "random seed is set by clock"
+  INTEGER :: l, j
+  INTEGER, DIMENSION(:), ALLOCATABLE :: clock
+  write(*,*) "random seed is set by clock"
 
-    CALL RANDOM_SEED(size=l)
-    ALLOCATE(clock(l))
-    DO j=1,l
-        CALL SYSTEM_CLOCK(COUNT=clock(j))
-        clock(j)=clock(j)+j
-    END DO
-    !write(*,*) "clock = ", clock
-    CALL RANDOM_SEED(PUT = clock)
-    DEALLOCATE(clock)
+  CALL RANDOM_SEED(size=l)
+  ALLOCATE(clock(l))
+  DO j=1,l
+    CALL SYSTEM_CLOCK(COUNT=clock(j))
+    clock(j)=clock(j)+j
+  END DO
+  !write(*,*) "clock = ", clock
+  CALL RANDOM_SEED(PUT = clock)
+  DEALLOCATE(clock)
 END SUBROUTINE init_random_seed
 
 subroutine readInput (inputfile, Errors, title, outputFolder, description, anotherParamSet, run, &
@@ -180,9 +180,9 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	character(LEN=400), intent(in) :: outputFolder
 	integer, intent(in) :: inputfile
 
-   	integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
+  integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
 	logical, intent(out) :: useStorEmerge
-   	real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv
+  real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
 	logical, intent(out) :: simEvap		!if true, then simulate evaporation
@@ -201,7 +201,7 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 
        
    
-   	integer :: countTitle !how many title rows have been read so far?
+  integer :: countTitle !how many title rows have been read so far?
 	!!! TODO: what length to allow for input parameters?
 	character(420) :: input 	!whole row in input
 	character(20) :: inputParName !parameter Name 
@@ -210,8 +210,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	integer :: ioStatus
 	integer :: i
 	logical :: check = .false. ! if check was successful
-   	integer, save :: lineNum !line Number
-   	character(9) :: lineNumChar !line number as character
+ 	integer, save :: lineNum !line Number
+  character(9) :: lineNumChar !line number as character
 	integer, save :: parameterSet !number of parameter set
 	character(9) :: parameterSetChar 
 	integer :: posEQ, posEM, posTab !position equal sign, exclamation mark and tab
@@ -219,8 +219,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	
 	!initiation of some variables:
 	run = .true.  !as default every parameter set gets run in the simulation
-    	anotherParamSet = .false. 
-    	countTitle = 0 
+    anotherParamSet = .false. 
+    countTitle = 0 
 	title = ""
 	description = ""
 	np= 0 !if there is no np in the input data, np is calculated as pa/4
@@ -229,149 +229,149 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	n = 0
 	
 	
-	write(*,*) "-----------------------------"
-	parameterSet = parameterSet + 1
-	write(parameterSetChar,'(I9)') parameterSet
-	parameterSetChar = adjustl(parameterSetChar)
-	write(*,*) 'parameter set ', parameterSetChar
+  write(*,*) "-----------------------------"
+  parameterSet = parameterSet + 1
+  write(parameterSetChar,'(I9)') parameterSet
+  parameterSetChar = adjustl(parameterSetChar)
+  write(*,*) 'parameter set ', parameterSetChar
 
     !loop over every row of the input file
-	do 	  
-		lineNum = lineNum + 1
-		write(lineNumChar,'(I9)') lineNum
-		lineNumChar = adjustl(lineNumChar)
-	
-		read(inputfile,'(A)', IOSTAT=IOStatus) input
-		if (IOStatus /= 0) exit
-		
-		PosEM = index(input, "!")
-		if(.not.PosEM==0) input = input(1:(PosEM-1))
+  do     
+  	lineNum = lineNum + 1
+  	write(lineNumChar,'(I9)') lineNum
+  	lineNumChar = adjustl(lineNumChar)
+  
+  	read(inputfile,'(A)', IOSTAT=IOStatus) input
+  	if (IOStatus /= 0) exit
+  	
+  	PosEM = index(input, "!")
+  	if(.not.PosEM==0) input = input(1:(PosEM-1))
 
-		!tabs to spaces
-		do
-			PosTab = index(input, "	") !thats a tab in the quotes
-			if(PosTab==0) exit
-			input(PosTab:PosTab) = " " ! and thats a space in the quotes
-		end do
+  	!tabs to spaces
+  	do
+      PosTab = index(input, "	") !thats a tab in the quotes
+      if(PosTab==0) exit
+      input(PosTab:PosTab) = " " ! and thats a space in the quotes
+    end do
 
-		if(input=="") then !ignore empty rows
-		else
-			
-			PosEQ = index(input, "=")
-			if(PosEQ == 0) then !if there is no equal sign
-				inputParName = "error" !string that doesn't get recognized below and produces the default error message
-				inputValChar = ""
-			else
-				inputParName = trim(input(1: (PosEQ-1))) !parameter Name (before "=")
-				inputValChar = adjustl(input((PosEQ+1): ) ) !parameter Value as Character (after "=")
-			end if
-			
-					
-			!exit if there is another title row
-			if(countTitle >= 1.AND.inputParName=="title") then
-	                  anotherParamSet = .true. ! if there is another title row there must be mutliple parameter sets
-	                  backspace(inputfile) ! go one row back so that the title row can be read in again
-	                  lineNum = lineNum-1 ! go back in line Number, too
-			          exit
-			end if  
-			
-			!if(.not.inputParName=="".AND.trim(inputValChar)=="") then      
-				!write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
-				!Errors =.true.
-			!else
-		
-				checkagainst: select case (inputParName)
-					case("run") 
-						read(inputValChar, *, IOSTAT=IOStatus) run
-					case("title")
-						read(inputValChar, '(A)', IOSTAT=IOStatus) title
-						countTitle = 1
-					case( "description")
-					 	read(inputValChar, '(A)', IOSTAT=IOStatus) description
-					case("n")
-						read(inputValChar, *, IOSTAT=IOStatus) n
-					case("m")
-						read(inputValChar, *, IOSTAT=IOStatus) m
-					case("np")
-						read(inputValChar, *, IOSTAT=IOStatus) np
-               case("nSteps")
-                  read(inputValChar, *, IOSTAT=IOStatus) nSteps
-               case("etPersist")
-                  read(inputValChar, *, IOSTAT=IOStatus) etPersist
-               case("storEmerge")
-                  read(inputValChar, *, IOSTAT=IOStatus) storEmerge
-					case("vegmax")
-						read(inputValChar, *, IOSTAT=IOStatus) vegmax
-					case("tSteps")
-						read(inputValChar, *, IOSTAT=IOStatus) tSteps
-					case("useStorEmerge")
-						read(inputValChar, *, IOSTAT=IOStatus) useStorEmerge
-					case("dx")
-						read(inputValChar, *, IOSTAT=IOStatus) dx
-					case("pa")
-						read(inputValChar, *, IOSTAT=IOStatus) pa
-					case("ts")
-						read(inputValChar, *, IOSTAT=IOStatus) ts
-					case("K0")
-						read(inputValChar, *, IOSTAT=IOStatus) K0 
-					case("Kmax")
-						read(inputValChar, *, IOSTAT=IOStatus) Kmax 
-					case("Kincrease")
-						read(inputValChar, *, IOSTAT=IOStatus) Kincrease
-					case("kf")
-						read(inputValChar, *, IOSTAT=IOStatus) kf
-					case("rf")
-						read(inputValChar, *, IOSTAT=IOStatus) rf
-					case("Emax")
-						read(inputValChar, *, IOSTAT=IOStatus) Emax
-					case("kc")
-						read(inputValChar, *, IOSTAT=IOStatus) kc
-					case("rc")
-						read(inputValChar, *, IOSTAT=IOStatus) rc
-					case("gamma")
-						read(inputValChar, *, IOSTAT=IOStatus) gamma
-					case("bav")
-						read(inputValChar, *, IOSTAT=IOStatus) bav
-					case("roughness")
-						read(inputValChar, *, IOSTAT=IOStatus) roughness
-					case("kv")
-						read(inputValChar, *, IOSTAT=IOStatus) kv
-					case("kb")
-						read(inputValChar, *, IOSTAT=IOStatus) kb
-					case("Dv")
-						read(inputValChar, *, IOSTAT=IOStatus) Dv
-					case("Db")
-						read(inputValChar, *, IOSTAT=IOStatus) Db
-					case("topogRoute")
-						read(inputValChar, *, IOSTAT=IOStatus) topogRoute
-					case("simErosion")
-						read(inputValChar, *, IOSTAT=IOStatus) simErosion
-					case("simEvap")
-						read(inputValChar, *, IOSTAT=IOStatus) simEvap
-					case("simVegEvolve")
-						read(inputValChar, *, IOSTAT=IOStatus) simVegEvolve
-					case("RandomInVeg")
-						read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
-               case("useRandomSeed")
-                  read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
-					case("BCs")
-						read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
-					case("outputFormat")
-						read(inputValChar, *, IOSTAT=IOStatus) outputFormat
-						
-					!if nothing of the above applies, an error message is shown
-					case default
-					    write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
-					Errors = .true.
-				end select checkagainst
-				
-				if (IOStatus /= 0) then
-					write(*,*) 'Error! Wrong Value for parameter "', trim(inputParName), '" in line number ', lineNumChar
-					Errors =.true.
-				end if
-			!end if
-		end if
-	end do !loop reading process
+    if(input=="") then !ignore empty rows
+    else
+      
+      PosEQ = index(input, "=")
+      if(PosEQ == 0) then !if there is no equal sign
+        inputParName = "error" !string that doesn't get recognized below and produces the default error message
+        inputValChar = ""
+      else
+        inputParName = trim(input(1: (PosEQ-1))) !parameter Name (before "=")
+        inputValChar = adjustl(input((PosEQ+1): ) ) !parameter Value as Character (after "=")
+      end if
+      
+          
+      !exit if there is another title row
+      if(countTitle >= 1.AND.inputParName=="title") then
+        anotherParamSet = .true. ! if there is another title row there must be mutliple parameter sets
+        backspace(inputfile) ! go one row back so that the title row can be read in again
+        lineNum = lineNum-1 ! go back in line Number, too
+        exit
+      end if  
+      
+      !if(.not.inputParName=="".AND.trim(inputValChar)=="") then      
+        !write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
+        !Errors =.true.
+      !else
+    
+        checkagainst: select case (inputParName)
+          case("run") 
+            read(inputValChar, *, IOSTAT=IOStatus) run
+          case("title")
+            read(inputValChar, '(A)', IOSTAT=IOStatus) title
+            countTitle = 1
+          case( "description")
+             read(inputValChar, '(A)', IOSTAT=IOStatus) description
+          case("n")
+            read(inputValChar, *, IOSTAT=IOStatus) n
+          case("m")
+            read(inputValChar, *, IOSTAT=IOStatus) m
+          case("np")
+            read(inputValChar, *, IOSTAT=IOStatus) np
+          case("nSteps")
+            read(inputValChar, *, IOSTAT=IOStatus) nSteps
+          case("etPersist")
+            read(inputValChar, *, IOSTAT=IOStatus) etPersist
+          case("storEmerge")
+            read(inputValChar, *, IOSTAT=IOStatus) storEmerge
+          case("vegmax")
+            read(inputValChar, *, IOSTAT=IOStatus) vegmax
+          case("tSteps")
+            read(inputValChar, *, IOSTAT=IOStatus) tSteps
+          case("useStorEmerge")
+            read(inputValChar, *, IOSTAT=IOStatus) useStorEmerge
+          case("dx")
+            read(inputValChar, *, IOSTAT=IOStatus) dx
+          case("pa")
+            read(inputValChar, *, IOSTAT=IOStatus) pa
+          case("ts")
+            read(inputValChar, *, IOSTAT=IOStatus) ts
+          case("K0")
+            read(inputValChar, *, IOSTAT=IOStatus) K0 
+          case("Kmax")
+            read(inputValChar, *, IOSTAT=IOStatus) Kmax 
+          case("Kincrease")
+            read(inputValChar, *, IOSTAT=IOStatus) Kincrease
+          case("kf")
+            read(inputValChar, *, IOSTAT=IOStatus) kf
+          case("rf")
+            read(inputValChar, *, IOSTAT=IOStatus) rf
+          case("Emax")
+            read(inputValChar, *, IOSTAT=IOStatus) Emax
+          case("kc")
+            read(inputValChar, *, IOSTAT=IOStatus) kc
+          case("rc")
+            read(inputValChar, *, IOSTAT=IOStatus) rc
+          case("gamma")
+            read(inputValChar, *, IOSTAT=IOStatus) gamma
+          case("bav")
+            read(inputValChar, *, IOSTAT=IOStatus) bav
+          case("roughness")
+            read(inputValChar, *, IOSTAT=IOStatus) roughness
+          case("kv")
+            read(inputValChar, *, IOSTAT=IOStatus) kv
+          case("kb")
+            read(inputValChar, *, IOSTAT=IOStatus) kb
+          case("Dv")
+            read(inputValChar, *, IOSTAT=IOStatus) Dv
+          case("Db")
+            read(inputValChar, *, IOSTAT=IOStatus) Db
+          case("topogRoute")
+            read(inputValChar, *, IOSTAT=IOStatus) topogRoute
+          case("simErosion")
+            read(inputValChar, *, IOSTAT=IOStatus) simErosion
+          case("simEvap")
+            read(inputValChar, *, IOSTAT=IOStatus) simEvap
+          case("simVegEvolve")
+            read(inputValChar, *, IOSTAT=IOStatus) simVegEvolve
+          case("RandomInVeg")
+            read(inputValChar, *, IOSTAT=IOStatus) RandomInVeg
+          case("useRandomSeed")
+            read(inputValChar, *, IOSTAT=IOStatus) useRandomSeed
+          case("BCs")
+            read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
+          case("outputFormat")
+            read(inputValChar, *, IOSTAT=IOStatus) outputFormat
+            
+          !if nothing of the above applies, an error message is shown
+          case default
+             write(*,*) 'Error! Cannot read "', trim(input), '" in line number ', lineNumChar
+          Errors = .true.
+        end select checkagainst
+        
+        if (IOStatus /= 0) then
+          write(*,*) 'Error! Wrong Value for parameter "', trim(inputParName), '" in line number ', lineNumChar
+          Errors =.true.
+        end if
+      !end if
+    end if
+  end do !loop reading process
 
   	!calculate np if set 0
 	if(np==0) then
@@ -394,84 +394,84 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 	else 
 		write(*,*) "read input without errors"
 		write(*,*) 'control input parameters in ',trim(adjustl(outputFolder)), trim(title), '_inputParameter.txt"'
-      OPEN(123,file=trim(adjustl(outputFolder))//trim(adjustl(title))//'_inputParameter.txt')
-      write(123,*) 'title          = ', trim(title)
-      write(123,*) "description    = ", trim(description)
-      write(123,*) "run            = ", run
-      write(123,*) "m              = ", m
-      write(123,*) "n              = ", n
-      write(123,*) "np             = ", np
-      write(123,*) "nSteps         = ", nSteps
-      write(123,*) "etPersist      = ", etPersist
-      write(123,*) "storEmerge     = ", storEmerge
-      write(123,*) "vegmax         = ", vegmax
-      write(123,*) "tSteps         = ", tSteps
-      write(123,*) "dx             = ", dx
-      write(123,*) "pa             = ", pa
-      write(123,*) "ts             = ", ts
-      write(123,*) "K0             = ", K0
-      write(123,*) "Kmax           = ", Kmax
-      write(123,*) "kf             = ", kf
-      write(123,*) "rf             = ", rf
-      write(123,*) "Emax           = ", Emax
-      write(123,*) "kc             = ", kc
-      write(123,*) "rc             = ", rc
-      write(123,*) "gamma          = ", gamma
-      write(123,*) "bav            = ", bav
-      write(123,*) "roughness      = ", roughness
-      write(123,*) "kv             = ", kv
-      write(123,*) "kb             = ", kb
-      write(123,*) "Dv             = ", Dv
-      write(123,*) "Db             = ", Db
-      write(123,*) "useStorEmerge  = ", useStorEmerge
-      write(123,*) "topogRoute     = ", topogRoute
-      write(123,*) "simErosion     = ", simErosion
-      write(123,*) "simEvap        = ",	simEvap
-      write(123,*) "simVegEvolve   = ", simVegEvolve
-      write(123,*) "RandomInVeg    = ", RandomInVeg
+    OPEN(123,file=trim(adjustl(outputFolder))//trim(adjustl(title))//'_inputParameter.txt')
+    write(123,*) 'title          = ', trim(title)
+    write(123,*) "description    = ", trim(description)
+    write(123,*) "run            = ", run
+    write(123,*) "m              = ", m
+    write(123,*) "n              = ", n
+    write(123,*) "np             = ", np
+    write(123,*) "nSteps         = ", nSteps
+    write(123,*) "etPersist      = ", etPersist
+    write(123,*) "storEmerge     = ", storEmerge
+    write(123,*) "vegmax         = ", vegmax
+    write(123,*) "tSteps         = ", tSteps
+    write(123,*) "dx             = ", dx
+    write(123,*) "pa             = ", pa
+    write(123,*) "ts             = ", ts
+    write(123,*) "K0             = ", K0
+    write(123,*) "Kmax           = ", Kmax
+    write(123,*) "kf             = ", kf
+    write(123,*) "rf             = ", rf
+    write(123,*) "Emax           = ", Emax
+    write(123,*) "kc             = ", kc
+    write(123,*) "rc             = ", rc
+    write(123,*) "gamma          = ", gamma
+    write(123,*) "bav            = ", bav
+    write(123,*) "roughness      = ", roughness
+    write(123,*) "kv             = ", kv
+    write(123,*) "kb             = ", kb
+    write(123,*) "Dv             = ", Dv
+    write(123,*) "Db             = ", Db
+    write(123,*) "useStorEmerge  = ", useStorEmerge
+    write(123,*) "topogRoute     = ", topogRoute
+    write(123,*) "simErosion     = ", simErosion
+    write(123,*) "simEvap        = ",	simEvap
+    write(123,*) "simVegEvolve   = ", simVegEvolve
+    write(123,*) "RandomInVeg    = ", RandomInVeg
 		write(123,*) "useRandomSeed  = ", useRandomSeed
-      write(123,*) "BCs            = ", bcs
+    write(123,*) "BCs            = ", bcs
 		write(123,*) "outputFormat   = ", outputFormat
 	end if
 
   !convert K0 and Kmax
-  	K0 = K0 * (365.d0* 24.d0)  !from mm/hr to mm/year  
+  K0 = K0 * (365.d0* 24.d0)  !from mm/hr to mm/year  
 	Kmax = Kmax * (365.d0* 24.d0)  !from mm/hr to mm/year  
 
-return
+  return
 end subroutine readInput
 
 
 subroutine deriveInputParameters (m, n, np, dx, dy, pa, ts, K0, Kmax, Emax, bav,&
-   gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
- 
-   implicit none
-   integer, intent(in) :: m, n, np
-   real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
-   integer, intent(out) :: mn, ne, precip
-   real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
+  gamma,  mn, ne, precip, alpha, Esb, Esv, Psv, Psb, pbar, ie, te)
 
-   mn = m*n
-   dy = dx
-   pbar = pa/dble(np) !water in each particle in mm
-   ie = pa / ts  !effective rainfall intensity mm / year
-   alpha = (Kmax-K0)/K0
-   !K(r) = K0 +K0 *alpha*exp(-kf*r)
-   !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
-   !PInf[r_] := Min[1, K[r]/ie]
-   !beta = Emax
-   !ET(r) =  Emax*exp(-kc*r)*dx*dy
-   Esb = bav*Emax  !maximum bare soil evap rate
-   Esv = gamma*Esb   !maximum soil evap from under canopy
-   ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
-   !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
-   !by one evap process at any one time
-   te = (1-ts)/ne  !length of a time step in evap calcs in years
+  implicit none
+  integer, intent(in) :: m, n, np
+  real*8, intent(in) :: dx, pa, ts, K0, Kmax, Emax, bav, gamma
+  integer, intent(out) :: mn, ne, precip
+  real*8, intent(out) :: alpha, Esb, Esv, Psv, Psb, pbar, ie, te, dy
 
-   Psb = te * Esb / pbar !bare soil
-   Psv = te * Esv / pbar	!same under canopy
-   !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
-   precip = np
+  mn = m*n
+  dy = dx
+  pbar = pa/dble(np) !water in each particle in mm
+  ie = pa / ts  !effective rainfall intensity mm / year
+  alpha = (Kmax-K0)/K0
+  !K(r) = K0 +K0 *alpha*exp(-kf*r)
+  !K[r_] := K0 + If[r < rf, K0*alpha*Exp[-kf*r], 0]
+  !PInf[r_] := Min[1, K[r]/ie]
+  !beta = Emax
+  !ET(r) =  Emax*exp(-kc*r)*dx*dy
+  Esb = bav*Emax  !maximum bare soil evap rate
+  Esv = gamma*Esb   !maximum soil evap from under canopy
+  ne = Int(Ceiling(Max((1.0-ts)*Esb/pbar,(1.0-ts)*dx*dy*Emax/pbar)))
+  !ne is the number of times required to divide 1-ts by in order to ensure only one particle   removed
+  !by one evap process at any one time
+  te = (1-ts)/ne  !length of a time step in evap calcs in years
+
+  Psb = te * Esb / pbar !bare soil
+  Psv = te * Esv / pbar	!same under canopy
+  !Pet(r) = te * dx * dy*Emax*exp(- kc*r)/pbar
+  precip = np
 
 end subroutine deriveInputParameters
 
@@ -493,139 +493,139 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 	!components of the model would be simulated, if so then associated parameters will be used
 
 
-   IMPLICIT NONE
+  IMPLICIT NONE
 
-   INTEGER, INTENT(IN) :: m !# of rows
-   INTEGER, INTENT(IN) :: n !# of columns
-   INTEGER,INTENT(IN) :: mn !m*n
+  INTEGER, INTENT(IN) :: m !# of rows
+  INTEGER, INTENT(IN) :: n !# of columns
+  INTEGER,INTENT(IN) :: mn !m*n
 
-   INTEGER, INTENT(IN) :: np !number of rain particles
-   REAL*8, INTENT(IN) :: pbar !mean rain event intensity 
-   REAL*8, INTENT(IN) :: ie
+  INTEGER, INTENT(IN) :: np !number of rain particles
+  REAL*8, INTENT(IN) :: pbar !mean rain event intensity 
+  REAL*8, INTENT(IN) :: ie
 
-   !Flags controlling simulation procedure
-   logical, intent(in) :: topogRoute	!if true, then use topography to route flows
-   logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
-   logical, intent(in) :: simEvap		!if true, then simulate evaporation
-   logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
-   logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
-   CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
-  
-  
-   INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
-                                        !1st value specifies first column
-                                        !second value specifies 1st row
-                                        !3rd value nth column
-                                        !4th value the mth row
-                                        !-2 denotes an outflow boundary
-                                        !-3 denotes a periodic boundary
-                                        !0 specifies let GD8 set the outflow to be the lowest cell
-   LOGICAL, INTENT(IN) :: setBCs                    !logical flag to test if BCs need specifying  
-  
-   !*************************************************************************************
-   
-   !characters for writing and reading
-   CHARACTER(len=3) :: mc
-   CHARACTER delimiter
-   CHARACTER*150 command
-   CHARACTER(len=255) :: cwd, savedir
+  !Flags controlling simulation procedure
+  logical, intent(in) :: topogRoute	!if true, then use topography to route flows
+  logical, intent(in) :: simErosion	!if true, then simulate erosion and update flow pathways
+  logical, intent(in) :: simEvap		!if true, then simulate evaporation
+  logical, intent(in) :: simVegEvolve	!if true, then simulate evolving vegetation
+  logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
+  CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
-   !counters
-   INTEGER :: i,j,k, m1,n1
-   INTEGER :: outflow, sold
-   INTEGER, intent(in) :: nSteps
-   INTEGER :: eSteps, flag, solMax, ne
-  
-   !infiltration variables
-   REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
-   Real*8 :: rfx, rfy
-   
-   !evaporation variables
-   REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
-   REAL*8,DIMENSION(7) :: eparams !evap input array
 
-   !random number
-   REAL*8 :: rnd
-   REAL*8 :: roughness
-   
-   !erosion parameters:
-   REAL*8, intent(in) :: kv, kb, Dv, Db
+  INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
+                                      !1st value specifies first column
+                                      !second value specifies 1st row
+                                      !3rd value nth column
+                                      !4th value the mth row
+                                      !-2 denotes an outflow boundary
+                                      !-3 denotes a periodic boundary
+                                      !0 specifies let GD8 set the outflow to be the lowest cell
+  LOGICAL, INTENT(IN) :: setBCs                    !logical flag to test if BCs need specifying  
 
-   !vegetation change variables
-   INTEGER :: storEmerge, etPersist, vegmax 
-   logical :: useStorEmerge
+  !*************************************************************************************
 
-   !vector for shuffling position of solution order
-   INTEGER, DIMENSION(mn,2) :: randOrder
+  !characters for writing and reading
+  CHARACTER(len=3) :: mc
+  CHARACTER delimiter
+  CHARACTER*150 command
+  CHARACTER(len=255) :: cwd, savedir
 
-   !matricies defining spatial distribution of infiltration and runoff properties
-   REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
+  !counters
+  INTEGER :: i,j,k, m1,n1
+  INTEGER :: outflow, sold
+  INTEGER, intent(in) :: nSteps
+  INTEGER :: eSteps, flag, solMax, ne
 
-   !newflowdirns,  flowdirns: flow directions matrices, integer values from 0 - 9 define the flow direction
-   !lakes intended to define local sinks within a landscape
-   INTEGER, DIMENSION(m,n) :: newflowdirns,  flowdirns
-   INTEGER, DIMENSION(m,n) :: lakes
+  !infiltration variables
+  REAL*8, intent(in) :: K0, rf, kf, Kmax, dx ,dy 
+  Real*8 :: rfx, rfy
 
-   !Water balance counters (of water particles)
-   !precip = annual rainfall (number of particles)
-   !store = water stored in unsaturated zone
-   !discharge = cumulative overland flow
-   !eTActual = number of water particles transpired by a plant at m,n
-   !bareE = bare soil evaporation
-   INTEGER, DIMENSION(m,n) :: precip
-   INTEGER, DIMENSION(m,n) :: store,discharge, eTActual, bareE
-   
-   !biomass
-   !integers defining the current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
-   INTEGER, DIMENSION(m,n) :: veg, dummyveg
-   
-   !mask = used by GD8 to solve for global flow routing
-   INTEGER, DIMENSION(m,n,9) :: mask
+  !evaporation variables
+  REAL*8 :: rcx, rcy, rc, kc, te, Psb, Psv, Emax  
+  REAL*8,DIMENSION(7) :: eparams !evap input array
 
-	character(LEN=6) :: outputFormat !csv or binary
+  !random number
+  REAL*8 :: rnd
+  REAL*8 :: roughness
 
-   integer :: progress !for the progress bar
-   character(4) :: char_n !number of rows as character, used for output formating
+  !erosion parameters:
+  REAL*8, intent(in) :: kv, kb, Dv, Db
 
-	real :: CPUstart
-	integer,dimension(8) :: datetime
+  !vegetation change variables
+  INTEGER :: storEmerge, etPersist, vegmax 
+  logical :: useStorEmerge
 
-   write(char_n,'(i4)') n
+  !vector for shuffling position of solution order
+  INTEGER, DIMENSION(mn,2) :: randOrder
+
+  !matricies defining spatial distribution of infiltration and runoff properties
+  REAL*8, DIMENSION(m,n) ::  infiltKern, storeKern, topog, flowResistance0,flowResistance1
+
+  !newflowdirns,  flowdirns: flow directions matrices, integer values from 0 - 9 define the flow direction
+  !lakes intended to define local sinks within a landscape
+  INTEGER, DIMENSION(m,n) :: newflowdirns,  flowdirns
+  INTEGER, DIMENSION(m,n) :: lakes
+
+  !Water balance counters (of water particles)
+  !precip = annual rainfall (number of particles)
+  !store = water stored in unsaturated zone
+  !discharge = cumulative overland flow
+  !eTActual = number of water particles transpired by a plant at m,n
+  !bareE = bare soil evaporation
+  INTEGER, DIMENSION(m,n) :: precip
+  INTEGER, DIMENSION(m,n) :: store,discharge, eTActual, bareE
+
+  !biomass
+  !integers defining the current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
+  INTEGER, DIMENSION(m,n) :: veg, dummyveg
+
+  !mask = used by GD8 to solve for global flow routing
+  INTEGER, DIMENSION(m,n,9) :: mask
+
+  character(LEN=6) :: outputFormat !csv or binary
+
+  integer :: progress !for the progress bar
+  character(4) :: char_n !number of rows as character, used for output formating
+
+  real :: CPUstart
+  integer,dimension(8) :: datetime
+
+  write(char_n,'(i4)') n
 
 !**************************************************************************************
 
-write(*,*) 'starting simulation'
+  write(*,*) 'starting simulation'
 
-call cpu_time(CPUstart)
-call date_and_time(values=datetime)
+  call cpu_time(CPUstart)
+  call date_and_time(values=datetime)
 
-CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
-   eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
+  CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
+     eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
+     flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
 
-If (outputFormat == "csv") THEN
-	CALL openCSVrasterFiles(resultsName, outputFolder)
-ELSE IF (outputFormat == "binary") THEN
-	CALL openBinaryFiles(resultsName, outputFolder)
-ENDIF
+  If (outputFormat == "csv") THEN
+  	CALL openCSVrasterFiles(resultsName, outputFolder)
+  ELSE IF (outputFormat == "binary") THEN
+  	CALL openBinaryFiles(resultsName, outputFolder)
+  ENDIF
 
 !***********************************************************************************
-!Timestep iterations
-DO j=1,nSteps
+  !Timestep iterations
+  DO j=1,nSteps
 
-   !reset evaporation and runoff (from model domain) counters
-   eTActual = 0
-   bareE = 0
-   outflow = 0
+    !reset evaporation and runoff (from model domain) counters
+    eTActual = 0
+    bareE = 0
+    outflow = 0
 
 
-   IF (topogRoute) THEN
+    IF (topogRoute) THEN
       if(j==1) print*, 'topography is used to route flows'
 
       !routes and stores water from rain events 
       CALL RoutingWithKernel(m,n,mn,precip, infiltKern, storeKern, flowdirns,topog, store,discharge,outflow)
 
-   
+
       !simulate erosion
       IF (simErosion) THEN
          if(j==1)  print*, 'simulating with erosion'
@@ -635,17 +635,17 @@ DO j=1,nSteps
          CALL GD8(topog,flowdirns, m,n) !recalculate flow directions given the new topography
          
          IF (setBCs) THEN
-                IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
-                IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
-                IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
-                IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+            IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+            IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+            IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+            IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
         END IF
 
       END IF
-   END IF
+    END IF
 
-   !simulate evaporation
-   IF (simEvap) THEN
+    !simulate evaporation
+    IF (simEvap) THEN
       if(j==1)  print*, 'simulating with evaporation'
       
       CALL Evaporation(veg,eTActual,bareE,store,eSteps,rcx,rcy,kc,dx,dy,te,pbar,Psb,Psv,Emax)
@@ -658,141 +658,141 @@ DO j=1,nSteps
          CALL Evaporation(veg,eTActual,bareE,store,ne - eSteps,rcx,rcy,kc,dx,dy, te,pbar,Psb,Psv,Emax)
       END IF
 
-   END IF
+    END IF
 
-!write output
-If (outputFormat == "csv") THEN
-	CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, &
-		store, discharge, outflow, flowdirns, topog, infiltKern)
-ELSE IF (outputFormat == "binary") THEN
-	CALL writeBinRaster(m,n, i, j, char_n, veg, ETActual, bareE, &
-		store, discharge, outflow, flowdirns, topog, infiltKern)
-ENDIF
+  !write output
+  If (outputFormat == "csv") THEN
+  	CALL writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, &
+  		store, discharge, outflow, flowdirns, topog, infiltKern)
+  ELSE IF (outputFormat == "binary") THEN
+  	CALL writeBinRaster(m,n, i, j, char_n, veg, ETActual, bareE, &
+  		store, discharge, outflow, flowdirns, topog, infiltKern)
+  ENDIF
 
-   !simulate vegetation evolve
-	IF (simEvap.and.simVegEvolve) THEN 
-             !Nanu: has this to be done after writing output?
-             !Gavan: The evaporation is relevat for where plants are at the time
-             !The rational for writing the output before here was that the hydrology and soil 
-             !properties were relevant to where the plants were.
+     !simulate vegetation evolve
+  	IF (simEvap.and.simVegEvolve) THEN 
+      !Nanu: has this to be done after writing output?
+      !Gavan: The evaporation is relevat for where plants are at the time
+      !The rational for writing the output before here was that the hydrology and soil 
+      !properties were relevant to where the plants were.
 
-		if(j==1) write(*,*) 'simulating with vegetation growth'
+  		if(j==1) write(*,*) 'simulating with vegetation growth'
 
-		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, .true., store, eTActual,1)
-		veg = veg + dummyveg  !add on emerging vegetation
+  		CALL VegChange(veg,m,n,vegmax, storEmerge, etPersist, .true., store, eTActual,1)
+  		veg = veg + dummyveg  !add on emerging vegetation
 
-		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern) 
-                !change soil properties in response to a change in the vegetation distribution 
+  		CALL InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,infiltKern) 
+        !change soil properties in response to a change in the vegetation distribution 
 
-		!could probably make this a function
-                WHERE (veg>0)
-			flowResistance1 = flowResistance0 + kv
-		ELSEWHERE
-			flowResistance1 = flowResistance0
-		END WHERE
-	END IF
+  		!could probably make this a function
+      WHERE (veg>0)
+  			flowResistance1 = flowResistance0 + kv
+  		ELSEWHERE
+  			flowResistance1 = flowResistance0
+  		END WHERE
+  	END IF
 
-   CALL progressBar(j, nSteps, progress)
-	
-END DO
+    CALL progressBar(j, nSteps, progress)
+  	
+  END DO
 
-CALL closeFiles()
-CALL closeOtherFiles(datetime, CPUstart)
+  CALL closeFiles()
+  CALL closeOtherFiles(datetime, CPUstart)
 	
 END SUBROUTINE SimCODE
 
 
 !set initial Conditions
 SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
-   eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-   flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs)
+  eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
+  flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs)
 
-   IMPLICIT NONE
+  IMPLICIT NONE
 
-   integer, INTENT(in) :: m, n		!number of rows and colums
-   INTEGER, intent(out) :: progress  !for the progress bar
-   INTEGER, DIMENSION(m,n), INTENT(out) :: precip
-   INTEGER, INTENT(in) :: np        !number of patricles of rain falling
-   REAL*8, INTENT(in) :: rf         !meter: maximum length for plant effect on infiltration
-   Real*8, INTENT(OUT) :: rfx, rfy
-   REAL*8, INTENT(in) :: rc         !meter: maximum length for plant water uptake
-   REAL*8, INTENT(OUT) :: rcx, rcy
-   INTEGER, INTENT(INOUT) :: eSteps
-   integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
-      !by one evap process at any one time
-   REAL*8, DIMENSION(m,n), intent(out) ::  topog, flowResistance0, flowResistance1
-   logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
-   INTEGER, DIMENSION(m,n), intent(out) :: veg, store
-   INTEGER, DIMENSION(m,n), intent(out) :: flowdirns, lakes
-   logical, INTENT(in) :: topogRoute	!if true, then use topography to route flows
-   real*8, INTENT(in) :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
-   real*8, INTENT(in) :: kf		!per meter : rate of decline in plant effect on infiltration
-   real*8, INTENT(in) :: Kmax		!maximum potential hydraulic conductivity in mm/hr
-   real*8, INTENT(in) :: ie		!effective rainfall intensity mm / year
-   REAL*8, INTENT(in) :: dx, dy  	!spatial dimesions of lattice cells
-   REAL*8, DIMENSION(m,n), INTENT(out) ::  infiltKern, storeKern
-   REAL*8, INTENT(in) :: kb !Gaussian parameters for diffusive sediment transport for
-
-
-   INTEGER, DIMENSION(4), INTENT(IN) :: bcs  !boundary conditions
-   LOGICAL, INTENT(IN) :: setBCs
-   
-   INTEGER :: i,j
-   REAL*8 :: rnd !random real
+  integer, INTENT(in) :: m, n		!number of rows and colums
+  INTEGER, intent(out) :: progress  !for the progress bar
+  INTEGER, DIMENSION(m,n), INTENT(out) :: precip
+  INTEGER, INTENT(in) :: np        !number of patricles of rain falling
+  REAL*8, INTENT(in) :: rf         !meter: maximum length for plant effect on infiltration
+  Real*8, INTENT(OUT) :: rfx, rfy
+  REAL*8, INTENT(in) :: rc         !meter: maximum length for plant water uptake
+  REAL*8, INTENT(OUT) :: rcx, rcy
+  INTEGER, INTENT(INOUT) :: eSteps
+  integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
+    !by one evap process at any one time
+  REAL*8, DIMENSION(m,n), intent(out) ::  topog, flowResistance0, flowResistance1
+  logical :: RandomInVeg	!if true, then allow vegetation to be randomly distributed initially, othewrwise set all veg to 0
+  INTEGER, DIMENSION(m,n), intent(out) :: veg, store
+  INTEGER, DIMENSION(m,n), intent(out) :: flowdirns, lakes
+  logical, INTENT(in) :: topogRoute	!if true, then use topography to route flows
+  real*8, INTENT(in) :: K0		!intrinsic bare soil hydraulic conductivity in mm/hr
+  real*8, INTENT(in) :: kf		!per meter : rate of decline in plant effect on infiltration
+  real*8, INTENT(in) :: Kmax		!maximum potential hydraulic conductivity in mm/hr
+  real*8, INTENT(in) :: ie		!effective rainfall intensity mm / year
+  REAL*8, INTENT(in) :: dx, dy  	!spatial dimesions of lattice cells
+  REAL*8, DIMENSION(m,n), INTENT(out) ::  infiltKern, storeKern
+  REAL*8, INTENT(in) :: kb !Gaussian parameters for diffusive sediment transport for
 
 
+  INTEGER, DIMENSION(4), INTENT(IN) :: bcs  !boundary conditions
+  LOGICAL, INTENT(IN) :: setBCs
 
-   progress = 0
-   precip = np
-   rfy = rf
-   rfx = rf
-   rcx = rc
-   rcy = rc
-
-   eSteps = max(min(ne,eSteps),1)
+  INTEGER :: i,j
+  REAL*8 :: rnd !random real
 
 
-   DO i=1,m
-      DO j=1,n
-         CALL random_number(rnd)
-         flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
 
-         CALL random_number(rnd)
-         topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
+  progress = 0
+  precip = np
+  rfy = rf
+  rfx = rf
+  rcx = rc
+  rcy = rc
 
-         IF (RandomInVeg) THEN
-            IF(j==1.and.i==1) print*,'random initial vegetation distribution'
-            IF (rnd>0.9) THEN
-               veg(i,j) = 1
-            ELSE
-               veg(i,j) = 0
-            END IF
-         ELSE
-            veg(i,j) = 0
-         END IF
-      END DO
-   END DO
+  eSteps = max(min(ne,eSteps),1)
 
-   flowResistance1 = flowResistance0
-   store=0
-   lakes = 0
-   flowdirns = -2
 
-   CALL GD8(topog,flowdirns, m,n)
+  DO i=1,m
+    DO j=1,n
+      CALL random_number(rnd)
+      flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
 
-   !GSM added next three lines
-   IF (setBCs) THEN
-        IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
-        IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
-        IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
-        IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
-   END IF
-   
-   IF (topogRoute) THEN
-   CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
-   END IF
+      CALL random_number(rnd)
+      topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
 
-   storeKern = 99999.d0
+      IF (RandomInVeg) THEN
+        IF(j==1.and.i==1) print*,'random initial vegetation distribution'
+        IF (rnd>0.9) THEN
+          veg(i,j) = 1
+        ELSE
+          veg(i,j) = 0
+        END IF
+      ELSE
+        veg(i,j) = 0
+      END IF
+    END DO
+  END DO
+
+  flowResistance1 = flowResistance0
+  store=0
+  lakes = 0
+  flowdirns = -2
+
+  CALL GD8(topog,flowdirns, m,n)
+
+  !GSM added next three lines
+  IF (setBCs) THEN
+    IF (bcs(1).ne.0) flowdirns(:,1) = bcs(1)
+    IF (bcs(2).ne.0) flowdirns(1,:) = bcs(2)
+    IF (bcs(3).ne.0) flowdirns(:,n) = bcs(3)
+    IF (bcs(4).ne.0) flowdirns(m,:) = bcs(4)
+  END IF
+
+  IF (topogRoute) THEN
+    CALL InfiltProb(veg,m,n,K0,ie,rfx,rfx,kf,Kmax,dx,dy,infiltKern)
+  END IF
+
+  storeKern = 99999.d0
 
 END SUBROUTINE setInitConditions
 
@@ -812,8 +812,8 @@ SUBROUTINE TwoDRandPos(randOrder,m, n,mn)
   k=1
   DO i=1,m
     DO j=1,n
-       randOrder(k,:) =(/ i, j /)
-       k = k +1
+      randOrder(k,:) =(/ i, j /)
+      k = k +1
     END DO
   END DO
   
@@ -927,96 +927,112 @@ INTEGER, DIMENSION(9,2) :: neighbs
 tempSurfaceStore = 0
 discharge = 0
 !outflow = 0
-CALL TwoDRandPos(randOrder,m,n,mn)  !randomly shuffel positions
+
+CALL TwoDRandPos(randOrder,m,n,mn)  !create a random order of x-y-positions
 nIter = maxval(precip)
 
-donumParticles : DO i=1,nIter  !loop over nIter rainfall particles
-  dodomain : DO j=1,mn  !loop though positions in matrix
+
+donumParticles : DO i=1,nIter  !loop over all rainfall particles in precipitation
+  dodomain : DO j=1,mn  !loop through random x-y-positions
+  
     x = randOrder(j,1)
     y = randOrder(j,2)
     isRoute = .TRUE.
 
- dowhileisRoute :  DO WHILE(isRoute)
+    dowhileisRoute :  DO WHILE(isRoute)
+
       CALL random_number(rnum)
-     Firstif : IF ((rnum<infiltKern(x,y)).AND.(store(x,y)<storeKern(x,y))) THEN
+    
+      ifInfiltrates : IF ((rnum<infiltKern(x,y)).AND.(store(x,y)<storeKern(x,y))) THEN
+        
         store(x,y) = store(x,y) + 1
         isRoute = .FALSE.
-      ELSE
-       ifnotPeriodicBC : IF (newflowdirns(x,y).ne.-3) THEN !if not a periodic boundary condition then
-       CALL Lookupfdir(newflowdirns(x,y),dx,dy)
-        discharge(x,y) = discharge(x,y) + 1
-        ifoutflow : IF ((dx==-2).AND.(dy==-2)) THEN
-          outflow = outflow + 1
-          isRoute = .FALSE.
-        ELSE 
-          ifdepression : IF ((dx==0).AND.(dy==0)) THEN
-            !need to better account for depressions
-            tempSurfaceStore(x,y) = tempSurfaceStore(x,y) + 1
-            CALL Neighbours(1,(/x,y/), (/m,n/),neighbs) !find next lowest cell
-            dy = 1
-            rnum = topog(neighbs(1,1),neighbs(1,2))+ 0.001*dble(tempSurfaceStore(neighbs(1,1),neighbs(1,2)))
-            DO k=2,9
-              IF ((neighbs(k,1).ne.-99).AND.(k.ne.5)) THEN
-                IF ((topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))).lt.rnum) THEN
-                    dy = k
-                    rnum = topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))
-                END IF
-              END IF
-            END DO
-            
-            ifoverflow : IF ((topog(x,y)+ dble(tempSurfaceStore(x,y))*0.004)>rnum) THEN
-              !assumed 1 particle = 4 mm
-              CALL fdirLookup((/x-neighbs(k,1) , y-neighbs(k,2)/), dy)
-              newflowdirns(x,y)  =  dy !value reassigned 
-              discharge(x,y) = discharge(x,y) + 1
-              tempSurfaceStore(x,y) =  tempSurfaceStore(x,y) - 1
-              x = neighbs(k,1)
-              y = neighbs(k,2)
-            ELSE 
-              isRoute = .FALSE.
-            END IF ifoverflow
-            
-          ELSE
-            x = x - dx
-            y = y - dy
-            IF (newflowdirns(x,y).eq.-1) THEN
-              isRoute = .FALSE.
-            END IF
-          ENDIF ifdepression
-        ENDIF ifoutflow
       
-      ELSE
-        discharge(x,y) = discharge(x,y) + 1
-        !periodic boundary conditionas can only really be defined simply for an inclined plane
-        !with two adjacent edges defined as the boundary 
-        !from which particles are routed to the opposite boundary
-        !for simplicity I'll assume the landscape slopes downwards in the direction of lower x and y
-       IF ((x.eq.1).AND.(y.gt.1)) THEN
-         x = m
-         y = y
-       END IF
-       IF ((y.eq.1).AND.(x.gt.1)) THEN
-         x = x
-         y = n
-       END IF
-       IF ((y.eq.1).AND.(x.eq.1)) THEN
-         x = m
-         y = n
-       END IF
-        
-      END IF ifnotPeriodicBC
-      END IF Firstif
+      ELSE !if not infiltrated
+
+        ifnotPeriodicBC : IF (newflowdirns(x,y).ne.-3) THEN !if not a periodic boundary condition then
+          
+          CALL Lookupfdir(newflowdirns(x,y),dx,dy)
+          discharge(x,y) = discharge(x,y) + 1
+          
+          ifoutflow : IF ((dx==-2).AND.(dy==-2)) THEN
+            
+            outflow = outflow + 1
+            isRoute = .FALSE.
+
+          ELSE !if not an outflow cell
+
+            ifdepression : IF ((dx==0).AND.(dy==0)) THEN
+              !need to better account for depressions
+              tempSurfaceStore(x,y) = tempSurfaceStore(x,y) + 1
+              CALL Neighbours(1,(/x,y/), (/m,n/),neighbs) !find next lowest cell
+              dy = 1
+              rnum = topog(neighbs(1,1),neighbs(1,2))+ 0.001*dble(tempSurfaceStore(neighbs(1,1),neighbs(1,2)))
+              DO k=2,9
+                IF ((neighbs(k,1).ne.-99).AND.(k.ne.5)) THEN
+                  IF ((topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))).lt.rnum) THEN
+                      dy = k
+                      rnum = topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))
+                  END IF
+                END IF
+              END DO
+                
+              ifoverflow : IF ((topog(x,y)+ dble(tempSurfaceStore(x,y))*0.004)>rnum) THEN
+                !assumed 1 particle = 4 mm
+                CALL fdirLookup((/x-neighbs(k,1) , y-neighbs(k,2)/), dy)
+                newflowdirns(x,y)  =  dy !value reassigned 
+                discharge(x,y) = discharge(x,y) + 1
+                tempSurfaceStore(x,y) =  tempSurfaceStore(x,y) - 1
+                x = neighbs(k,1)
+                y = neighbs(k,2)
+              ELSE !is not overflowing
+                isRoute = .FALSE.
+              END IF ifoverflow
+
+            ELSE !if not a depresion move particle in flow direction
+              x = x - dx
+              y = y - dy
+              IF (newflowdirns(x,y).eq.-1) THEN
+                isRoute = .FALSE.
+              END IF
+
+            ENDIF ifdepression
+
+          ENDIF ifoutflow
+    
+        ELSE !if periodic boundary condition
+          discharge(x,y) = discharge(x,y) + 1
+          !periodic boundary conditionas can only really be defined simply for an inclined plane
+          !with two adjacent edges defined as the boundary 
+          !from which particles are routed to the opposite boundary
+          !for simplicity I'll assume the landscape slopes downwards in the direction of lower x and y
+          IF ((x.eq.1).AND.(y.gt.1)) THEN
+            x = m
+            y = y
+          END IF
+          IF ((y.eq.1).AND.(x.gt.1)) THEN
+            x = x
+            y = n
+          END IF
+          IF ((y.eq.1).AND.(x.eq.1)) THEN
+            x = m
+            y = n
+          END IF
+          
+        END IF ifnotPeriodicBC
+      END IF ifInfiltrates
     END DO dowhileisRoute
   END DO dodomain
-CALL OneDRandList(randOrder,mn)
+  CALL OneDRandList(randOrder,mn)
 END DO donumParticles
 
+!Infiltrate water in depressions once all precipitation particles are routed
 DO i=1,m
-DO j=1,n
-  IF ((tempSurfaceStore(i,j)>0).AND.(store(i,j)<storeKern(i,j))) THEN
-    store(i,j) = min(store(i,j)+tempSurfaceStore(i,j),INT(storeKern(i,j)))
-  END IF
-END DO
+  DO j=1,n
+    IF ((tempSurfaceStore(i,j)>0).AND.(store(i,j)<storeKern(i,j))) THEN
+      store(i,j) = min(store(i,j)+tempSurfaceStore(i,j),INT(storeKern(i,j)))
+    END IF
+  END DO
 END DO
 
 END SUBROUTINE RoutingWithKernel
@@ -1072,7 +1088,7 @@ SUBROUTINE InfiltProb(veg,m,n,K0,ie,rfx,rfy,kf,Kmax,dx,dy,iProb)
      DO di = -1*m1,m1
      DO dj = -1*n1,n1
         IF (veg(Modulo(i + di - 1, m) + 1,Modulo(j + dj - 1, n) + 1)>0) THEN
-            iProb(i,j) =  iProb(i,j) + kern(-1*di,-1*dj)
+          iProb(i,j) =  iProb(i,j) + kern(-1*di,-1*dj)
         END IF
      END DO
      END DO
@@ -1121,25 +1137,25 @@ SUBROUTINE ListConvolve(base,kernel,convol,m,n,m1,n1)
   dummybase(dm+1:m+dm,dn+1:n+dn)=DBLE(base)/1.d00
   
   DO i=1,dm
-      dummybase(dm+1-i,dn+1:n+dn)=base(i,:)
-      dummybase(dm-dm+i,dn+1:n+dn)=base(m-i+1,:)
+    dummybase(dm+1-i,dn+1:n+dn)=base(i,:)
+    dummybase(dm-dm+i,dn+1:n+dn)=base(m-i+1,:)
   END DO
   DO i=1,dn
-      dummybase(dm+1:m+dm,dn+1-i)=base(:,i)
-      dummybase(dm+1:m+dm,n2-dn+i)=base(:,n-i+1)
+    dummybase(dm+1:m+dm,dn+1-i)=base(:,i)
+    dummybase(dm+1:m+dm,n2-dn+i)=base(:,n-i+1)
   END DO
  
   DO i=dm+1,m2-dm
     DO j=dn+1,n2-dn
-        dummybase2(i-dm:i+dm,j-dn:j+dn)= dummybase2(i-dm:i+dm,j-dn:j+dn)+dummybase(i,j)*kernel
+      dummybase2(i-dm:i+dm,j-dn:j+dn)= dummybase2(i-dm:i+dm,j-dn:j+dn)+dummybase(i,j)*kernel
     END DO
   END DO
   
   
   convol = dummybase2(dm+1:m+dm,dn+1:n+dn)
   
- DEALLOCATE(dummybase)
- DEALLOCATE(dummybase2)
+  DEALLOCATE(dummybase)
+  DEALLOCATE(dummybase2)
 END SUBROUTINE ListConvolve
 
 
@@ -1189,53 +1205,53 @@ SUBROUTINE Erosion(discharge,topog,newflowdirns,veg,flowResistance,m,n)
   dx = 0.d0 !flow length, dx
    
   Do i=1,m
-  DO j=1,n
-    fDirRef = newflowdirns(i,j)
-    CALL LookUpFdir(fDirRef,deltax,deltay)
-    
-    If ((fDirRef.gt.0).and.(fDirRef.lt.9)) THEN
-     posx=i-deltax
-     posy=j-deltay
-     dx(i, j) = (deltax**2.d0 + deltay**2.d0)**0.5
-     slope = (topog(i, j) - topog(posx, posy))/dx(i, j)/cellLength
+    DO j=1,n
+      fDirRef = newflowdirns(i,j)
+      CALL LookUpFdir(fDirRef,deltax,deltay)
+      
+      If ((fDirRef.gt.0).and.(fDirRef.lt.9)) THEN
+        posx=i-deltax
+        posy=j-deltay
+        dx(i, j) = (deltax**2.d0 + deltay**2.d0)**0.5
+        slope = (topog(i, j) - topog(posx, posy))/dx(i, j)/cellLength
 
-     Qs_out(i, j) = 7000.d0*(slope**1.5d0) * (cellLength**2.d0)*flow(i, j) / flowResistance(i, j)**0.5d0
-     Qs_in(posx, posy) = Qs_out(i, j) + Qs_in(posx, posy)
-    ELSEIF (fDirRef.le.0) THEN
-      dx(i, j) = cellLength
-      slope = 1.d0
-      Qs_out(i, j) = 7000.d0*(slope**1.5d0) * (cellLength**2.d0)*flow(i, j) / flowResistance(i, j)**0.5d0
-    ELSE
-      dx(i, j) = cellLength
-      Qs_out(i, j) = 0.d0
-    END IF
-    
-  END DO
+        Qs_out(i, j) = 7000.d0*(slope**1.5d0) * (cellLength**2.d0)*flow(i, j) / flowResistance(i, j)**0.5d0
+        Qs_in(posx, posy) = Qs_out(i, j) + Qs_in(posx, posy)
+      ELSEIF (fDirRef.le.0) THEN
+        dx(i, j) = cellLength
+        slope = 1.d0
+        Qs_out(i, j) = 7000.d0*(slope**1.5d0) * (cellLength**2.d0)*flow(i, j) / flowResistance(i, j)**0.5d0
+      ELSE
+        dx(i, j) = cellLength
+        Qs_out(i, j) = 0.d0
+      END IF
+      
+    END DO
   END DO
   
   !boundary condition if ouflow cells undergoes no lowering
   DO i=1,m
-  DO j=1,n
-    fDirRef = newflowdirns(i,j)
-    IF (fDirRef.le.0) THEN  
-      Qs_out(i, j) = Qs_in(i, j)
-    END IF
-  END DO
+    DO j=1,n
+      fDirRef = newflowdirns(i,j)
+      IF (fDirRef.le.0) THEN  
+        Qs_out(i, j) = Qs_in(i, j)
+      END IF
+    END DO
   END DO
 
   !(* calc of change in elevation dz *)
   deltaz = 0.d0
   Do i=1,m
-  DO j=1,n
-    fDirRef = newflowdirns(i,j)
-    If(fDirRef.eq.0) THEN 
-     deltaz(i, j) = -1.d0*(( - Qs_in(i, j))/dx(i, j)/specificweight)
-    ELSEIF (fDirRef.eq.-1) THEN 
-      deltaz(i, j) = -0.05d0 / timestep  !base level lowering rate
-    ELSE
-     deltaz(i, j) = -1.d0*((Qs_out(i, j) - Qs_in(i, j))/dx(i, j)/specificweight)
-    END IF
-  END DO
+    DO j=1,n
+      fDirRef = newflowdirns(i,j)
+      If(fDirRef.eq.0) THEN 
+       deltaz(i, j) = -1.d0*(( - Qs_in(i, j))/dx(i, j)/specificweight)
+      ELSEIF (fDirRef.eq.-1) THEN 
+        deltaz(i, j) = -0.05d0 / timestep  !base level lowering rate
+      ELSE
+       deltaz(i, j) = -1.d0*((Qs_out(i, j) - Qs_in(i, j))/dx(i, j)/specificweight)
+      END IF
+    END DO
   !  deltaz(i,1) = 0.0d0  !base level lowering rate
   END DO
 
@@ -1325,20 +1341,20 @@ m=SIZE(newtopog,1)
 n=SIZE(newtopog,2)
 
 DO i=2,m-1
-DO j=2,n-1
-  holes=0
-  DO k=-1,1
-  DO l=-1,1
-    IF (newtopog(i,j)<newtopog(i + k, j + l)) THEN
-      holes=holes+1
+  DO j=2,n-1
+    holes=0
+    DO k=-1,1
+    DO l=-1,1
+      IF (newtopog(i,j)<newtopog(i + k, j + l)) THEN
+        holes=holes+1
+      END IF
+    END DO
+    END DO
+    IF (holes.ge.8) THEN
+      holes = 1
+      RETURN
     END IF
-  END DO
-  END DO
-  IF (holes.ge.8) THEN
-    holes = 1
-    RETURN
-  END IF
-ENDDO
+  ENDDO
 END DO
 
 END SUBROUTINE FindHoles
@@ -1388,62 +1404,62 @@ SUBROUTINE Evaporation(veg,eTActual,bareE,store,tsteps,rcx,rcy,kc,dx,dy,te,pbar,
   n1 = int(Floor(rcy/dy))
  
   Do i=(-1*m1),m1,1
-  DO j =(-1*n1),n1,1
-     radius = sqrt((i*dx)**2.0+(j*dy)**2.0)
-     IF (radius<=rc) THEN
-        uptakeprob(i,j) = dexp(-1.d0*(kc**2.0)*(radius**2.0))
-     ELSE
-        uptakeprob(i,j) = 0.d0
-     END IF
-  END DO
+    DO j =(-1*n1),n1,1
+       radius = sqrt((i*dx)**2.0+(j*dy)**2.0)
+       IF (radius<=rc) THEN
+          uptakeprob(i,j) = dexp(-1.d0*(kc**2.0)*(radius**2.0))
+       ELSE
+          uptakeprob(i,j) = 0.d0
+       END IF
+    END DO
   END DO
   
-   uptakeprob= uptakeprob/sum(uptakeprob)*dx*dx*Emax*te/pbar
+  uptakeprob= uptakeprob/sum(uptakeprob)*dx*dx*Emax*te/pbar
   k=1
   Do i=1,m
-  Do j=1,n
-    posxy(k,:)=(/i,j/)
-    k=k+1
-  END DO
+    Do j=1,n
+      posxy(k,:)=(/i,j/)
+      k=k+1
+    END DO
   END DO
   
   i=1
   Do WHILE ((i.le.tsteps).AND.(storeCounter.gt.0))
-     i=i+1
+    i=i+1
     CALL TwoDRandPos(posxy,m, n,mn) 
     Do j =1, mn
-     a = posxy(j,1)
-     b = posxy(j,2)
+      a = posxy(j,1)
+      b = posxy(j,2)
      
-     If (veg(a,b)>0) THEN
+      If (veg(a,b)>0) THEN
         
         DO di=-1*m1,m1
-        DO dj=-1*n1,n1
-          CALL random_number(rnd)
-          IF ((store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1).ne.0).and. &
-            (rnd<uptakeprob(-1*di,-1*dj))) THEN
-              eTActual(a,b)=eTActual(a,b)+1
-	      storeCounter=storeCounter-1
-              store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1)= &
-              store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1)-1
-          END IF
+          DO dj=-1*n1,n1
+            CALL random_number(rnd)
+            IF ((store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1).ne.0).and. &
+              (rnd<uptakeprob(-1*di,-1*dj))) THEN
+                eTActual(a,b)=eTActual(a,b)+1
+  	            storeCounter=storeCounter-1
+                store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1)= &
+                store(Modulo(a + di - 1, m) + 1,Modulo(b + dj - 1, n) + 1)-1
+            END IF
+         END DO
        END DO
-       END DO
-     END IF
+      END IF
      
-     If (veg(a,b)>0) THEN
-       baresoilprob = Psv
-     ELSE
-       baresoilprob = Psb
-     END IF
+      If (veg(a,b)>0) THEN
+        baresoilprob = Psv
+      ELSE
+        baresoilprob = Psb
+      END IF
      
-     CALL random_number(rnd)
-     IF ((store(a,b).ne.0).and.(rnd<baresoilprob)) THEN
+      CALL random_number(rnd)
+      IF ((store(a,b).ne.0).and.(rnd<baresoilprob)) THEN
         bareE(a,b) = bareE(a,b)+ 1
         store(a,b)=store(a,b)-1
         storeCounter = storeCounter-1
       ENDIF
-     END DO
+    END DO
   END DO
   
 END SUBROUTINE Evaporation
@@ -1482,16 +1498,16 @@ SUBROUTINE Neighbours(order,posij, dom,neighbs)
   x0 = posij(1)
   y0 = posij(2)
  
-   k=1
-   Do i=(-1*order),order
-     DO j=(-1*order),order
+  k=1
+  Do i=(-1*order),order
+    DO j=(-1*order),order
       If (((x0+i).ge.1).and.((x0+i).le.xmax).and.((y0+j).ge.1).and.((y0+j).le.ymax)) THEN
         neighbs(k,1)=x0+i
         neighbs(k,2)=y0+j
       END IF
       k=k+1
-     END DO
-   END DO
+    END DO
+  END DO
 
 END SUBROUTINE Neighbours
 
@@ -1513,48 +1529,48 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
 !	LSD2 in row 2 and otherpos in row3
   !(retunrs (-99,-99) for positions outside the domain
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IMPLICIT NONE
-      
-      INTEGER, INTENT(IN) :: order,m ,n
-      INTEGER, DIMENSION(2), INTENT(IN) :: posxy
-      REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
-      INTEGER, DIMENSION(3,2), INTENT(OUT) :: lsdList
-      
-      
-      REAL*8 :: z0, slope1, slope2
-      INTEGER :: ymax, xmax, n1,i,posy
-      INTEGER, DIMENSION(1) :: posx
-      INTEGER, DIMENSION(2) :: dom, LSD1, LSD2,clockpos, anticlockpos, otherpos
-      INTEGER, DIMENSION((order*2+1)**2,2) :: pos2
-      INTEGER, DIMENSION((order*2+1)**2) :: locs
-      REAL*8, DIMENSION((order*2+1)**2-1) :: slps
-      INTEGER, DIMENSION((order*2+1)**2-1,2) :: pos3
-      
-      ymax = SIZE(topog,1)
-      xmax = SIZE(topog,2)
-      dom = (/ymax, xmax /)
-      n1 = 8*order
-      
-    If(posxy(1).ne.-99)  THEN 
-     z0 = topog(posxy(1), posxy(2))
-     CALL Neighbours(order, posxy, dom, pos2)
-     pos3=pos2((/1,2,3,6,9,8,7,4/),:)
-     If(maxval(pos3) .eq.-99) THEN
-       lsdList=RESHAPE((/ -99,-99,-99,-99,-99,-99 /),(/3,2/))  
-       RETURN
-     END IF
-     Do i=1,n1
+  IMPLICIT NONE
+  
+  INTEGER, INTENT(IN) :: order,m ,n
+  INTEGER, DIMENSION(2), INTENT(IN) :: posxy
+  REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
+  INTEGER, DIMENSION(3,2), INTENT(OUT) :: lsdList
+  
+  
+  REAL*8 :: z0, slope1, slope2
+  INTEGER :: ymax, xmax, n1,i,posy
+  INTEGER, DIMENSION(1) :: posx
+  INTEGER, DIMENSION(2) :: dom, LSD1, LSD2,clockpos, anticlockpos, otherpos
+  INTEGER, DIMENSION((order*2+1)**2,2) :: pos2
+  INTEGER, DIMENSION((order*2+1)**2) :: locs
+  REAL*8, DIMENSION((order*2+1)**2-1) :: slps
+  INTEGER, DIMENSION((order*2+1)**2-1,2) :: pos3
+  
+  ymax = SIZE(topog,1)
+  xmax = SIZE(topog,2)
+  dom = (/ymax, xmax /)
+  n1 = 8*order
+    
+  If(posxy(1).ne.-99)  THEN 
+    z0 = topog(posxy(1), posxy(2))
+    CALL Neighbours(order, posxy, dom, pos2)
+    pos3=pos2((/1,2,3,6,9,8,7,4/),:)
+    If(maxval(pos3) .eq.-99) THEN
+      lsdList=RESHAPE((/ -99,-99,-99,-99,-99,-99 /),(/3,2/))  
+      RETURN
+    END IF
+    Do i=1,n1
       If(pos3(i,1).ne.-99) THEN 
         slps(i) = 1.0*(z0 - topog(pos3(i,1), pos3(i,2)))/((posxy(1) - pos3(i,1))**2 + (posxy(2) - pos3(i,2))**2)**0.5
       ELSE
         slps(i) = -99999.d0
       end if
-     end do 
-     
-     If(maxval(slps) < 0) THEN
+    end do 
+   
+    If(maxval(slps) < 0) THEN
       lsdList=RESHAPE((/ -99,-99,-99,-99,-99,-99 /),(/3,2/))     ! (* i.e. all neighbouring cells higher *)
       RETURN
-     ELSE
+    ELSE
       posx = maxloc(slps)
       LSD1 = pos3(posx(1),:)
       !CALL Pos1d(pos2,(order*2+1)**2,2,LSD1,locs)
@@ -1566,32 +1582,32 @@ SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
       anticlockpos = pos3(posx(1),:)
 
       If((clockpos(1) .ne. -99).and.(anticlockpos(1) .ne. -99)) THEN
-       Slope1 = 1.0*(z0 - topog(clockpos(1), clockpos(2)))/ &
-       ((posxy(1) - clockpos(1))**2 + (posxy(2) - clockpos(2))**2)**0.5
-       Slope2 = 1.0*(z0 - topog(anticlockpos(1), anticlockpos(2)))/ &
-       ((posxy(1) - anticlockpos(1))**2 + (posxy(2) - anticlockpos(2))**2)**0.5
-       If(Slope1 > Slope2) THEN
-         LSD2 = clockpos
-         otherpos = anticlockpos
-       ELSE
-         LSD2 = anticlockpos
-         otherpos = clockpos
+        Slope1 = 1.0*(z0 - topog(clockpos(1), clockpos(2)))/ &
+        ((posxy(1) - clockpos(1))**2 + (posxy(2) - clockpos(2))**2)**0.5
+        Slope2 = 1.0*(z0 - topog(anticlockpos(1), anticlockpos(2)))/ &
+        ((posxy(1) - anticlockpos(1))**2 + (posxy(2) - anticlockpos(2))**2)**0.5
+        If(Slope1 > Slope2) THEN
+          LSD2 = clockpos
+          otherpos = anticlockpos
+        ELSE
+          LSD2 = anticlockpos
+          otherpos = clockpos
         END IF !(* end of If Slope1>Slope2 *)
       ELSE
-       If((clockpos(1) .eq.-99).and.(anticlockpos(1).eq.-99)) THEN
-         LSD2 = (/-99,-99/)
-       ELSE
-         If(clockpos(1).eq.-99) THEN
-           LSD2 = anticlockpos
-           otherpos = clockpos
-         ELSE
-           LSD2 = clockpos
-           otherpos = anticlockpos
-         END IF
-       END IF
-       END IF ! (* end of If clockpos!={"Null","Null"}anticlockpos!={"Null","Null"}, *)
+        If((clockpos(1) .eq.-99).and.(anticlockpos(1).eq.-99)) THEN
+          LSD2 = (/-99,-99/)
+        ELSE
+          If(clockpos(1).eq.-99) THEN
+            LSD2 = anticlockpos
+            otherpos = clockpos
+          ELSE
+            LSD2 = clockpos
+            otherpos = anticlockpos
+          END IF
+        END IF
+      END IF ! (* end of If clockpos!={"Null","Null"}anticlockpos!={"Null","Null"}, *)
     END IF !(* end of If Max[slps]<0 *)
-     END IF !  end of if posxy!=(/-99,-99/)
+  END IF !  end of if posxy!=(/-99,-99/)
   lsdList(1,:) = LSD1
   lsdList(2,:)= LSD2
   lsdList(3,:)=otherpos
@@ -1609,33 +1625,33 @@ SUBROUTINE RotateArray(list,m,n,leftorRight)
 !It returns 
 !	the array: list
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     IMPLICIT NONE
-     
-     INTEGER, INTENT(IN) :: m,n
-     INTEGER, DIMENSION(m,n), INTENT(INOUT) :: list
-     INTEGER, INTENT(IN) :: leftorRight
-     
-     !Roates the rows of a 2 D array to the left<0 or
-     !vice versa if rotate right > 0
-     !if left = -1 then rotate a list left
-     !if left != -1 then rotate right
-     
-     INTEGER,DIMENSION(n) :: temp
-     INTEGER :: i
-     
-     DO i=1,abs(leftorRight)
-     If(leftorRight.lt.0) THEN
-       temp = list(1,:)
-       list(1:m-1,:)=list(2:m,:)
-       list(m,:)=temp
-     ELSE
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: m,n
+  INTEGER, DIMENSION(m,n), INTENT(INOUT) :: list
+  INTEGER, INTENT(IN) :: leftorRight
+
+  !Roates the rows of a 2 D array to the left<0 or
+  !vice versa if rotate right > 0
+  !if left = -1 then rotate a list left
+  !if left != -1 then rotate right
+
+  INTEGER,DIMENSION(n) :: temp
+  INTEGER :: i
+
+  DO i=1,abs(leftorRight)
+    If(leftorRight.lt.0) THEN
+      temp = list(1,:)
+      list(1:m-1,:)=list(2:m,:)
+      list(m,:)=temp
+    ELSE
       IF (leftorRight.gt.0) THEN
-       temp = list(m,:)
-       list(2:m,:)=list(1:m-1,:)
-       list(1,:)=temp
+        temp = list(m,:)
+        list(2:m,:)=list(1:m-1,:)
+        list(1,:)=temp
       END IF
-     ENDIF
-     END DO
+    ENDIF
+  END DO
 END SUBROUTINE RotateArray
 
 
@@ -1650,31 +1666,31 @@ SUBROUTINE Pos1d(list,m,n,match,rownum)
 !It returns 
 !	the number of the row matching the value: match
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     IMPLICIT NONE
-     !return the row position that is the same as match , returns 0,0 if no match 
-     INTEGER, INTENT(IN) :: m,n
-     INTEGER, DIMENSION(m,n),INTENt(in) :: list
-     integer, dimension(n), intent(in) :: match
-     INTEGER, DIMENSION(m),INTENT(OUT) :: rownum
+  IMPLICIT NONE
+  !return the row position that is the same as match , returns 0,0 if no match 
+  INTEGER, INTENT(IN) :: m,n
+  INTEGER, DIMENSION(m,n),INTENt(in) :: list
+  integer, dimension(n), intent(in) :: match
+  INTEGER, DIMENSION(m),INTENT(OUT) :: rownum
 
-    Integer :: i, j,k
-    INTEGER :: test
-    rownum=0
-    k=1
-    DO i=1,m
+  Integer :: i, j,k
+  INTEGER :: test
+  rownum=0
+  k=1
+  DO i=1,m
     test = 1
     DO j=1,n
-    IF (list(i,j).eq.match(j)) THEN
-     test=test*1
-    ELSE
-     test = test*0
-    END IF
-    END DO
-      IF(test.eq.1) THEN
-        rownum(k)=i
-        k=k+1
+      IF (list(i,j).eq.match(j)) THEN
+        test=test*1
+      ELSE
+        test = test*0
       END IF
     END DO
+    IF(test.eq.1) THEN
+      rownum(k)=i
+      k=k+1
+    END IF
+  END DO
     
 END SUBROUTINE Pos1D 
 
@@ -1689,178 +1705,136 @@ Subroutine GD8(topog,flowdirns, m,n)
 !It returns 
 !	integers for the flow directions: flowdirns
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   
-   IMPLICIT NONE
-   
-   INTEGER,INTENT(IN) :: m,n
-   !INTEGER, DIMENSION(m,n), INTENT(IN) :: lakes
-   REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
-   INTEGER, DIMENSION(m,n), INTENT(INOUT) :: flowdirns
-   
-   
-   INTEGER :: mn, ordsCounter, order, counter, i,j,k, idirn, dx ,dy
-   INTEGER, DIMENSION(SIZE(topog),2) :: ords
-   REAL *8, DIMENSION(SIZE(topog)) :: oneDtopog
-   INTEGER, DIMENSION(SIZE(topog)) :: ind2, rownum
-   INTEGER, DIMENSION(2) :: startcell,  upstreamcell, upflowdirn
-   INTEGER, DIMENSION(2) :: LSD1, secondary1,otherAnglePosition1
-   INTEGER, DIMENSION(2) :: LSD2, secondary2,otherAnglePosition2
-   INTEGER, DIMENSION(2) :: upsecondary, targetcell, dirn11, dirn12, dirn21, dirn22
-   INTEGER, DIMENSION(3,2) :: lsdList
-   REAL*8 :: z02, z0, z1, z2, slp1, slp2
-   LOGICAL :: test1, test2, test3
-   
-   mn = m*n
-   flowdirns = -2  !default value use for checking is a dirn has been assigned yet
+  IMPLICIT NONE
 
-   z02 = Floor(Minval(topog)) - 10
-   order = 1
-   CALL makeOrds(topog,ords, m,n)
-   startcell = ords(1,:)
-   ordsCounter = 2
-   CALL Pos1d(ords,mn,2,startcell,rownum)
-   IF (rownum(1).ne.0) THEN
-      CALL endShift(ords,rownum(1), mn,2)
-      ords(mn,:)=(/0,0/)
+  INTEGER,INTENT(IN) :: m,n
+  !INTEGER, DIMENSION(m,n), INTENT(IN) :: lakes
+  REAL*8, DIMENSION(m,n), INTENT(IN) :: topog
+  INTEGER, DIMENSION(m,n), INTENT(INOUT) :: flowdirns
+
+
+  INTEGER :: mn, ordsCounter, order, counter, i,j,k, idirn, dx ,dy
+  INTEGER, DIMENSION(SIZE(topog),2) :: ords
+  REAL *8, DIMENSION(SIZE(topog)) :: oneDtopog
+  INTEGER, DIMENSION(SIZE(topog)) :: ind2, rownum
+  INTEGER, DIMENSION(2) :: startcell,  upstreamcell, upflowdirn
+  INTEGER, DIMENSION(2) :: LSD1, secondary1,otherAnglePosition1
+  INTEGER, DIMENSION(2) :: LSD2, secondary2,otherAnglePosition2
+  INTEGER, DIMENSION(2) :: upsecondary, targetcell, dirn11, dirn12, dirn21, dirn22
+  INTEGER, DIMENSION(3,2) :: lsdList
+  REAL*8 :: z02, z0, z1, z2, slp1, slp2
+  LOGICAL :: test1, test2, test3
+   
+  mn = m*n
+  flowdirns = -2  !default value use for checking if a dirn has been assigned yet
+
+  z02 = Floor(Minval(topog)) - 10
+  order = 1
+  CALL makeOrds(topog,ords, m,n)
+  startcell = ords(1,:)
+  ordsCounter = 2
+  CALL Pos1d(ords,mn,2,startcell,rownum)
+  IF (rownum(1).ne.0) THEN
+    CALL endShift(ords,rownum(1), mn,2)
+    ords(mn,:)=(/0,0/)
   END IF
      
-   CALL LSDs(1, startcell, topog,m,n,lsdList)
-   LSD1 = lsdList(1,:)
-   secondary1 = lsdList(2,:)
-   otherAnglePosition1 = lsdList(3,:)
-   
-   CALL fdirLookup(startcell-LSD1, idirn)
-   flowdirns(startcell(1), startcell(2)) = idirn
-   CALL Pos1d(ords,mn,2,startcell,rownum)
-   IF (rownum(1).ne.0) THEN
-      CALL endShift(ords,rownum(1), mn,2)
-      ords(mn,:)=(/0,0/)
-   END IF
+  CALL LSDs(1, startcell, topog,m,n,lsdList)
+  LSD1 = lsdList(1,:)
+  secondary1 = lsdList(2,:)
+  otherAnglePosition1 = lsdList(3,:)
+
+  CALL fdirLookup(startcell-LSD1, idirn)
+  flowdirns(startcell(1), startcell(2)) = idirn
+  CALL Pos1d(ords,mn,2,startcell,rownum)
+  IF (rownum(1).ne.0) THEN
+    CALL endShift(ords,rownum(1), mn,2)
+    ords(mn,:)=(/0,0/)
+  END IF
      
-   upstreamcell = startcell
-   upflowdirn = startcell - LSD1
-   upsecondary = secondary1
-   targetcell = LSD1
-   counter = 1
-   
-   ordsDo : DO While(ords(1,1).gt.0)
+  upstreamcell = startcell
+  upflowdirn = startcell - LSD1
+  upsecondary = secondary1
+  targetcell = LSD1
+  counter = 1
+
+  ordsDo : DO While(ords(1,1).gt.0)
     
     mainif : If(targetcell(1).eq.-99) THEN
-     startcell = ords(1,:)
-     CALL LSDs(1, startcell, topog,m,n,lsdList)
-     LSD1 = lsdList(1,:)
-     secondary1 = lsdList(2,:)
-     otherAnglePosition1 = lsdList(3,:)
-   
-     upstreamcell = startcell
-     upflowdirn = startcell - LSD1
-     upsecondary = secondary1
-     targetcell = LSD1
-     
-     CALL fdirLookup(startcell-LSD1, idirn)
-     flowdirns(startcell(1), startcell(2)) = idirn
-     
+      startcell = ords(1,:)
+      CALL LSDs(1, startcell, topog,m,n,lsdList)
+      LSD1 = lsdList(1,:)
+      secondary1 = lsdList(2,:)
+      otherAnglePosition1 = lsdList(3,:)
+
+      upstreamcell = startcell
+      upflowdirn = startcell - LSD1
+      upsecondary = secondary1
+      targetcell = LSD1
+
+      CALL fdirLookup(startcell-LSD1, idirn)
+      flowdirns(startcell(1), startcell(2)) = idirn
+
       CALL Pos1d(ords,mn,2,startcell,rownum)
-         IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-         END IF
-  ELSE !mainif :
-     ifAlreadyAsigned : If(flowdirns(targetcell(1), targetcell(2)).gt. -2) THEN 
+      IF (rownum(1).ne.0) THEN
+        CALL endShift(ords,rownum(1),mn,2)
+        ords(mn,:)=(/0,0/)
+      END IF
+    ELSE !mainif :
+      ifAlreadyAsigned : If(flowdirns(targetcell(1), targetcell(2)).gt. -2) THEN 
        
-       !assign flow dirn to upstreamcell
-       CALL Lookupfdir(idirn, dx,dy)
-       !upstreamcell = targetcell +(/dx,dy/)
-       flowdirns(upstreamcell(1), upstreamcell(2)) = idirn
-       CALL Pos1d(ords,mn,2,upstreamcell,rownum)
-         IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-         END IF
-       startcell = ords(1,:)
+        !assign flow dirn to upstreamcell
+        CALL Lookupfdir(idirn, dx,dy)
+        !upstreamcell = targetcell +(/dx,dy/)
+        flowdirns(upstreamcell(1), upstreamcell(2)) = idirn
+        CALL Pos1d(ords,mn,2,upstreamcell,rownum)
+          IF (rownum(1).ne.0) THEN
+            CALL endShift(ords,rownum(1),mn,2)
+            ords(mn,:)=(/0,0/)
+          END IF
+        startcell = ords(1,:)
+         
+        CALL LSDs(1, startcell, topog,m,n,lsdList)
+        LSD1 = lsdList(1,:)
+        secondary1 = lsdList(2,:)
+        otherAnglePosition1 = lsdList(3,:)
+         
+        upstreamcell = startcell
+        upflowdirn = startcell - LSD1
+        upsecondary = secondary1
+        targetcell = LSD1
+        CALL fdirLookup(startcell-LSD1, idirn)
+        flowdirns(startcell(1), startcell(2)) = idirn
+         
+        CALL RotateArray(ords,mn,2,-1)
+        ords(mn,:)=(/0,0/)
        
-       CALL LSDs(1, startcell, topog,m,n,lsdList)
-       LSD1 = lsdList(1,:)
-       secondary1 = lsdList(2,:)
-       otherAnglePosition1 = lsdList(3,:)
-       
-       upstreamcell = startcell
-       upflowdirn = startcell - LSD1
-       upsecondary = secondary1
-       targetcell = LSD1
-       CALL fdirLookup(startcell-LSD1, idirn)
-       flowdirns(startcell(1), startcell(2)) = idirn
-       
-       CALL RotateArray(ords,mn,2,-1)
-       ords(mn,:)=(/0,0/)
-       
-       ELSE !ifAlreadyAsigned 
+      ELSE !ifAlreadyAsigned 
        
         CALL LSDs(1, targetcell, topog,m,n,lsdList)
         LSD2 = lsdList(1,:)
         secondary2 = lsdList(2,:)
         otherAnglePosition2 = lsdList(3,:)
        
-       If((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99)) THEN
-        flowdirns(targetcell(1), targetcell(2)) = -1
+        If((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99)) THEN
+          flowdirns(targetcell(1), targetcell(2)) = -1 !Nanu: -1 is a flag for what?
         
-       CALL Pos1d(ords,mn,2,targetcell,rownum)
-       IF (rownum(1).ne.0) THEN
-         CALL endShift(ords,rownum(1),mn,2)
-         ords(mn,:)=(/0,0/)
-       END IF
-                
-        startcell = ords(1,:)
-        CALL LSDs(order, startcell, topog,m,n,lsdList)
-        LSD1 = lsdList(1,:)
-        secondary1 = lsdList(2,:)
-        otherAnglePosition1 = lsdList(3,:)
-       
-        upstreamcell = startcell
-        targetcell = LSD1
-        upflowdirn = startcell - LSD1
-        upsecondary = secondary1
-        CALL fdirLookup(startcell-LSD1, idirn)
-        flowdirns(startcell(1), startcell(2)) = idirn
-        
-        CALL Pos1d(ords,mn,2,startcell,rownum)
-         IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-         END IF
-        
-      ELSE !if ((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99))
-        
-        z0 = topog(targetcell(1), targetcell(2))
-        
-        If(secondary2(1) .ne.-99) THEN 
-         z1 = topog(secondary2(1), secondary2(2))
-        ELSE
-         z1 = z02
-        END IF
-        
-        If(otherAnglePosition2(1).ne.-99) THEN
-          z2 = topog(otherAnglePosition2(1),otherAnglePosition2(2))
-        ELSE
-          z2 = z02
-        END IF
-        
-        If((z1 > z0).AND.(z2 > z0)) THEN
-          CALL fdirLookup(targetcell-LSD2, idirn)
-          flowdirns(targetcell(1), targetcell(2)) = idirn
-         
-         CALL Pos1d(ords,mn,2,targetcell,rownum)
-         IF (rownum(1).ne.0) THEN
-           CALL endShift(ords,rownum(1),mn,2)
-           ords(mn,:)=(/0,0/)
-         END IF
-         
-          startcell = LSD2
-          CALL LSDs(1, startcell, topog,m,n,lsdList)
+          CALL Pos1d(ords,mn,2,targetcell,rownum)
+          IF (rownum(1).ne.0) THEN
+            CALL endShift(ords,rownum(1),mn,2)
+            ords(mn,:)=(/0,0/)
+          END IF
+                  
+          startcell = ords(1,:)
+          CALL LSDs(order, startcell, topog,m,n,lsdList)
           LSD1 = lsdList(1,:)
           secondary1 = lsdList(2,:)
           otherAnglePosition1 = lsdList(3,:)
          
-         If(LSD1(1) .ne.-99) THEN
+          upstreamcell = startcell
+          targetcell = LSD1
+          upflowdirn = startcell - LSD1
+          upsecondary = secondary1
           CALL fdirLookup(startcell-LSD1, idirn)
           flowdirns(startcell(1), startcell(2)) = idirn
           
@@ -1869,89 +1843,131 @@ Subroutine GD8(topog,flowdirns, m,n)
             CALL endShift(ords,rownum(1),mn,2)
             ords(mn,:)=(/0,0/)
           END IF
-          
-          upflowdirn = startcell - LSD1
-          upsecondary = secondary1
-         
-         ELSE !if (LSD1(1) .ne.-99)
-          
-          flowdirns(startcell(1), startcell(2)) = -1
-          
-          CALL Pos1d(ords,mn,2,startcell,rownum)
-          IF (rownum(1).ne.0) THEN
-            CALL endShift(ords,rownum(1),mn,2)
-            ords(mn,:)=(/0,0/)
-          END IF
-           
-          upflowdirn = (/-99, -99/)
-          upsecondary = (/-99, -99/)
-        END IF !(LSD1(1) .ne.-99) 
-         
-         targetcell = LSD1
-         CALL LSDs(1, targetcell, topog,m,n,lsdList)
-         LSD2 = lsdList(1,:)
-         secondary2 = lsdList(2,:)
-         otherAnglePosition2 = lsdList(3,:)
-         upstreamcell = startcell
-        ELSE !if ((z1 > z0).AND.(z2 > z0))
-         dirn11 = upstreamcell - targetcell
-         dirn21 = targetcell - LSD2
-         test1 = ((dirn11(1) .eq. dirn21(1)).AND.(dirn11(2) .eq. dirn21(2)))
-         dirn12 = upstreamcell - upsecondary
-         dirn22 = targetcell - secondary2
-         test2 = ((dirn12(1) .eq. dirn22(1)).AND.(dirn12(2) .eq. dirn22(2)))
-         slp1 = (topog(startcell(1), startcell(2)) - & 
-                    topog(LSD2(1), LSD2(2)))/Sqrt(DBLE(((startcell(1) - & 
-                 LSD2(1))**2 + (startcell(2) - LSD2(2))**2)))
-                 
-         slp2 = (topog(startcell(1), startcell(2)) - & 
-                    topog(secondary2(1), secondary2(2)))/&
-                    Sqrt(DBLE(((startcell(1) - secondary2(1))**2 + (startcell(2) - & 
-                 secondary2(2))**2)))
-         
-         test3 = (slp1 < slp2)
-         
-         If((test1.AND.test2).AND.test3) THEN
-          If(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2))) THEN
-                CALL fdirLookup(targetcell-secondary2, idirn)
-                flowdirns(targetcell(1), targetcell(2)) = idirn
+        
+        ELSE !if ((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99))
+        
+          z0 = topog(targetcell(1), targetcell(2))
+        
+          If(secondary2(1) .ne.-99) THEN 
+            z1 = topog(secondary2(1), secondary2(2))
           ELSE
+            z1 = z02
+          END IF
+        
+          If(otherAnglePosition2(1).ne.-99) THEN
+            z2 = topog(otherAnglePosition2(1),otherAnglePosition2(2))
+          ELSE
+            z2 = z02
+          END IF
+        
+          If((z1 > z0).AND.(z2 > z0)) THEN
             CALL fdirLookup(targetcell-LSD2, idirn)
             flowdirns(targetcell(1), targetcell(2)) = idirn
+         
+            CALL Pos1d(ords,mn,2,targetcell,rownum)
+            IF (rownum(1).ne.0) THEN
+              CALL endShift(ords,rownum(1),mn,2)
+              ords(mn,:)=(/0,0/)
+            END IF
+         
+            startcell = LSD2
+            CALL LSDs(1, startcell, topog,m,n,lsdList)
+            LSD1 = lsdList(1,:)
+            secondary1 = lsdList(2,:)
+            otherAnglePosition1 = lsdList(3,:)
+         
+            If(LSD1(1) .ne.-99) THEN
+              CALL fdirLookup(startcell-LSD1, idirn)
+              flowdirns(startcell(1), startcell(2)) = idirn
+          
+              CALL Pos1d(ords,mn,2,startcell,rownum)
+              IF (rownum(1).ne.0) THEN
+                CALL endShift(ords,rownum(1),mn,2)
+                ords(mn,:)=(/0,0/)
+              END IF
+          
+              upflowdirn = startcell - LSD1
+              upsecondary = secondary1
+         
+            ELSE !if (LSD1(1) .ne.-99)
+          
+              flowdirns(startcell(1), startcell(2)) = -1 !Nanu: -1 is a flag for what?
+          
+              CALL Pos1d(ords,mn,2,startcell,rownum)
+              IF (rownum(1).ne.0) THEN
+                CALL endShift(ords,rownum(1),mn,2)
+                ords(mn,:)=(/0,0/)
+              END IF
            
-          END IF !(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2)))
+              upflowdirn = (/-99, -99/)
+              upsecondary = (/-99, -99/)
+            END IF !(LSD1(1) .ne.-99) 
+         
+            targetcell = LSD1
+            CALL LSDs(1, targetcell, topog,m,n,lsdList)
+            LSD2 = lsdList(1,:)
+            secondary2 = lsdList(2,:)
+            otherAnglePosition2 = lsdList(3,:)
+            upstreamcell = startcell
+          ELSE !if ((z1 > z0).AND.(z2 > z0))
+            dirn11 = upstreamcell - targetcell
+            dirn21 = targetcell - LSD2
+            test1 = ((dirn11(1) .eq. dirn21(1)).AND.(dirn11(2) .eq. dirn21(2)))
+            dirn12 = upstreamcell - upsecondary
+            dirn22 = targetcell - secondary2
+            test2 = ((dirn12(1) .eq. dirn22(1)).AND.(dirn12(2) .eq. dirn22(2)))
+            slp1 = (topog(startcell(1), startcell(2)) - & 
+              topog(LSD2(1), LSD2(2)))/Sqrt(DBLE(((startcell(1) - & 
+              LSD2(1))**2 + (startcell(2) - LSD2(2))**2)))
+                   
+            slp2 = (topog(startcell(1), startcell(2)) - & 
+              topog(secondary2(1), secondary2(2)))/&
+              Sqrt(DBLE(((startcell(1) - secondary2(1))**2 + (startcell(2) - & 
+              secondary2(2))**2)))
+
+            test3 = (slp1 < slp2)
+         
+            If((test1.AND.test2).AND.test3) THEN
+              If(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2))) THEN
+                CALL fdirLookup(targetcell-secondary2, idirn)
+                flowdirns(targetcell(1), targetcell(2)) = idirn
+              ELSE
+                CALL fdirLookup(targetcell-LSD2, idirn)
+                flowdirns(targetcell(1), targetcell(2)) = idirn
+           
+              END IF !(topog(secondary2(1), secondary2(2)).le. topog(targetcell(1), targetcell(2)))
           
-          CALL Pos1d(ords,mn,2,targetcell,rownum)
-          IF (rownum(1).ne.0) THEN
-            CALL endShift(ords,rownum(1),mn,2)
-            ords(mn,:)=(/0,0/)
-          END IF
+              CALL Pos1d(ords,mn,2,targetcell,rownum)
+              IF (rownum(1).ne.0) THEN
+                CALL endShift(ords,rownum(1),mn,2)
+                ords(mn,:)=(/0,0/)
+              END IF
           
-          upstreamcell = targetcell
-          upflowdirn = targetcell - secondary2
-          upsecondary = secondary2
-          targetcell = secondary2
-        ELSE !if ((test1.AND.test2).AND.test3)
-           CALL fdirLookup(targetcell-LSD2, idirn)
-           flowdirns(targetcell(1), targetcell(2)) = idirn
+              upstreamcell = targetcell
+              upflowdirn = targetcell - secondary2
+              upsecondary = secondary2
+              targetcell = secondary2
+            ELSE !if ((test1.AND.test2).AND.test3)
+              CALL fdirLookup(targetcell-LSD2, idirn)
+              flowdirns(targetcell(1), targetcell(2)) = idirn
           
-          If(topog(LSD2(1), LSD2(2)) > topog(targetcell(1), targetcell(2))) THEN 
-          ! Print*, "7:"
-          END IF
+              If(topog(LSD2(1), LSD2(2)) > topog(targetcell(1), targetcell(2))) THEN 
+              ! Print*, "7:"
+              END IF
           
-          CALL Pos1d(ords,mn,2,targetcell,rownum)
-          IF (rownum(1).ne.0) THEN
-            CALL endShift(ords,rownum(1), mn,2)
-            ords(mn,:)=(/0,0/)
-          END IF         
+              CALL Pos1d(ords,mn,2,targetcell,rownum)
+              IF (rownum(1).ne.0) THEN
+                CALL endShift(ords,rownum(1), mn,2)
+                ords(mn,:)=(/0,0/)
+              END IF         
           
-          upstreamcell = targetcell
-          upflowdirn = targetcell - LSD2
-          upsecondary = secondary2
-          targetcell = LSD2
-          END IF !((test1.AND.test2).AND.test3)
-        END IF  !((z1 > z0).AND.(z2 > z0))
-      END IF !((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99))
+              upstreamcell = targetcell
+              upflowdirn = targetcell - LSD2
+              upsecondary = secondary2
+              targetcell = LSD2
+            END IF !((test1.AND.test2).AND.test3)
+          END IF  !((z1 > z0).AND.(z2 > z0))
+        END IF !((secondary2(1) .eq. -99).OR.(LSD2(1) .eq. -99))
       END IF ifAlreadyAsigned 
      
     END IF  mainif
@@ -2006,7 +2022,7 @@ SUBROUTINE fdirLookup(dirnxy, idirn)
   ELSEIF ((dirnxy(1).eq.0).AND.(dirnxy(2).eq.0)) THEN
     idirn = 9
   ELSE
-    idirn = -1  
+    idirn = -1  !Nanu: what does -1 stand for?
   END IF
 END SUBROUTINE fdirLookup
 
@@ -2347,23 +2363,23 @@ END SUBROUTINE VegChange
 !open (or create) files for writing the output as .csv files
 SUBROUTINE openCSVrasterFiles(resultsName, outputFolder)
 
-   IMPLICIT NONE
+  IMPLICIT NONE
 
-	character(LEN=400), intent(in) :: outputFolder
-   CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
+  character(LEN=400), intent(in) :: outputFolder
+  CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
 
-   OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
-   write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
+  OPEN(2,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_SummaryResults.csv')
+  write(2,*) 'timeStep;vegDensity;totalET;totalBE;totalStore; totalDischarge; totalOutflow;'
 
-   OPEN(13,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_vegetation.csv')
-   OPEN(14,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowdirections.csv')
-   OPEN(15,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_store.csv')
-   OPEN(16,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_discharge.csv')
-   OPEN(17,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_eTActual.csv')
-   OPEN(18,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_bareE.csv')
-   OPEN(19,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_topography.csv')
-   OPEN(20,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowResistance.csv')
+  OPEN(13,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_vegetation.csv')
+  OPEN(14,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowdirections.csv')
+  OPEN(15,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_store.csv')
+  OPEN(16,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_discharge.csv')
+  OPEN(17,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_eTActual.csv')
+  OPEN(18,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_bareE.csv')
+  OPEN(19,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_topography.csv')
+  OPEN(20,file=trim(adjustl(outputFolder))//trim(adjustl(resultsName))//'_flowResistance.csv')
 
 END SUBROUTINE openCSVrasterFiles
 
@@ -2393,16 +2409,16 @@ END SUBROUTINE openBinaryFiles
 
 SUBROUTINE closeFiles()
 
-   !close files
-   CLOSE(2)
-   CLOSE(13)
-   CLOSE(14)
-   CLOSE(15)
-   CLOSE(16)
-   CLOSE(17)
-   CLOSE(18)
-   CLOSE(19)
-   CLOSE(20)
+  !close files
+  CLOSE(2)
+  CLOSE(13)
+  CLOSE(14)
+  CLOSE(15)
+  CLOSE(16)
+  CLOSE(17)
+  CLOSE(18)
+  CLOSE(19)
+  CLOSE(20)
 
 END SUBROUTINE closeFiles
 
@@ -2411,71 +2427,71 @@ END SUBROUTINE closeFiles
 !additional a file SummaryResults.csv is created
 SUBROUTINE writeCSVraster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
 
-   IMPLICIT NONE
+  IMPLICIT NONE
 
-   INTEGER, INTENT(in) :: m,n, outflow, i,j
-   character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
-   INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
-   REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
+  INTEGER, INTENT(in) :: m,n, outflow, i,j
+  character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
+  INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
+  REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
 
-   WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
-   sum(bareE), sum(store), sum(discharge), outflow
+  WRITE(2,'(i3,";",e14.6, ";",5(i10, ";"))') j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+  sum(bareE), sum(store), sum(discharge), outflow
 
-   !write csv-files
-   write(13,*) "time step = ", j, ";"
-   write(13,'('//char_n//'(i3,";"))') veg
+  !write csv-files
+  write(13,*) "time step = ", j, ";"
+  write(13,'('//char_n//'(i3,";"))') veg
 
-   write(14,*) "time step = ", j, ";"
-   write(14,'('//char_n//'(i4,";"))') flowdirns
+  write(14,*) "time step = ", j, ";"
+  write(14,'('//char_n//'(i4,";"))') flowdirns
 
-   write(15,*) "time step = ", j, ";"
-   write(15,'('//char_n//'(i12,";"))') store
+  write(15,*) "time step = ", j, ";"
+  write(15,'('//char_n//'(i12,";"))') store
 
-   write(16,*) "time step = ", j, ";"
-   write(16,'('//char_n//'(i12,";"))') discharge
+  write(16,*) "time step = ", j, ";"
+  write(16,'('//char_n//'(i12,";"))') discharge
 
-   write(17,*) "time step = ", j, ";"
-   write(17,'('//char_n//'(i12,";"))') eTActual
+  write(17,*) "time step = ", j, ";"
+  write(17,'('//char_n//'(i12,";"))') eTActual
 
-   write(18,*) "time step = ", j, ";"
-   write(18,'('//char_n//'(i12,";"))') bareE
+  write(18,*) "time step = ", j, ";"
+  write(18,'('//char_n//'(i12,";"))') bareE
 
-   write(19,*) "time step = ", j, ";"
-   write(19,'('//char_n//'(e14.6,";"))') topog
+  write(19,*) "time step = ", j, ";"
+  write(19,'('//char_n//'(e14.6,";"))') topog
 
-   write(20,*) "time step = ", j, ";"
-   write(20,'('//char_n//'(e14.6,";"))') infiltKern
+  write(20,*) "time step = ", j, ";"
+  write(20,'('//char_n//'(e14.6,";"))') infiltKern
 
 END SUBROUTINE writeCSVraster
 
 SUBROUTINE writeBinRaster(m,n, i, j, char_n, veg, ETActual, bareE, store, discharge, outflow, flowdirns, topog, infiltKern)
 
-IMPLICIT NONE
+  IMPLICIT NONE
 
-INTEGER, INTENT(in) :: m,n, outflow, i,j
-character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
-INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
-REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
+  INTEGER, INTENT(in) :: m,n, outflow, i,j
+  character(4), INTENT(in) :: char_n !number of rows as character, used for output formating
+  INTEGER, DIMENSION(m,n), intent(in) :: veg, store, discharge, flowdirns, bareE, eTActual
+  REAL*8, DIMENSION(m,n), INTENT(IN) :: infiltKern, topog
 
-WRITE(2,*) j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
-sum(bareE), sum(store), sum(discharge), outflow
+  WRITE(2,*) j,dble(sum(veg))/dble((m*n)), sum(ETActual), &
+  sum(bareE), sum(store), sum(discharge), outflow
 
-!write csv-files
-write(13) veg
+  !write csv-files
+  write(13) veg
 
-write(14) flowdirns
+  write(14) flowdirns
 
-write(15) store
+  write(15) store
 
-write(16) discharge
+  write(16) discharge
 
-write(17) eTActual
+  write(17) eTActual
 
-write(18) bareE
+  write(18) bareE
 
-write(19) topog
+  write(19) topog
 
-write(20) infiltKern
+  write(20) infiltKern
 
 END SUBROUTINE writeBinRaster
 
@@ -2505,17 +2521,17 @@ END SUBROUTINE closeOtherFiles
 ! to display a progress bare in the console:
 SUBROUTINE progressBar(j, nSteps, progress)
 
-   IMPLICIT NONE
-   INTEGER, intent(in) :: j, nSteps
-   Integer, intent(inout) :: progress
+  IMPLICIT NONE
+  INTEGER, intent(in) :: j, nSteps
+  Integer, intent(inout) :: progress
 
-   if(j==1) write(*,*) "timestep iteration"
+  if(j==1) write(*,*) "timestep iteration"
 
-   !write progess bar:
-   progress = nint((Real(j)/Real(nSteps))*100)
-   write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
-   progress, repeat("=", progress/2), repeat("-", (50-progress/2))
-   if(j==nSteps) write(*,'(a)') "" ! to make a newline
+  !write progess bar:
+  progress = nint((Real(j)/Real(nSteps))*100)
+  write(*,'((a,I3, "%", " <", a, a, ">"))', advance="no") achar(13), & !achar(13) is important for overwriting the output
+  progress, repeat("=", progress/2), repeat("-", (50-progress/2))
+  if(j==nSteps) write(*,'(a)') "" ! to make a newline
 
 END SUBROUTINE progressBar
 

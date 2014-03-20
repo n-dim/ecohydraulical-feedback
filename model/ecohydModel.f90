@@ -971,8 +971,8 @@ donumParticles : DO i=1,nIter  !loop over all rainfall particles in precipitatio
               DO k=2,9
                 IF ((neighbs(k,1).ne.-99).AND.(k.ne.5)) THEN
                   IF ((topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))).lt.rnum) THEN
-                      dy = k
-                      rnum = topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))
+                    dy = k
+                    rnum = topog(neighbs(k,1),neighbs(k,2))+ 0.001*dble(tempSurfaceStore(neighbs(k,1),neighbs(k,2)))
                   END IF
                 END IF
               END DO
@@ -992,7 +992,7 @@ donumParticles : DO i=1,nIter  !loop over all rainfall particles in precipitatio
             ELSE !if not a depresion move particle in flow direction
               x = x - dx
               y = y - dy
-              IF (newflowdirns(x,y).eq.-1) THEN
+              IF (newflowdirns(x,y).eq.-1) THEN !Nanu: what does the flag -1 mean?
                 isRoute = .FALSE.
               END IF
 
@@ -1515,19 +1515,19 @@ END SUBROUTINE Neighbours
 
 SUBROUTINE LSDs(order, posxy, topog,m,n,lsdList)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !(* This function returns the matrix positions;
-      !LSD1: the position of the neighbouring cell with the steepest slope downhill;
-      !LSD2: the position of the neighbouring cell with second steepest slope adjacent LSD1;
-      !otherpos: the position of the other neighbouring cell the mirror reflection about LSD1 of LSD2;
+!(* This function returns the matrix positions;
+!  LSD1: the position of the neighbouring cell with the steepest slope downhill;
+!  LSD2: the position of the neighbouring cell with second steepest slope adjacent LSD1;
+!  otherpos: the position of the other neighbouring cell the mirror reflection about LSD1 of LSD2;
 !
 !It requires as input:
-!	the topography: topog
-!	the order defined by the algorithm to define the size of the neighbourhood: order
-! 	As well as the position of the cell pinned for calculating the flow direction: posxy
+!	 the topography: topog
+!	 the order defined by the algorithm to define the size of the neighbourhood: order
+!  As well as the position of the cell pinned for calculating the flow direction: posxy
 !It returns 
-!	a vector with the [i,j] of the position of LSD1 in row 1
-!	LSD2 in row 2 and otherpos in row3
-  !(retunrs (-99,-99) for positions outside the domain
+!	 a vector with the [i,j] of the position of LSD1 in row 1
+!	 LSD2 in row 2 and otherpos in row3
+!  (returns (-99,-99) for positions outside the domain
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   IMPLICIT NONE
   

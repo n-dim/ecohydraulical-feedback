@@ -5,18 +5,21 @@ m 	= 			64	!number of rows
 n 	= 			64	!number of columns
 
 !climate /landscape parameters:
-np 	= 			63 	!number of particles of rain falling
-roughness = 	                0.0000001
+np 			=	63 			!number of particles of rain falling
+roughness 	= 	0.0000001
+slope 		=	0.2			!slope of the topography
+orientation = 	0.7853982 	!in radians
+							!0.7853982 equals pi/4 which is 45 degree anticlockwise from east
 
 nSteps 	= 		200 		!total number of "years"
 
 !veg change variables
-etPersist = 	200			!evapotranspiration rate over which plants start do grow
+etPersist = 	200			!evapotranspiration rate over which plants start to grow
 storEmerge =	120			!storage based emerge of new plants
 useStorEmerge = T			!flag denotes whether to use random collonisation pc or storage based sEmerge
 vegmax = 		9		!maximum biomass
 
-
+	
 tSteps= 		200 		!number of iterations for evap calcs between veg change
 
 pa = 			250 		!mean annual precip mm

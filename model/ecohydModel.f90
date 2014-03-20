@@ -70,6 +70,8 @@ real*8 :: pbar		!water in each particle in mm
 real*8 :: ie		!effective rainfall intensity mm / year
 real*8 :: te		!years: length of a time step in evap calcs
 
+real*8 :: orientation, slope !orientation and slope of the topography
+
 !for reading process:
 integer :: unitNumber = 11
 logical :: anotherParamSet !are there multiple parameter Sets?
@@ -100,8 +102,9 @@ open(unitNumber, file=trim(adjustl(inputFileName)), status="old")
 DO !loop to read and execute every parameter set
   call readInput (unitNumber, Errors, title, outputFolder, description, anotherParamSet, run, &
     m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
-    dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv,&
-    topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
+    dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
+    topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat, &
+    orientation, slope)
   !nanu you might want to put this somewhere else
   setBCs = .FALSE.
   if (sum(abs(bcs))>0) then
@@ -119,7 +122,7 @@ DO !loop to read and execute every parameter set
   CALL SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
   	np, pbar, ie, roughness, K0, rf, kf, Kmax, dx ,dy , &
   	rc, kc,tSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, & 
-  	kb, Dv, Db,title, outputFormat, bcs, setBCS)
+  	kb, Dv, Db,title, outputFormat, bcs, setBCS, orientation, slope)
 
   else
     write(*,*) "don't run simulation for this parameter set"
@@ -174,7 +177,8 @@ END SUBROUTINE init_random_seed
 subroutine readInput (inputfile, Errors, title, outputFolder, description, anotherParamSet, run, &
 	m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps, useStorEmerge, &
 	dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, &
-	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat)
+	topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, bcs, outputFormat, &
+  orientation, slope)
 
 	IMPLICIT NONE
 	character(LEN=400), intent(in) :: outputFolder
@@ -182,14 +186,13 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
 
   integer, intent(out) :: m, n, np, nSteps, etPersist, storEmerge, vegmax, tSteps
 	logical, intent(out) :: useStorEmerge
-  real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv
+  real*8, intent(out) :: dx, pa, ts, K0, Kmax, kf, rf, Emax, kc, rc, gamma, bav, roughness, kv, Dv, orientation, slope
 	logical, intent(out) :: topogRoute	!if true, then use topography to route flows
 	logical, intent(out) :: simErosion	!if true, then simulate erosion and update flow pathways
 	logical, intent(out) :: simEvap		!if true, then simulate evaporation
 	logical, intent(out) :: simVegEvolve	!if true, then simulate evolving vegetation
 	logical, intent(out) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
 
-	
 	logical, intent(out) :: run !run simulation for this parameter set?
 	character(200), intent(out) :: title
 	character(400), intent(out) :: description
@@ -358,6 +361,10 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
             read(inputValChar, FMT='(4i3)', IOSTAT=IOStatus) bcs
           case("outputFormat")
             read(inputValChar, *, IOSTAT=IOStatus) outputFormat
+          case("orientation")
+            read(inputValChar, *, IOSTAT=IOStatus) orientation
+          case("slope")
+            read(inputValChar, *, IOSTAT=IOStatus) slope
             
           !if nothing of the above applies, an error message is shown
           case default
@@ -419,6 +426,8 @@ subroutine readInput (inputfile, Errors, title, outputFolder, description, anoth
     write(123,*) "gamma          = ", gamma
     write(123,*) "bav            = ", bav
     write(123,*) "roughness      = ", roughness
+    write(123,*) "orientation    = ", orientation
+    write(123,*) "slope          = ", slope
     write(123,*) "kv             = ", kv
     write(123,*) "kb             = ", kb
     write(123,*) "Dv             = ", Dv
@@ -484,7 +493,7 @@ end subroutine deriveInputParameters
 SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve, RandomInVeg, &
 	np , pbar, ie, roughness,K0, rf, kf, Kmax, dx ,dy ,&
 	rc, kc,eSteps,te,Psb,Psv,Emax, ne, vegmax, storEmerge, etPersist, useStorEmerge,kv, kb, & 
-	Dv, Db, resultsName, outputFormat, bcs, setBCs)
+	Dv, Db, resultsName, outputFormat, bcs, setBCs, orientation, slope)
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!This subroutine does all the calculations after the input parameters have been set
@@ -511,6 +520,8 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
   logical, intent(in) :: RandomInVeg	!if true, then allow vegetation to bi randomly distributed initially, othewrwise set all veg to 0
   CHARACTER(LEN=200), INTENT(IN) :: resultsName  !results file name (name of parameter set)
 
+  !topography
+  REAL*8, INTENT(IN) :: orientation, slope
 
   INTEGER, DIMENSION(4), INTENT(IN) :: bcs         !integers denoting boundary conditions
                                       !1st value specifies first column
@@ -579,6 +590,7 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
   !integers defining the current status of veg (between 0 = no veg, 1 - 9 various integers of max biomass
   INTEGER, DIMENSION(m,n) :: veg, dummyveg
 
+
   !mask = used by GD8 to solve for global flow routing
   INTEGER, DIMENSION(m,n,9) :: mask
 
@@ -601,7 +613,7 @@ SUBROUTINE SimCODE(m,n,mn,nSteps, topogRoute, simErosion, simEvap, simVegEvolve,
 
   CALL setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
      eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-     flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs)
+     flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb, bcs, setBCs, orientation, slope)
 
   If (outputFormat == "csv") THEN
   	CALL openCSVrasterFiles(resultsName, outputFolder)
@@ -705,7 +717,7 @@ END SUBROUTINE SimCODE
 !set initial Conditions
 SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, rcy, &
   eSteps, ne, flowResistance0, flowResistance1, topog, RandomInVeg, veg, store, lakes, &
-  flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs)
+  flowdirns, topogRoute, K0, kf, Kmax, ie, dx, dy, infiltKern, storeKern, kb,bcs, setBCs, orientation, slope)
 
   IMPLICIT NONE
 
@@ -717,6 +729,7 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
   Real*8, INTENT(OUT) :: rfx, rfy
   REAL*8, INTENT(in) :: rc         !meter: maximum length for plant water uptake
   REAL*8, INTENT(OUT) :: rcx, rcy
+  REAL*8, INTENT(IN) :: orientation, slope  !orientation and slope of the topography
   INTEGER, INTENT(INOUT) :: eSteps
   integer, INTENT(in) :: ne		!ne is the number of times required to divide 1-ts by in order to ensure only one particle removed
     !by one evap process at any one time
@@ -758,7 +771,8 @@ SUBROUTINE setInitConditions(m, n, progress, precip, np, rf, rfx, rfy, rc, rcx, 
       flowResistance0(i,j) = (dble(rnd)+1.0d0)*kb
 
       CALL random_number(rnd)
-      topog(i,j)  =0.2d0*dble(i)+0.2d0*dble(j) + 1000.d0
+
+      topog(i,j)  =cos(orientation)*dble(slope)*dble(i)+sin(orientation)*dble(slope)*dble(j) + 1000.d0 !Still to solve: if orientation is equal to pi the simulation runs endlessly
 
       IF (RandomInVeg) THEN
         IF(j==1.and.i==1) print*,'random initial vegetation distribution'

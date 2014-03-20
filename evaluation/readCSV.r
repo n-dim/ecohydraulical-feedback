@@ -6,7 +6,7 @@ readCSV <- function(file=NA) {
   parameter <- as.list(Temp[,2])
   # give list elements the right names
   names(parameter) <- Temp[,1]
-  formats <- c(rep("character", 2), "logical", rep("numeric", 25), rep("logical", 7))
+  formats <- c(rep("character", 2), "logical", rep("numeric", 27), rep("logical", 7), rep("character", 7))
   for(i in 1:length(parameter)){
     parameter[i] <- as(parameter[i], formats[i])
   }

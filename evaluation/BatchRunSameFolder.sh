@@ -8,7 +8,7 @@
 	folder=$(dirname $inputfile)
 	outfolder=$folder/$2
   mkdir $outfolder
-  ecohydModel.out $inputfile $outfolder                     # simulation run
+  ecohydModel.out $inputfile $outfolder &&                                   # simulation run
   postprocessing.sh $outfolder
   
   #./readAllCSV.sh $outfolder                                                # convert to .RData

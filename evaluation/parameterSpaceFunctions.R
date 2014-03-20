@@ -101,8 +101,9 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   if(randomAverage){
     av <- which(names(dimnames(result))=="useRandomSeed")
     if(length(av)!=0){
-      dims <- 1:length(dim(result))
-      result <- apply(result, dims[-av], function(x) mean(x, na.rm=T))    
+      dims <- (1:length(dim(result)))[-av]
+      resultIQR <- apply(result, dims, function(x) IQR(x, na.rm=T))    
+      result <- apply(result, dims, function(x) mean(x, na.rm=T))   
     }
     
   }
@@ -116,6 +117,12 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
     x <- suppressWarnings(as.numeric(names(result)))
     if(any(is.na(x))) x <- 1:length(x)
     plot(x, result, type="l", main=paste0(names(selectiveParameter), " = ", selectiveParameter), ylab=outputParameter)
+    if(randomAverage){
+      par(new=T)
+      plot(x, resultIQR, col="green", type="l", axes=F, ylab="", xlab="", lty=2)
+      axis(4, pretty(resultIQR), col="green")
+      mtext("IQR", 4, 3)
+    }
   }
   
   # display in shaded picture (if 3d)
@@ -128,7 +135,7 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
     
     # write simulation numbers into grid
    
-      text(as.numeric(rep(x, ncol(selectedSims))), as.numeric(rep(y, each=nrow(selectedSims))), selectedSims, cex=.8)
+      text(as.numeric(rep(x, ncol(selectedSims))), as.numeric(rep(y, each=nrow(selectedSims))), selectedSims, cex=.6)
 
     
     # other parameters in figure label:
@@ -146,19 +153,21 @@ viewParameterSpace <- function(parameterSpace, simFolder, outputParameter, selec
   invisible(return(selectedSims))
 }
 
-printPDFs <- function (withRandomAverage=F) {
-  #--- print grid matrix ---
-  asp= nrow(sims)/ncol(sims)
-  pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
-  try({
-    plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
-  })
-  dev.off()
+printPDFs <- function (withGrids=T, withRandomAverage=F) {
+  if(withGrids){
+    #--- print grid matrix ---
+    asp= ncol(as.matrix(sims))/nrow(as.matrix(sims))
+    pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_gridMatrix.pdf")[1], height=14+7*strheight("x", "inches"), width=14*asp+4*strheight("x", "inches"), onefile=T)
+    try({
+      plotGridMatrix(sims,title=paste(names(selectiveParameter), "=", selectiveParameter))
+    })
+    dev.off()
+  }
   
   
   #--- print other parameters ----
   
-  outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavenumber", "wavelength", "wavelength2", "phaseshift", "angularEntropy", "radialEntropy", "Entropy2D", "orientation")
+  outputParameters <- c("medianTotalET", "medianTotalBareEvap", "medianTotalDischarge", "medianTotalStore", "medianTotalOutflow", "medianVegDensity", "coverRatioMedian", "wavelength", "wavelength2", "phaseshift", "angularEntropy", "radialEntropy", "Entropy2D", "orientation", "meanWavelength", "meanWavelength2")
   # "wavespeed",
   pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot.pdf"), onefile=T)
   try({
@@ -169,13 +178,18 @@ printPDFs <- function (withRandomAverage=F) {
   dev.off()
   
   #--- print with random average ---
-  if(withRandomAverage){
+  av <- which(names(dimnames(result))=="useRandomSeed")
+  
+  if(withRandomAverage & length(av)!=0){
     pdf(paste0(simFolder, "/", names(selectiveParameter), " = ", selectiveParameter, "_parameterPlot_randomaverage.pdf"), onefile=T)
+    marold <- par()$mar
+    par(mar=c(5,4, 4, 4))
     try({
       for(i in outputParameters){
         viewParameterSpace(parameterSpace, simFolder, outputParameter=i, selectiveParameter=selectiveParameter, plot=T, applyFunction="median", randomAverage=T)
       }
     })
+    par(mar=marold)
     dev.off()  
   }
 }

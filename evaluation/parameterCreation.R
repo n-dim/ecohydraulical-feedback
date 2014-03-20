@@ -95,6 +95,41 @@ parlist$useRandomSeed <- rep(T,10)
 parlist$n <- NULL
 parlist$m <- c(10, 20, 40, 80, 160, 320)
 
+#---- repeatability with 2^n scale
+
+parlist$m <- 2^(3:8)
+
+#------ smaller scale ----
+
+parlist$m <- c(10, 20, 40, 80)
+
+#--- only one m repeating --------
+
+parlist$m <- 100
+parlist$useRandomSeed <- rep(T, 24)
+
+#-----------------#
+parlist$m <- 60
+parlist$useRandomSeed <- rep(T,1)
+parlist$KincFrac <- c(4,5,6,9,15,16,17,18,19,20) 
+parlist$K0 <-c(0.06, 0.3 )
+parlist$K0 <- 0.3
+
+#------ repeatability ----------
+parlist$nSteps <- 100
+parlist$KincFrac <- 9
+parlist$K0 <- 0.3
+parlist$useRandomSeed <- rep(T,40)
+parlist$n <- NULL
+parlist$m <- seq(10, 100, 10)
+
+#---- repeatability ---------
+
+parlist$m <- seq(140, by=40, length.out=5)
+
 ################################################
 parameterSpace <- calcParameterSpace(parlist)
 
+if(F){
+  source("simulate_ParameterSpace.R")
+}

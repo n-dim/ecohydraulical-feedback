@@ -16,6 +16,12 @@ postprocessing <- function(outputFolder=NA) {
   outFileName <- Data$parameter$title
   mn <- Data$parameter$m*Data$parameter$n
   
+  # save data:
+  parameter <- Data$parameter
+  save(parameter, file=file.path(outputFolder, paste0(outFileName, "_parameter.RData")))  
+  grids <- Data$rasters
+  save(grids, file=file.path(outputFolder, paste0(outFileName, "_grids.RData")))   
+  
   # postprocessing:
   postprocessing <- NULL
   postprocessing$coverRatio <- coverRatio(Data)
@@ -42,19 +48,18 @@ postprocessing <- function(outputFolder=NA) {
     postprocessing$radialEntropy[t] <- Spectrum$entropy_radial
     postprocessing$angularEntropy[t] <- Spectrum$entropy_angular
     postprocessing$Entropy2D[t] <- Spectrum$entropy_2D
-    Temp <-  extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F, smoothing=1.5) 
+    Temp <-  extractWaveLength(bild=Data$rasters$vegetation[[t]], F, F, smoothing=0) # smoothing=1.5
     postprocessing$wavelength2[t] <- Temp $ wavelength
     postprocessing$phaseshift[t] <- Temp $ phaseshift
     rm(Temp)
     rm(grid)
   }
   postprocessing$wavespeed <- c(NA, diff(postprocessing$phaseshift))
+  postprocessing$meanWavelength <- mean(tail(postprocessing$wavelength), -20)
+  postprocessing$meanWavelength2 <- mean(tail(postprocessing$wavelength2), -20)
   
-  # save data:
-  parameter <- Data$parameter
-  save(parameter, file=file.path(outputFolder, paste0(outFileName, "_parameter.RData")))  
-  grids <- Data$rasters
-  save(grids, file=file.path(outputFolder, paste0(outFileName, "_grids.RData")))        
+  
+     
   save(postprocessing, file=file.path(outputFolder, paste0(outFileName, "_postprocessing.RData")))
   #save(list=outFileName, file=file.path(outputFolder,paste(outFileName, "_grids.RData", sep="")))  
 }

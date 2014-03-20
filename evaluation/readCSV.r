@@ -26,7 +26,7 @@ readCSV <- function(file=NA) {
         for(j in 1:nSteps){
           Temp <- as.matrix(read.table(file=connection, sep=";", skip=1, nrow=m, header=F))
           colnames(Temp) <- NULL  
-          rasters[[i]][[j]] <- Temp[1:n,1:m]
+          rasters[[i]][[j]] <- Temp[1:m,1:n]
         }
         close(connection)
       }

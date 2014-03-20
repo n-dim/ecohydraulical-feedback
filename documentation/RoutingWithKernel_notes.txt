@@ -1,0 +1,44 @@
+route water particle
+
+loop through positions in matrix
+
+IF random number (0...1) is greater then infiltKern(x,y) and stor(x,y) is greater then storeKern(x,y)
+
+	add particle to storage
+
+ELSE
+	IF not a periodic boundary condition
+		Lookupfdr(newflowdirns(x,y), dx, dy)
+		add to discharge
+
+		IF outflow
+			add to outflow
+		ELSE
+			IF depression
+				add to depression
+				depression calc...
+			END
+		END
+	ELSE
+		add to discharge
+		...
+	END
+
+
+Die Anfangs-Koordinaten werden in zufälliger Reihenfolge abgearbeitet.
+Regenpartikel fällt auf Anfangs-Koordinate. Von da an wird er weitergeleitet:
+
+particle wird so lange über die Fläche bewegt, wie:
+
+1. er nicht infiltriert ist (von Zufallszahl bestimmt)
+2. er nicht aus der Fläche fließt (outflow bei non-periodic boundary condition)
+3. er in einer Senke landet, diese jedoch zum überlaufen bringt
+
+particle wird gestoppt, wenn:
+
+1. er in einer Senke landet und diese nicht zum überlaufen bringt
+2. er infiltriert
+3. er fließt aus der Fläche (non-periodic boundary condition)
+4. Die Fließrichtung ist -1 (normale Fließrichtungen gehen von 1 bis 8 für die 8 umliegenden Pixel und 9 für keine Bewegung, -1 ist ein Fehlercode des GD8-Algorithmus?)
+
+-1 for positions outside the domain
